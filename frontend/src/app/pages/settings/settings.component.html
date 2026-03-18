@@ -1,0 +1,296 @@
+<div class="settings-container">
+  <h1 class="page-title">Configuracoes</h1>
+
+  <mat-tab-group animationDuration="200ms" class="settings-tabs">
+    <!-- Tab 1: Credenciais -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">vpn_key</mat-icon>
+        Credenciais
+      </ng-template>
+      <div class="tab-content">
+        <!-- Meta Ads -->
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>ads_click</mat-icon>
+            Meta Ads
+          </h2>
+
+          @if (metaConnected) {
+            <!-- Connected State -->
+            <div class="meta-connected-card">
+              <div class="meta-status">
+                <mat-icon class="status-icon connected">check_circle</mat-icon>
+                <div class="status-info">
+                  <span class="status-label">Conectado como</span>
+                  <span class="status-name">{{ metaUserName }}</span>
+                </div>
+                <button mat-stroked-button color="warn" (click)="disconnectMeta()" class="disconnect-btn">
+                  <mat-icon>link_off</mat-icon>
+                  Desconectar
+                </button>
+              </div>
+
+              @if (metaAccounts.length > 0) {
+                <div class="account-selector">
+                  <mat-form-field appearance="outline" class="account-select">
+                    <mat-label>Conta de Anuncios</mat-label>
+                    <mat-select [value]="metaSelectedAccount" (selectionChange)="selectMetaAccount($event.value)">
+                      @for (account of metaAccounts; track account.id) {
+                        <mat-option [value]="account.id">
+                          {{ account.name }} ({{ account.id }})
+                          @if (account.business_name) {
+                            - {{ account.business_name }}
+                          }
+                        </mat-option>
+                      }
+                    </mat-select>
+                    <mat-icon matPrefix>account_box</mat-icon>
+                  </mat-form-field>
+                </div>
+              }
+
+              @if (metaAccounts.length === 0 && !metaLoading) {
+                <div class="no-accounts-warning">
+                  <mat-icon>warning</mat-icon>
+                  <span>Nenhuma conta de anuncios encontrada. Verifique se sua conta Facebook tem acesso a contas de anuncios.</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <!-- Not Connected State -->
+            <div class="meta-connect-card">
+              <div class="connect-info">
+                <mat-icon class="connect-icon">facebook</mat-icon>
+                <div>
+                  <p class="connect-title">Conecte sua conta do Facebook</p>
+                  <p class="connect-desc">Clique no botao abaixo para autorizar o acesso ao Meta Ads. Voce podera criar campanhas diretamente pelo chat.</p>
+                </div>
+              </div>
+
+              <div class="fields-grid" style="margin-bottom: 16px;">
+                <mat-form-field appearance="outline">
+                  <mat-label>App ID</mat-label>
+                  <input matInput [(ngModel)]="settings.meta_app_id" placeholder="Seu Meta App ID">
+                  <mat-icon matPrefix>fingerprint</mat-icon>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>App Secret</mat-label>
+                  <input matInput [(ngModel)]="settings.meta_app_secret"
+                         [type]="showFields['meta_app_secret'] ? 'text' : 'password'"
+                         placeholder="Seu App Secret">
+                  <mat-icon matPrefix>lock</mat-icon>
+                  <button mat-icon-button matSuffix (click)="toggleVisibility('meta_app_secret')">
+                    <mat-icon>{{ showFields['meta_app_secret'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  </button>
+                </mat-form-field>
+              </div>
+
+              <button mat-raised-button class="meta-connect-btn"
+                      (click)="connectMeta()" [disabled]="metaLoading">
+                @if (metaLoading) {
+                  <mat-icon class="spinning">sync</mat-icon>
+                  Conectando...
+                } @else {
+                  <mat-icon>login</mat-icon>
+                  Conectar com Facebook
+                }
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- WhatsApp Business -->
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>chat</mat-icon>
+            WhatsApp Business
+          </h2>
+          <div class="fields-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Phone Number ID</mat-label>
+              <input matInput [(ngModel)]="settings.whatsapp_phone_id" placeholder="ID do numero">
+              <mat-icon matPrefix>phone</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Access Token</mat-label>
+              <input matInput [(ngModel)]="settings.whatsapp_token"
+                     [type]="showFields['whatsapp_token'] ? 'text' : 'password'"
+                     placeholder="Token do WhatsApp">
+              <mat-icon matPrefix>token</mat-icon>
+              <button mat-icon-button matSuffix (click)="toggleVisibility('whatsapp_token')">
+                <mat-icon>{{ showFields['whatsapp_token'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Business ID</mat-label>
+              <input matInput [(ngModel)]="settings.whatsapp_business_id" placeholder="ID do Business">
+              <mat-icon matPrefix>business</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- AI -->
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>psychology</mat-icon>
+            Inteligencia Artificial
+          </h2>
+          <div class="fields-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Provedor de IA</mat-label>
+              <mat-select [(ngModel)]="settings.ai_provider">
+                <mat-option value="claude">Claude (Anthropic)</mat-option>
+                <mat-option value="openai">OpenAI (GPT)</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>smart_toy</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>API Key</mat-label>
+              <input matInput [(ngModel)]="settings.ai_api_key"
+                     [type]="showFields['ai_api_key'] ? 'text' : 'password'"
+                     placeholder="Sua chave de API">
+              <mat-icon matPrefix>key</mat-icon>
+              <button mat-icon-button matSuffix (click)="toggleVisibility('ai_api_key')">
+                <mat-icon>{{ showFields['ai_api_key'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 2: Modo de Operacao -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">tune</mat-icon>
+        Modo de Operacao
+      </ng-template>
+      <div class="tab-content">
+        <h2 class="section-title">Escolha o modo de operacao da IA</h2>
+        <div class="mode-cards">
+          <div class="mode-card mode-manual"
+               [class.mode-selected]="settings.operation_mode === 'manual'"
+               (click)="settings.operation_mode = 'manual'">
+            <div class="mode-icon">&#128274;</div>
+            <h3 class="mode-title">Manual</h3>
+            <p class="mode-description">
+              Voce aprova TUDO antes de executar: artes, textos, campanhas e disparos.
+            </p>
+            <div class="mode-radio">
+              <mat-icon>{{ settings.operation_mode === 'manual' ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+              <span>{{ settings.operation_mode === 'manual' ? 'Selecionado' : 'Selecionar' }}</span>
+            </div>
+          </div>
+
+          <div class="mode-card mode-semi"
+               [class.mode-selected]="settings.operation_mode === 'semi_auto'"
+               (click)="settings.operation_mode = 'semi_auto'">
+            <div class="mode-icon">&#9889;</div>
+            <h3 class="mode-title">Semi-Automatico</h3>
+            <p class="mode-description">
+              IA executa campanhas e disparos automaticamente. Voce aprova apenas artes e textos criativos.
+            </p>
+            <div class="mode-radio">
+              <mat-icon>{{ settings.operation_mode === 'semi_auto' ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+              <span>{{ settings.operation_mode === 'semi_auto' ? 'Selecionado' : 'Selecionar' }}</span>
+            </div>
+          </div>
+
+          <div class="mode-card mode-auto"
+               [class.mode-selected]="settings.operation_mode === 'auto'"
+               (click)="settings.operation_mode = 'auto'">
+            <div class="mode-icon">&#128640;</div>
+            <h3 class="mode-title">Piloto Automatico</h3>
+            <p class="mode-description">
+              IA faz TUDO sozinha: pesquisa, cria artes, monta campanhas e dispara. Voce so acompanha os resultados.
+            </p>
+            <div class="mode-radio">
+              <mat-icon>{{ settings.operation_mode === 'auto' ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+              <span>{{ settings.operation_mode === 'auto' ? 'Selecionado' : 'Selecionar' }}</span>
+            </div>
+          </div>
+        </div>
+
+        @if (settings.operation_mode === 'auto') {
+          <div class="warning-box">
+            <mat-icon>warning</mat-icon>
+            <span>Atencao: No modo Piloto Automatico, a IA tomara decisoes de gasto dentro dos limites configurados.</span>
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Tab 3: Limites de Gasto -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">account_balance_wallet</mat-icon>
+        Limites de Gasto
+      </ng-template>
+      <div class="tab-content">
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>attach_money</mat-icon>
+            Limites de Orcamento
+          </h2>
+
+          <div class="budget-grid">
+            <div class="budget-card">
+              <mat-form-field appearance="outline" class="budget-field">
+                <mat-label>Limite Diario (R$)</mat-label>
+                <input matInput type="number" [(ngModel)]="settings.daily_budget_limit"
+                       min="0" step="10" placeholder="0.00">
+                <span matPrefix class="currency-prefix">R$&nbsp;</span>
+              </mat-form-field>
+              <div class="progress-section">
+                <div class="progress-label">
+                  <span>Gasto hoje</span>
+                  <span>R$ 0,00 / R$ {{ settings.daily_budget_limit | number:'1.2-2' }}</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width]="'0%'"></div>
+                </div>
+                <span class="progress-percent">0% utilizado</span>
+              </div>
+            </div>
+
+            <div class="budget-card">
+              <mat-form-field appearance="outline" class="budget-field">
+                <mat-label>Limite Mensal (R$)</mat-label>
+                <input matInput type="number" [(ngModel)]="settings.monthly_budget_limit"
+                       min="0" step="100" placeholder="0.00">
+                <span matPrefix class="currency-prefix">R$&nbsp;</span>
+              </mat-form-field>
+              <div class="progress-section">
+                <div class="progress-label">
+                  <span>Gasto este mes</span>
+                  <span>R$ 0,00 / R$ {{ settings.monthly_budget_limit | number:'1.2-2' }}</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width]="'0%'"></div>
+                </div>
+                <span class="progress-percent">0% utilizado</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <mat-icon>info</mat-icon>
+            <span>A IA nunca ultrapassara estes limites, independente do modo de operacao.</span>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <div class="save-section">
+    <button mat-raised-button color="primary" class="save-button"
+            (click)="saveSettings()" [disabled]="saving">
+      <mat-icon>save</mat-icon>
+      {{ saving ? 'Salvando...' : 'Salvar Configuracoes' }}
+    </button>
+  </div>
+</div>

@@ -1,0 +1,231 @@
+<div class="analytics-page">
+  <div class="page-header">
+    <h1>Analytics e Relatorios</h1>
+  </div>
+
+  @if (loading) {
+    <div class="loading-state">
+      <mat-icon>hourglass_empty</mat-icon>
+      <p>Carregando dados...</p>
+    </div>
+  }
+
+  @if (!loading && !hasData) {
+    <div class="empty-state">
+      <mat-icon>insert_chart_outlined</mat-icon>
+      <p>Crie campanhas e leads para ver analises aqui</p>
+    </div>
+  }
+
+  @if (!loading && hasData && data) {
+    <!-- Row 1: KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card orange">
+        <mat-icon class="kpi-icon">account_balance_wallet</mat-icon>
+        <div class="kpi-label">Gasto Total (R$)</div>
+        <div class="kpi-value">R$ {{ data.kpis.total_spent | number:'1.2-2' }}</div>
+      </div>
+      <div class="kpi-card blue">
+        <mat-icon class="kpi-icon">people</mat-icon>
+        <div class="kpi-label">Total de Leads</div>
+        <div class="kpi-value">{{ data.kpis.total_leads | number }}</div>
+      </div>
+      <div class="kpi-card green">
+        <mat-icon class="kpi-icon">check_circle</mat-icon>
+        <div class="kpi-label">Conversoes</div>
+        <div class="kpi-value">{{ data.kpis.total_conversions | number }}</div>
+      </div>
+      <div class="kpi-card cyan">
+        <mat-icon class="kpi-icon">analytics</mat-icon>
+        <div class="kpi-label">CPL (Custo/Lead)</div>
+        <div class="kpi-value">R$ {{ data.kpis.cpl | number:'1.2-2' }}</div>
+      </div>
+      <div class="kpi-card purple">
+        <mat-icon class="kpi-icon">paid</mat-icon>
+        <div class="kpi-label">CPA (Custo/Aquisicao)</div>
+        <div class="kpi-value">R$ {{ data.kpis.cpa | number:'1.2-2' }}</div>
+      </div>
+      <div class="kpi-card emerald">
+        <mat-icon class="kpi-icon">trending_up</mat-icon>
+        <div class="kpi-label">ROAS</div>
+        <div class="kpi-value">{{ data.kpis.roas | number:'1.2-2' }}x</div>
+      </div>
+    </div>
+
+    <!-- Row 2: Funnel + WhatsApp Stats -->
+    <div class="row-two">
+      <!-- Visual Funnel -->
+      <div class="card funnel-card">
+        <h3>Funil de Conversao</h3>
+        <div class="funnel-container">
+          @for (stage of data.funnel; track stage.stage; let i = $index) {
+            <div class="funnel-stage">
+              <div class="funnel-label">
+                <span class="stage-name">{{ stage.stage }}</span>
+                <span class="stage-value">{{ stage.value | number }}</span>
+                @if (i > 0) {
+                  <span class="stage-drop">{{ getFunnelDrop(i) }}</span>
+                }
+              </div>
+              <div class="funnel-bar-track">
+                <div
+                  class="funnel-bar"
+                  [style.width.%]="getFunnelWidth(stage.value)"
+                  [style.background]="stage.color">
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- WhatsApp Stats -->
+      <div class="card wa-card">
+        <h3>WhatsApp</h3>
+        <div class="wa-stats">
+          <div class="wa-stat">
+            <div class="wa-stat-header">
+              <span>Enviadas</span>
+              <span class="wa-stat-value">{{ data.whatsapp_summary.total_sent | number }}</span>
+            </div>
+            <mat-progress-bar mode="determinate" [value]="100" color="primary"></mat-progress-bar>
+          </div>
+          <div class="wa-stat">
+            <div class="wa-stat-header">
+              <span>Entregues</span>
+              <span class="wa-stat-value">{{ data.whatsapp_summary.total_delivered | number }}</span>
+            </div>
+            <mat-progress-bar mode="determinate" [value]="getWaPercent(data.whatsapp_summary.total_delivered)" color="accent"></mat-progress-bar>
+          </div>
+          <div class="wa-stat">
+            <div class="wa-stat-header">
+              <span>Lidas</span>
+              <span class="wa-stat-value">{{ data.whatsapp_summary.total_read | number }}</span>
+            </div>
+            <mat-progress-bar mode="determinate" [value]="getWaPercent(data.whatsapp_summary.total_read)" color="primary"></mat-progress-bar>
+          </div>
+          <div class="wa-stat">
+            <div class="wa-stat-header">
+              <span>Respondidas</span>
+              <span class="wa-stat-value">{{ data.whatsapp_summary.total_replied | number }}</span>
+            </div>
+            <mat-progress-bar mode="determinate" [value]="getWaPercent(data.whatsapp_summary.total_replied)" color="accent"></mat-progress-bar>
+          </div>
+          <div class="wa-highlight">
+            <span class="wa-highlight-label">Taxa de Resposta</span>
+            <span class="wa-highlight-value">{{ data.kpis.wa_response_rate }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Charts -->
+    <div class="row-charts">
+      <div class="card chart-card">
+        <h3>Evolucao Semanal</h3>
+        <div class="chart-wrapper">
+          <canvas baseChart
+            [type]="'line'"
+            [data]="lineChartData"
+            [options]="lineChartOptions">
+          </canvas>
+        </div>
+      </div>
+      <div class="card chart-card">
+        <h3>Gasto Diario</h3>
+        <div class="chart-wrapper">
+          <canvas baseChart
+            [type]="'bar'"
+            [data]="barChartData"
+            [options]="barChartOptions">
+          </canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4: Campaign Comparison Table -->
+    <div class="card table-card">
+      <h3>Comparacao de Campanhas</h3>
+      @if (data.campaign_comparison.length === 0) {
+        <p class="no-data">Nenhuma campanha encontrada</p>
+      } @else {
+        <div class="table-container">
+          <table mat-table [dataSource]="tableDataSource" matSort>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Campanha</th>
+              <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="platform">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Plataforma</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="platform-badge" [class.meta]="row.platform === 'Meta Ads'" [class.whatsapp]="row.platform === 'WhatsApp'">
+                  {{ row.platform }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="col1">
+              <th mat-header-cell *matHeaderCellDef>Impressoes / Enviadas</th>
+              <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 1) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="col2">
+              <th mat-header-cell *matHeaderCellDef>Cliques / Entregues</th>
+              <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 2) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="col3">
+              <th mat-header-cell *matHeaderCellDef>Leads / Lidas</th>
+              <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 3) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="col4">
+              <th mat-header-cell *matHeaderCellDef>Conversoes / Respondidas</th>
+              <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 4) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="col5">
+              <th mat-header-cell *matHeaderCellDef>Gasto / Taxa</th>
+              <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 5) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="col6">
+              <th mat-header-cell *matHeaderCellDef>CTR / CPC</th>
+              <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 6) }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Row 5: Lead Funnel Breakdown -->
+    <div class="card lead-funnel-card">
+      <h3>Distribuicao de Leads por Status</h3>
+      @if (totalLeadsInFunnel === 0) {
+        <p class="no-data">Nenhum lead encontrado</p>
+      } @else {
+        <div class="lead-funnel">
+          @for (item of leadFunnelItems; track item.label) {
+            <div class="lead-funnel-row">
+              <div class="lead-funnel-label">
+                <span class="lead-status-dot" [style.background]="item.color"></span>
+                <span>{{ item.label }}</span>
+              </div>
+              <div class="lead-funnel-bar-track">
+                <div class="lead-funnel-bar" [style.width.%]="item.percent" [style.background]="item.color"></div>
+              </div>
+              <div class="lead-funnel-info">
+                <span class="lead-count">{{ item.count }}</span>
+                <span class="lead-percent">{{ item.percent }}%</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

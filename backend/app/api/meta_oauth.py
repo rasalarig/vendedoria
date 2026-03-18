@@ -1,0 +1,204 @@
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+from pydantic import BaseModel
+
+from app.core.database import get_db
+from app.models.settings import Settings
+from app.services.meta_oauth import MetaOAuthService
+
+router = APIRouter(prefix="/meta", tags=["meta-oauth"])
+
+# Default redirect URI - frontend handles the callback
+REDIRECT_URI = "http://localhost:4201/settings"
+
+
+class SelectAccountRequest(BaseModel):
+    account_id: str
+    account_name: str = ""
+
+
+@router.get("/auth-url")
+async def get_auth_url(db: Session = Depends(get_db)):
+    """Get Facebook OAuth authorization URL."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings or not settings.meta_app_id or not settings.meta_app_secret:
+        return {"error": "App ID e App Secret precisam estar preenchidos primeiro"}
+
+    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret)
+    url = service.get_auth_url(REDIRECT_URI)
+    return {"auth_url": url}
+
+
+@router.get("/callback")
+async def oauth_callback(code: str = Query(...), db: Session = Depends(get_db)):
+    """Handle OAuth callback - exchange code for token."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings or not settings.meta_app_id or not settings.meta_app_secret:
+        return {"error": "Configuracoes incompletas"}
+
+    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret)
+
+    # Exchange code for token
+    result = await service.exchange_code(code, REDIRECT_URI)
+    if "error" in result:
+        return {"error": result["error"]}
+
+    access_token = result["access_token"]
+
+    # Get user info
+    user_info = await service.get_user_info(access_token)
+
+    # Save token and user info
+    settings.meta_access_token = access_token
+    settings.meta_user_name = user_info.get("name", "")
+
+    # Auto-fetch Facebook Page ID for ad creatives
+    pages = await service.get_pages(access_token)
+    if pages:
+        settings.facebook_page_id = pages[0]["id"]
+
+    # Auto-fetch Ad Account if only one available (or pick first)
+    accounts = await service.get_ad_accounts(access_token)
+    if accounts:
+        settings.meta_ad_account_id = accounts[0]["id"]
+
+    db.commit()
+
+    return {
+        "success": True,
+        "user_name": user_info.get("name", ""),
+        "user_id": user_info.get("id", ""),
+    }
+
+
+@router.get("/accounts")
+async def get_ad_accounts(db: Session = Depends(get_db)):
+    """List available ad accounts for the authenticated user."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings or not settings.meta_access_token:
+        return {"error": "Nao conectado ao Facebook"}
+
+    service = MetaOAuthService(
+        settings.meta_app_id or "", settings.meta_app_secret or ""
+    )
+    accounts = await service.get_ad_accounts(settings.meta_access_token)
+
+    return {
+        "accounts": accounts,
+        "selected": settings.meta_ad_account_id or "",
+    }
+
+
+@router.post("/select-account")
+async def select_account(data: SelectAccountRequest, db: Session = Depends(get_db)):
+    """Save selected ad account."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings:
+        return {"error": "Configuracoes nao encontradas"}
+
+    settings.meta_ad_account_id = data.account_id
+    db.commit()
+
+    return {"success": True, "account_id": data.account_id}
+
+
+@router.get("/pages")
+async def get_pages(db: Session = Depends(get_db)):
+    """List user's Facebook Pages."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings or not settings.meta_access_token:
+        return {"error": "Nao conectado ao Facebook"}
+
+    service = MetaOAuthService(
+        settings.meta_app_id or "", settings.meta_app_secret or ""
+    )
+    pages = await service.get_pages(settings.meta_access_token)
+    return {
+        "pages": [{"id": p["id"], "name": p["name"]} for p in pages],
+        "selected": settings.facebook_page_id or "",
+    }
+
+
+@router.get("/readiness")
+async def check_readiness(db: Session = Depends(get_db)):
+    """Check Meta Ads readiness: connection, page, payment, etc."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+
+    result = {
+        "has_app_credentials": bool(settings and settings.meta_app_id and settings.meta_app_secret),
+        "is_connected": bool(settings and settings.meta_access_token),
+        "user_name": (settings.meta_user_name if settings else "") or "",
+        "has_ad_account": bool(settings and settings.meta_ad_account_id),
+        "ad_account_id": (settings.meta_ad_account_id if settings else "") or "",
+        "has_page": bool(settings and settings.facebook_page_id),
+        "page_id": (settings.facebook_page_id if settings else "") or "",
+        "has_payment": False,
+        "payment_error": "",
+    }
+
+    # If connected and has ad account, check payment
+    if result["is_connected"] and result["has_ad_account"]:
+        from app.services.meta_ads import MetaAdsService
+        meta = MetaAdsService(
+            access_token=settings.meta_access_token,
+            ad_account_id=settings.meta_ad_account_id,
+        )
+        payment_info = await meta.check_payment()
+        result["has_payment"] = payment_info.get("has_payment", False)
+        result["payment_error"] = payment_info.get("error", "")
+
+    return result
+
+
+@router.get("/payment-status")
+async def get_payment_status(db: Session = Depends(get_db)):
+    """Check if the Meta ad account has a payment method configured."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings or not settings.meta_access_token or not settings.meta_ad_account_id:
+        return {"has_payment": False, "error": "Meta Ads nao conectado"}
+
+    from app.services.meta_ads import MetaAdsService
+    meta = MetaAdsService(
+        access_token=settings.meta_access_token,
+        ad_account_id=settings.meta_ad_account_id,
+    )
+    result = await meta.check_payment()
+    return result
+
+
+@router.post("/reconnect")
+async def reconnect(db: Session = Depends(get_db)):
+    """Disconnect and return new OAuth URL for reconnection."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings:
+        return {"error": "Configuracoes nao encontradas"}
+
+    # Clear existing connection
+    settings.meta_access_token = ""
+    settings.meta_ad_account_id = ""
+    settings.meta_user_name = ""
+    settings.facebook_page_id = ""
+    db.commit()
+
+    # Generate new OAuth URL
+    if not settings.meta_app_id or not settings.meta_app_secret:
+        return {"error": "App ID e App Secret nao configurados"}
+
+    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret)
+    url = service.get_auth_url(REDIRECT_URI)
+    return {"success": True, "auth_url": url}
+
+
+@router.post("/disconnect")
+async def disconnect(db: Session = Depends(get_db)):
+    """Disconnect Meta account - clear tokens and account info."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings:
+        return {"error": "Configuracoes nao encontradas"}
+
+    settings.meta_access_token = ""
+    settings.meta_ad_account_id = ""
+    settings.meta_user_name = ""
+    db.commit()
+
+    return {"success": True}

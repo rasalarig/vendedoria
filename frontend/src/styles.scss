@@ -1,0 +1,452 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$dark-primary: mat.define-palette(mat.$deep-purple-palette, 400);
+$dark-accent: mat.define-palette(mat.$pink-palette, A200);
+$dark-warn: mat.define-palette(mat.$red-palette);
+$dark-theme: mat.define-dark-theme((
+  color: (primary: $dark-primary, accent: $dark-accent, warn: $dark-warn),
+  typography: mat.define-typography-config(
+    $font-family: '"Inter", "Roboto", "Helvetica Neue", sans-serif',
+  ),
+  density: 0
+));
+
+@include mat.all-component-themes($dark-theme);
+
+// ====================================================
+// VENDEDORIA 2026 — Premium SaaS Design System
+// ====================================================
+
+// Color tokens
+$bg-base: #09090b;
+$bg-surface: #18181b;
+$bg-elevated: #27272a;
+$border-default: #3f3f46;
+$border-subtle: #27272a;
+$accent-violet: #8b5cf6;
+$accent-violet-hover: #a78bfa;
+$accent-success: #22c55e;
+$accent-warning: #f59e0b;
+$accent-danger: #ef4444;
+$accent-info: #3b82f6;
+$text-primary: #fafafa;
+$text-secondary: #a1a1aa;
+$text-muted: #71717a;
+
+// Gradients
+$gradient-brand: linear-gradient(135deg, #8b5cf6, #ec4899);
+$gradient-success: linear-gradient(135deg, #22c55e, #06b6d4);
+$gradient-revenue: linear-gradient(135deg, #f59e0b, #ef4444);
+$gradient-info: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+// ====================================================
+// Global resets
+// ====================================================
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Inter', 'Roboto', 'Helvetica Neue', sans-serif;
+  background-color: $bg-base;
+  color: $text-primary;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.main-content {
+  padding: 32px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+// ====================================================
+// Scrollbar
+// ====================================================
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $border-default;
+  border-radius: 3px;
+
+  &:hover {
+    background: $text-muted;
+  }
+}
+
+// ====================================================
+// Global utility classes
+// ====================================================
+
+// Big number displays
+.big-number {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+  color: $text-primary;
+}
+
+.metric-label {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: $text-secondary;
+}
+
+// Gradient text
+.gradient-text {
+  background: $gradient-brand;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Glass card effect
+.glass-card {
+  background: rgba(24, 24, 27, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+  border-radius: 16px;
+}
+
+// Glow effects
+.glow-violet { box-shadow: 0 0 30px rgba(139, 92, 246, 0.15); }
+.glow-green { box-shadow: 0 0 30px rgba(34, 197, 94, 0.15); }
+.glow-blue { box-shadow: 0 0 30px rgba(59, 130, 246, 0.15); }
+
+// ====================================================
+// Angular Material component overrides
+// ====================================================
+
+// MatCard
+.mat-mdc-card {
+  background: $bg-surface !important;
+  border: 1px solid $border-subtle !important;
+  border-radius: 16px !important;
+  color: $text-primary !important;
+  box-shadow: none !important;
+}
+
+// MatToolbar
+.mat-toolbar {
+  background: $bg-base !important;
+  color: $text-primary !important;
+  border-bottom: 1px solid $border-subtle !important;
+  box-shadow: none !important;
+}
+
+// MatSidenav
+.mat-sidenav {
+  background: $bg-base !important;
+  border-right: 1px solid $border-subtle !important;
+}
+
+.mat-sidenav-container {
+  background: $bg-base !important;
+}
+
+// MatButton
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-flat-button,
+.mat-mdc-stroked-button,
+.mat-mdc-outlined-button {
+  border-radius: 8px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.mat-mdc-flat-button.mat-primary,
+.mat-mdc-raised-button.mat-primary {
+  background-color: $accent-violet !important;
+  color: white !important;
+
+  &:hover {
+    background-color: $accent-violet-hover !important;
+  }
+}
+
+.mat-mdc-icon-button {
+  color: $text-secondary !important;
+
+  &:hover {
+    color: $text-primary !important;
+  }
+}
+
+// MatTable
+.mat-mdc-table {
+  background: transparent !important;
+}
+
+.mat-mdc-header-row {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.mat-mdc-header-cell {
+  color: $text-muted !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  border-bottom-color: $border-subtle !important;
+  font-weight: 600 !important;
+}
+
+.mat-mdc-cell {
+  color: $text-secondary !important;
+  font-size: 14px !important;
+  border-bottom-color: rgba(63, 63, 70, 0.3) !important;
+}
+
+.mat-mdc-row:hover {
+  background: rgba(139, 92, 246, 0.04) !important;
+}
+
+// MatDialog
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-color: #{$bg-surface} !important;
+
+  .mdc-dialog__surface {
+    background: $bg-surface !important;
+    border: 1px solid $border-default !important;
+    border-radius: 16px !important;
+  }
+}
+
+.mat-mdc-dialog-title {
+  color: $text-primary !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+// MatInput / MatFormField
+.mat-mdc-form-field {
+  .mdc-text-field--outlined {
+    background-color: $bg-base !important;
+  }
+
+  .mdc-floating-label {
+    color: $text-muted !important;
+  }
+
+  .mdc-text-field__input,
+  input.mat-mdc-input-element {
+    color: $text-primary !important;
+    caret-color: $accent-violet !important;
+  }
+
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: $border-default !important;
+  }
+
+  &.mat-focused {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: $accent-violet !important;
+    }
+  }
+
+  .mat-mdc-form-field-hint {
+    color: $text-muted !important;
+  }
+
+  .mat-mdc-form-field-error {
+    color: $accent-danger !important;
+  }
+}
+
+// MatSelect
+.mat-mdc-select-value {
+  color: $text-primary !important;
+}
+
+.mat-mdc-select-arrow {
+  color: $text-muted !important;
+}
+
+.mat-mdc-option {
+  color: $text-primary !important;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.08) !important;
+  }
+
+  &.mdc-list-item--selected {
+    background: rgba(139, 92, 246, 0.12) !important;
+  }
+}
+
+.mat-mdc-select-panel {
+  background: $bg-elevated !important;
+  border: 1px solid $border-default !important;
+  border-radius: 12px !important;
+}
+
+// MatTab
+.mat-mdc-tab-header {
+  background: $bg-surface !important;
+  border-bottom: 1px solid $border-subtle !important;
+}
+
+.mat-mdc-tab:not(.mdc-tab--active) .mdc-tab__text-label {
+  color: $text-muted !important;
+}
+
+.mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+  color: $accent-violet !important;
+}
+
+.mdc-tab-indicator__content--underline {
+  border-color: $accent-violet !important;
+}
+
+.mat-mdc-tab-body-wrapper {
+  background: transparent !important;
+}
+
+// MatProgressBar
+.mat-mdc-progress-bar {
+  .mdc-linear-progress__bar-inner {
+    border-color: $accent-violet !important;
+  }
+
+  .mdc-linear-progress__buffer-bar {
+    background-color: $bg-elevated !important;
+  }
+}
+
+// MatProgressSpinner
+.mat-mdc-progress-spinner circle {
+  stroke: $accent-violet !important;
+}
+
+// MatPaginator
+.mat-mdc-paginator {
+  background: transparent !important;
+  color: $text-secondary !important;
+}
+
+// MatSnackBar
+.snackbar-success {
+  --mdc-snackbar-container-color: #{$bg-elevated};
+  --mdc-snackbar-supporting-text-color: #{$accent-success};
+}
+
+.snackbar-error {
+  --mdc-snackbar-container-color: #{$bg-elevated};
+  --mdc-snackbar-supporting-text-color: #{$accent-danger};
+}
+
+// MatExpansionPanel
+.mat-expansion-panel {
+  background: $bg-elevated !important;
+  color: $text-primary !important;
+  box-shadow: none !important;
+  border: 1px solid $border-subtle !important;
+  border-radius: 12px !important;
+  margin-bottom: 8px !important;
+
+  .mat-expansion-panel-header {
+    color: $text-primary !important;
+  }
+
+  .mat-expansion-panel-header-title {
+    color: $text-primary !important;
+  }
+
+  .mat-expansion-indicator::after {
+    color: $text-muted !important;
+  }
+}
+
+// MatDivider
+.mat-divider {
+  border-color: $border-subtle !important;
+}
+
+// MatStepper
+.mat-stepper-horizontal,
+.mat-stepper-vertical {
+  background: transparent !important;
+}
+
+.mat-step-header {
+  .mat-step-label {
+    color: $text-muted !important;
+
+    &.mat-step-label-active {
+      color: $text-primary !important;
+    }
+
+    &.mat-step-label-selected {
+      color: $accent-violet !important;
+    }
+  }
+
+  .mat-step-icon {
+    background-color: $bg-elevated !important;
+    color: $text-muted !important;
+
+    &.mat-step-icon-selected {
+      background-color: $accent-violet !important;
+      color: white !important;
+    }
+
+    &.mat-step-icon-state-edit {
+      background-color: $accent-success !important;
+      color: white !important;
+    }
+  }
+}
+
+.mat-stepper-horizontal-line {
+  border-color: $border-default !important;
+}
+
+// MatList
+.mat-mdc-list-item {
+  color: $text-secondary !important;
+}
+
+// MatChip
+.mat-mdc-chip {
+  background: $bg-elevated !important;
+  color: $text-secondary !important;
+  border: 1px solid $border-default !important;
+}
+
+// MatCardSubtitle
+.mat-mdc-card-subtitle {
+  color: $text-muted !important;
+}
+
+// MatCardActions
+.mat-mdc-card-actions {
+  padding: 8px 16px 16px !important;
+}
