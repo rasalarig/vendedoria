@@ -77,6 +77,20 @@ export class CampaignService {
     return this.http.post(`${this.apiUrl}/${id}/repair`, {});
   }
 
+  refreshMetrics(id: number): Observable<Campaign> {
+    return this.http.get<Campaign>(`${this.apiUrl}/${id}`);
+  }
+
+  getReviewStatus(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${id}/review-status`);
+  }
+
+  uploadImage(id: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/${id}/upload-image`, formData);
+  }
+
   delete(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }

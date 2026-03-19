@@ -78,3 +78,14 @@ async def startup_event():
             conn.commit()
     except Exception:
         pass
+    # Migrate: add meta_pixel_id column
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE settings ADD COLUMN meta_pixel_id VARCHAR(100) DEFAULT ''"
+                )
+            )
+            conn.commit()
+    except Exception:
+        pass

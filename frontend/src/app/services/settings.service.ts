@@ -60,4 +60,8 @@ export class SettingsService {
   reconnectMeta(): Observable<{success?: boolean, auth_url?: string, error?: string}> {
     return this.http.post<{success?: boolean, auth_url?: string, error?: string}>('http://localhost:8000/api/meta/reconnect', {});
   }
+
+  getPrerequisites(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/prerequisites`);
+  }
 }

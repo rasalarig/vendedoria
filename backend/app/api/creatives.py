@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
@@ -8,6 +8,7 @@ from app.models.creative import Creative
 from app.models.product import Product
 from app.models.settings import Settings
 from app.services.ai_creative import AICreativeService
+from app.services.meta_ads import MetaAdsService
 
 router = APIRouter(prefix="/creatives", tags=["creatives"])
 
@@ -184,6 +185,26 @@ async def regenerate_creative(creative_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(creative)
     return creative_to_response(creative)
+
+
+@router.post("/upload-image")
+async def upload_ad_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Upload an image to Meta Ads and return the image_hash."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings or not settings.meta_access_token or not settings.meta_ad_account_id:
+        raise HTTPException(status_code=400, detail="Meta Ads nao configurado.")
+
+    meta_service = MetaAdsService(
+        access_token=settings.meta_access_token,
+        ad_account_id=settings.meta_ad_account_id,
+    )
+    image_bytes = await file.read()
+    result = await meta_service.upload_image(image_bytes, file.filename)
+
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return result
 
 
 @router.delete("/{creative_id}")

@@ -29,6 +29,8 @@ class Settings(Base):
     ai_provider = Column(String(50), default="claude")  # claude, openai
     # Operation Mode
     operation_mode = Column(String(20), default=OperationMode.MANUAL.value)
+    # Meta Pixel
+    meta_pixel_id = Column(String(100), default="")
     # Budget Limits
     daily_budget_limit = Column(Float, default=0.0)
     monthly_budget_limit = Column(Float, default=0.0)

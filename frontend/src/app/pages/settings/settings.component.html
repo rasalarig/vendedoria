@@ -1,6 +1,98 @@
 <div class="settings-container">
   <h1 class="page-title">Configuracoes</h1>
 
+  <!-- Prerequisites Checklist -->
+  @if (prerequisites) {
+    <mat-card class="prerequisites-card" [class.all-ready]="prerequisites.ready_for_campaign">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="prereq-header-icon"
+                  [class.ready]="prerequisites.ready_for_campaign"
+                  [class.not-ready]="!prerequisites.ready_for_campaign">
+          {{ prerequisites.ready_for_campaign ? 'verified' : 'checklist' }}
+        </mat-icon>
+        <mat-card-title class="prereq-title">
+          {{ prerequisites.ready_for_campaign ? 'Pronto para criar campanhas!' : 'Pre-requisitos para Campanhas' }}
+        </mat-card-title>
+        <mat-card-subtitle class="prereq-subtitle">
+          {{ prerequisites.ready_for_campaign ? 'Todos os itens essenciais estao configurados.' : 'Complete os itens abaixo para criar sua primeira campanha.' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="prereq-grid">
+          <div class="prereq-item" [class.done]="prerequisites.meta_connected">
+            <mat-icon [class.check]="prerequisites.meta_connected" [class.missing]="!prerequisites.meta_connected">
+              {{ prerequisites.meta_connected ? 'check_circle' : 'cancel' }}
+            </mat-icon>
+            <div class="prereq-info">
+              <span class="prereq-label">Conta Meta conectada</span>
+              <span class="prereq-hint">{{ prerequisites.meta_connected ? 'Conectado' : 'Conecte na aba Credenciais > Meta Ads' }}</span>
+            </div>
+          </div>
+
+          <div class="prereq-item" [class.done]="prerequisites.ad_account">
+            <mat-icon [class.check]="prerequisites.ad_account" [class.missing]="!prerequisites.ad_account">
+              {{ prerequisites.ad_account ? 'check_circle' : 'cancel' }}
+            </mat-icon>
+            <div class="prereq-info">
+              <span class="prereq-label">Conta de Anuncios</span>
+              <span class="prereq-hint">{{ prerequisites.ad_account ? 'Selecionada' : 'Selecione apos conectar o Meta' }}</span>
+            </div>
+          </div>
+
+          <div class="prereq-item" [class.done]="prerequisites.facebook_page">
+            <mat-icon [class.check]="prerequisites.facebook_page" [class.missing]="!prerequisites.facebook_page">
+              {{ prerequisites.facebook_page ? 'check_circle' : 'cancel' }}
+            </mat-icon>
+            <div class="prereq-info">
+              <span class="prereq-label">Pagina do Facebook</span>
+              <span class="prereq-hint">{{ prerequisites.facebook_page ? 'Vinculada' : 'Crie em facebook.com/pages/create' }}</span>
+            </div>
+          </div>
+
+          <div class="prereq-item" [class.done]="prerequisites.pixel_configured">
+            <mat-icon [class.check]="prerequisites.pixel_configured" [class.missing]="!prerequisites.pixel_configured">
+              {{ prerequisites.pixel_configured ? 'check_circle' : 'cancel' }}
+            </mat-icon>
+            <div class="prereq-info">
+              <span class="prereq-label">Meta Pixel</span>
+              <span class="prereq-hint">{{ prerequisites.pixel_configured ? 'Configurado' : 'Opcional - configure para rastrear conversoes' }}</span>
+            </div>
+          </div>
+
+          <div class="prereq-item" [class.done]="prerequisites.has_product">
+            <mat-icon [class.check]="prerequisites.has_product" [class.missing]="!prerequisites.has_product">
+              {{ prerequisites.has_product ? 'check_circle' : 'cancel' }}
+            </mat-icon>
+            <div class="prereq-info">
+              <span class="prereq-label">Produto cadastrado</span>
+              <span class="prereq-hint">{{ prerequisites.has_product ? 'Pelo menos 1 produto' : 'Cadastre pelo chat ou aba Produtos' }}</span>
+            </div>
+          </div>
+
+          <div class="prereq-item" [class.done]="prerequisites.has_creative">
+            <mat-icon [class.check]="prerequisites.has_creative" [class.missing]="!prerequisites.has_creative">
+              {{ prerequisites.has_creative ? 'check_circle' : 'cancel' }}
+            </mat-icon>
+            <div class="prereq-info">
+              <span class="prereq-label">Criativo gerado</span>
+              <span class="prereq-hint">{{ prerequisites.has_creative ? 'Pelo menos 1 criativo' : 'Gere pelo chat apos cadastrar produto' }}</span>
+            </div>
+          </div>
+
+          <div class="prereq-item" [class.done]="prerequisites.payment_method">
+            <mat-icon [class.check]="prerequisites.payment_method" [class.missing]="!prerequisites.payment_method">
+              {{ prerequisites.payment_method ? 'check_circle' : 'cancel' }}
+            </mat-icon>
+            <div class="prereq-info">
+              <span class="prereq-label">Metodo de pagamento</span>
+              <span class="prereq-hint">{{ prerequisites.payment_method ? 'Configurado' : 'Adicione em business.facebook.com/billing' }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
   <mat-tab-group animationDuration="200ms" class="settings-tabs">
     <!-- Tab 1: Credenciais -->
     <mat-tab>

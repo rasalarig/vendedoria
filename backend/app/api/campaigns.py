@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
@@ -140,7 +140,15 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
         total_budget = monthly_budget_limit
 
     # Use MetaAdsService
-    meta_service = MetaAdsService(access_token=access_token, ad_account_id=ad_account_id)
+    page_id = settings.facebook_page_id if settings else ""
+    meta_service = MetaAdsService(access_token=access_token, ad_account_id=ad_account_id, page_id=page_id)
+
+    # Check account status before proceeding
+    account_status = await meta_service.check_account_status()
+    if not account_status.get("is_ok"):
+        if account_status.get("is_token_expired"):
+            raise HTTPException(status_code=401, detail=account_status["message"])
+        raise HTTPException(status_code=400, detail=account_status["message"])
 
     # Suggest targeting
     targeting_data = meta_service.suggest_targeting(
@@ -159,36 +167,41 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
     if creative:
         campaign_name = f"Campanha - {product.name} - {creative.headline or 'Criativo'}"
 
-    # Create campaign on Meta (real or mock)
-    meta_campaign = await meta_service.create_campaign(name=campaign_name)
-    meta_campaign_id = meta_campaign.get("id", "")
+    # Build ad creative fields from creative or product defaults
+    ad_message = f"Conheca {product.name}! {product.description or ''}"
+    ad_headline = product.name
+    ad_image_url = ""
+    ad_cta = "LEARN_MORE"
 
-    # Create adset
-    meta_adset = await meta_service.create_adset(
-        campaign_id=meta_campaign_id,
-        name=f"Adset - {product.name}",
+    if creative:
+        ad_message = creative.copy_text or ad_message
+        ad_headline = creative.headline or ad_headline
+        ad_image_url = creative.image_url or ""
+        ad_cta = creative.cta or "LEARN_MORE"
+
+    # Get pixel_id from settings for conversion tracking
+    pixel_id = settings.meta_pixel_id or "" if settings else ""
+
+    # Create full campaign on Meta (campaign + adset + creative + ad)
+    result = await meta_service.create_full_campaign(
+        campaign_name=campaign_name,
         targeting=targeting_data,
         daily_budget=daily_budget,
+        ad_message=ad_message,
+        ad_headline=ad_headline,
+        ad_image_url=ad_image_url,
+        ad_cta=ad_cta,
+        pixel_id=pixel_id,
     )
-    meta_adset_id = meta_adset.get("id", "")
 
-    # Create ad
-    creative_data = {}
-    if creative:
-        creative_data = {
-            "headline": creative.headline,
-            "copy_text": creative.copy_text,
-            "cta": creative.cta,
-            "image_url": creative.image_url,
-        }
-    meta_ad = await meta_service.create_ad(
-        adset_id=meta_adset_id,
-        name=f"Ad - {product.name}",
-        creative_data=creative_data,
-    )
-    meta_ad_id = meta_ad.get("id", "")
+    # Check for errors
+    if result.get("errors"):
+        raise HTTPException(
+            status_code=400,
+            detail=result["errors"][0] if result["errors"] else "Erro ao criar campanha no Meta Ads",
+        )
 
-    # Save campaign to DB
+    # Save campaign to DB with all IDs from the result
     campaign = Campaign(
         product_id=product.id,
         creative_id=creative.id if creative else None,
@@ -196,9 +209,10 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
         platform="meta",
         status="active",
         objective="CONVERSIONS",
-        meta_campaign_id=meta_campaign_id,
-        meta_adset_id=meta_adset_id,
-        meta_ad_id=meta_ad_id,
+        meta_campaign_id=result.get("campaign_id", ""),
+        meta_adset_id=result.get("adset_id", ""),
+        meta_ad_id=result.get("ad_id", ""),
+        meta_creative_id=result.get("creative_id", ""),
         targeting=targeting_data,
         daily_budget=daily_budget,
         total_budget=total_budget,
@@ -652,6 +666,52 @@ async def repair_campaign(campaign_id: int, db: Session = Depends(get_db)):
         "message": f"Reparado: {', '.join(repaired)}" if repaired else "Nenhum componente reparado",
         "campaign": campaign_to_response(campaign, product_name=product_name, creative_headline=creative_headline, creative_copy=creative_copy, creative_image_url=creative_image_url, creative_cta=creative_cta),
     }
+
+
+@router.get("/{campaign_id}/review-status")
+async def get_campaign_review_status(campaign_id: int, db: Session = Depends(get_db)):
+    """Get ad review status from Meta for a campaign."""
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    if not campaign or not campaign.meta_ad_id:
+        raise HTTPException(status_code=404, detail="Campanha nao encontrada ou sem anuncio Meta vinculado")
+
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings or not settings.meta_access_token:
+        raise HTTPException(status_code=400, detail="Meta Ads nao configurado.")
+
+    meta_service = MetaAdsService(
+        access_token=settings.meta_access_token,
+        ad_account_id=settings.meta_ad_account_id or "",
+    )
+    return await meta_service.get_ad_review_status(campaign.meta_ad_id)
+
+
+@router.post("/{campaign_id}/upload-image")
+async def upload_campaign_image(
+    campaign_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """Upload an image to Meta Ads for a specific campaign."""
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campanha nao encontrada")
+
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings or not settings.meta_access_token or not settings.meta_ad_account_id:
+        raise HTTPException(status_code=400, detail="Meta Ads nao configurado.")
+
+    meta_service = MetaAdsService(
+        access_token=settings.meta_access_token,
+        ad_account_id=settings.meta_ad_account_id,
+    )
+    image_bytes = await file.read()
+    result = await meta_service.upload_image(image_bytes, file.filename)
+
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return result
 
 
 @router.delete("/{campaign_id}")

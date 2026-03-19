@@ -62,6 +62,9 @@ export class SettingsComponent implements OnInit {
   metaSelectedAccount = '';
   metaLoading = false;
 
+  prerequisites: any = null;
+  prerequisitesLoading = false;
+
   constructor(
     private settingsService: SettingsService,
     private snackBar: MatSnackBar,
@@ -70,11 +73,25 @@ export class SettingsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadSettings();
+    this.loadPrerequisites();
     // Check for OAuth callback code in URL
     this.route.queryParams.subscribe(params => {
       if (params['code']) {
         this.handleMetaCallback(params['code']);
       }
+    });
+  }
+
+  loadPrerequisites(): void {
+    this.prerequisitesLoading = true;
+    this.settingsService.getPrerequisites().subscribe({
+      next: (data) => {
+        this.prerequisites = data;
+        this.prerequisitesLoading = false;
+      },
+      error: () => {
+        this.prerequisitesLoading = false;
+      },
     });
   }
 

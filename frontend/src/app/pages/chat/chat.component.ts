@@ -183,6 +183,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   navigateToAction(action: string): void {
     const routes: Record<string, string> = {
       product_created: '/products',
+      product_updated: '/products',
+      product_deleted: '/products',
       creatives_generated: '/creatives',
       campaign_created: '/campaigns',
       strategy_generated: '/strategy',
@@ -196,6 +198,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   getActionLabel(action: string): string {
     const labels: Record<string, string> = {
       product_created: 'Produto criado',
+      product_updated: 'Produto atualizado',
+      product_deleted: 'Produto removido',
       creatives_generated: 'Criativos gerados',
       campaign_created: 'Campanha criada',
       strategy_generated: 'Estrategia gerada',
@@ -206,6 +210,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   getActionClass(action: string): string {
     const classes: Record<string, string> = {
       product_created: 'product',
+      product_updated: 'product',
+      product_deleted: 'product',
       creatives_generated: 'creative',
       campaign_created: 'campaign',
       strategy_generated: 'strategy',
@@ -216,6 +222,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   getActionIcon(action: string): string {
     const icons: Record<string, string> = {
       product_created: 'check_circle',
+      product_updated: 'edit',
+      product_deleted: 'delete',
       creatives_generated: 'palette',
       campaign_created: 'bar_chart',
       strategy_generated: 'psychology',

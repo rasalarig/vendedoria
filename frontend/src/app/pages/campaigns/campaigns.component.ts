@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -17,6 +17,8 @@ import { CampaignService, Campaign, CampaignCreate } from '../../services/campai
 import { ProductService, Product } from '../../services/product.service';
 import { CreativeService, Creative } from '../../services/creative.service';
 import { SettingsService } from '../../services/settings.service';
+import { Subscription, interval } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-campaigns',
@@ -311,6 +313,77 @@ import { SettingsService } from '../../services/settings.service';
                   @if (expandedCampaignId === campaign.id) {
                     <mat-divider></mat-divider>
                     <div class="campaign-details">
+                      <!-- Campaign Dashboard -->
+                      <div class="campaign-dashboard">
+                        <h4><mat-icon>analytics</mat-icon> Dashboard de Metricas</h4>
+                        <div class="dashboard-kpis">
+                          <div class="kpi-card">
+                            <div class="kpi-icon impressions-icon"><mat-icon>visibility</mat-icon></div>
+                            <div class="kpi-content">
+                              <span class="kpi-value">{{ campaign.impressions | number }}</span>
+                              <span class="kpi-label">Impressoes</span>
+                            </div>
+                          </div>
+                          <div class="kpi-card">
+                            <div class="kpi-icon clicks-icon"><mat-icon>touch_app</mat-icon></div>
+                            <div class="kpi-content">
+                              <span class="kpi-value">{{ campaign.clicks | number }}</span>
+                              <span class="kpi-label">Cliques</span>
+                            </div>
+                          </div>
+                          <div class="kpi-card">
+                            <div class="kpi-icon conversions-icon"><mat-icon>shopping_cart</mat-icon></div>
+                            <div class="kpi-content">
+                              <span class="kpi-value">{{ campaign.conversions | number }}</span>
+                              <span class="kpi-label">Conversoes</span>
+                            </div>
+                          </div>
+                          <div class="kpi-card">
+                            <div class="kpi-icon leads-icon"><mat-icon>person_add</mat-icon></div>
+                            <div class="kpi-content">
+                              <span class="kpi-value">{{ campaign.leads | number }}</span>
+                              <span class="kpi-label">Leads</span>
+                            </div>
+                          </div>
+                          <div class="kpi-card">
+                            <div class="kpi-icon ctr-icon"><mat-icon>ads_click</mat-icon></div>
+                            <div class="kpi-content">
+                              <span class="kpi-value" [class.good-metric]="campaign.ctr >= 2" [class.bad-metric]="campaign.ctr < 1">{{ campaign.ctr | number:'1.2-2' }}%</span>
+                              <span class="kpi-label">CTR</span>
+                            </div>
+                          </div>
+                          <div class="kpi-card">
+                            <div class="kpi-icon cpc-icon"><mat-icon>payments</mat-icon></div>
+                            <div class="kpi-content">
+                              <span class="kpi-value" [class.good-metric]="campaign.cpc < 1" [class.bad-metric]="campaign.cpc > 5">R$ {{ campaign.cpc | number:'1.2-2' }}</span>
+                              <span class="kpi-label">CPC</span>
+                            </div>
+                          </div>
+                          <div class="kpi-card">
+                            <div class="kpi-icon cpl-icon"><mat-icon>price_check</mat-icon></div>
+                            <div class="kpi-content">
+                              <span class="kpi-value">R$ {{ campaign.cpl | number:'1.2-2' }}</span>
+                              <span class="kpi-label">CPL</span>
+                            </div>
+                          </div>
+                          <div class="kpi-card spent-card">
+                            <div class="kpi-icon spent-icon"><mat-icon>account_balance_wallet</mat-icon></div>
+                            <div class="kpi-content">
+                              <span class="kpi-value">R$ {{ campaign.spent | number:'1.2-2' }}</span>
+                              <span class="kpi-label">Gasto Total</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        @if (campaign.status === 'active' || campaign.status === 'mock') {
+                          <div class="polling-indicator">
+                            <div class="pulse-dot"></div>
+                            <span>Atualizando metricas automaticamente a cada 30s</span>
+                          </div>
+                        }
+                      </div>
+                      <mat-divider></mat-divider>
+
                       <!-- Meta Components Status -->
                       <div class="detail-section">
                         <h4>Componentes no Meta</h4>
@@ -782,9 +855,98 @@ import { SettingsService } from '../../services/settings.service';
       mat-icon { font-size: 14px; width: 14px; height: 14px; }
       &:hover { text-decoration: underline; }
     }
+
+    .campaign-dashboard {
+      margin-bottom: 16px;
+      h4 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #fafafa;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        mat-icon { color: #8b5cf6; }
+      }
+    }
+
+    .dashboard-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .kpi-card {
+      background: #09090b;
+      border: 1px solid #27272a;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: border-color 0.2s;
+      &:hover { border-color: #3f3f46; }
+    }
+
+    .kpi-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      mat-icon { font-size: 20px; width: 20px; height: 20px; }
+    }
+
+    .impressions-icon { background: rgba(59, 130, 246, 0.1); color: #60a5fa; mat-icon { color: #60a5fa; } }
+    .clicks-icon { background: rgba(139, 92, 246, 0.1); color: #a78bfa; mat-icon { color: #a78bfa; } }
+    .conversions-icon { background: rgba(34, 197, 94, 0.1); color: #4ade80; mat-icon { color: #4ade80; } }
+    .leads-icon { background: rgba(236, 72, 153, 0.1); color: #f472b6; mat-icon { color: #f472b6; } }
+    .ctr-icon { background: rgba(245, 158, 11, 0.1); color: #fbbf24; mat-icon { color: #fbbf24; } }
+    .cpc-icon { background: rgba(20, 184, 166, 0.1); color: #2dd4bf; mat-icon { color: #2dd4bf; } }
+    .cpl-icon { background: rgba(168, 85, 247, 0.1); color: #c084fc; mat-icon { color: #c084fc; } }
+    .spent-icon { background: rgba(239, 68, 68, 0.1); color: #f87171; mat-icon { color: #f87171; } }
+
+    .kpi-content {
+      display: flex;
+      flex-direction: column;
+      .kpi-value { font-size: 20px; font-weight: 700; color: #fafafa; }
+      .kpi-label { font-size: 11px; color: #71717a; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    }
+
+    .polling-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: rgba(34, 197, 94, 0.05);
+      border: 1px solid rgba(34, 197, 94, 0.15);
+      border-radius: 8px;
+      color: #4ade80;
+      font-size: 12px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); }
+      70% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+      100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-kpis { grid-template-columns: repeat(2, 1fr); }
+    }
   `],
 })
-export class CampaignsComponent implements OnInit {
+export class CampaignsComponent implements OnInit, OnDestroy {
   products: Product[] = [];
   approvedCreatives: Creative[] = [];
   campaigns: Campaign[] = [];
@@ -807,6 +969,7 @@ export class CampaignsComponent implements OnInit {
 
   adAccountId = '';
   expandedCampaignId: number | null = null;
+  private pollingSubscription: Subscription | null = null;
 
   constructor(
     private campaignService: CampaignService,
@@ -826,6 +989,29 @@ export class CampaignsComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.stopPolling();
+  }
+
+  startPolling(): void {
+    this.stopPolling();
+    this.pollingSubscription = interval(30000).pipe(
+      switchMap(() => this.campaignService.getAll()),
+    ).subscribe({
+      next: (campaigns) => {
+        this.campaigns = campaigns;
+      },
+      error: () => {} // silently ignore polling errors
+    });
+  }
+
+  stopPolling(): void {
+    if (this.pollingSubscription) {
+      this.pollingSubscription.unsubscribe();
+      this.pollingSubscription = null;
+    }
+  }
+
   loadProducts(): void {
     this.productService.getAll().subscribe({
       next: (products) => {
@@ -843,6 +1029,7 @@ export class CampaignsComponent implements OnInit {
       next: (campaigns) => {
         this.campaigns = campaigns;
         this.loadingCampaigns = false;
+        this.startPolling();
       },
       error: () => {
         this.campaigns = [];

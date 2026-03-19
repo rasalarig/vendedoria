@@ -5,8 +5,8 @@ from typing import Dict, List, Optional
 class MetaOAuthService:
     """Handle Facebook/Meta OAuth flow for ads integration."""
 
-    GRAPH_URL = "https://graph.facebook.com/v18.0"
-    OAUTH_URL = "https://www.facebook.com/v18.0/dialog/oauth"
+    GRAPH_URL = "https://graph.facebook.com/v22.0"
+    OAUTH_URL = "https://www.facebook.com/v22.0/dialog/oauth"
 
     def __init__(self, app_id: str, app_secret: str):
         self.app_id = app_id
