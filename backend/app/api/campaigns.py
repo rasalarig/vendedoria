@@ -498,7 +498,17 @@ async def activate_campaign_on_meta(campaign_id: int, db: Session = Depends(get_
         return {
             "success": False,
             "error": "payment_missing",
-            "message": "Sua conta de anuncios nao tem metodo de pagamento configurado. Adicione um cartao de credito em https://www.facebook.com/ads/manager/account_settings/account_billing/ antes de ativar a campanha.",
+            "message": "Sua conta de anuncios nao tem metodo de pagamento configurado. Adicione um cartao em [Configurar Pagamento](https://www.facebook.com/ads/manager/account_settings/account_billing/).",
+            "steps": steps,
+        }
+
+    # Check for prepaid accounts with zero balance
+    if payment_info.get("is_prepaid") and not payment_info.get("has_sufficient_funds"):
+        balance = payment_info.get("balance", 0)
+        return {
+            "success": False,
+            "error": "insufficient_funds",
+            "message": f"Sua conta de anuncios usa modelo pre-pago e tem saldo de R${balance:.2f}. Voce precisa adicionar fundos antes de ativar a campanha. Acesse [Adicionar Fundos](https://www.facebook.com/ads/manager/account_settings/account_billing/) e clique em 'Adicionar fundos'.",
             "steps": steps,
         }
 

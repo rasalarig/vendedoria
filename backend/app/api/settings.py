@@ -125,13 +125,17 @@ async def check_prerequisites(db: Session = Depends(get_db)):
             meta = MetaAdsService(settings.meta_access_token, settings.meta_ad_account_id)
             payment = await meta.check_payment()
             checks["payment_method"] = payment.get("has_payment", False)
+            checks["is_prepaid"] = payment.get("is_prepaid", False)
+            checks["balance"] = payment.get("balance", 0)
+            checks["has_sufficient_funds"] = payment.get("has_sufficient_funds", False)
         except Exception:
             checks["payment_method"] = False
 
     # Overall readiness
     checks["ready_for_campaign"] = all([
         checks["meta_connected"], checks["ad_account"],
-        checks["facebook_page"], checks["has_product"], checks["has_creative"]
+        checks["facebook_page"], checks["has_product"], checks["has_creative"],
+        checks.get("has_sufficient_funds", checks.get("payment_method", False))
     ])
 
     return checks

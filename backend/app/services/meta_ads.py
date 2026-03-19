@@ -575,23 +575,39 @@ class MetaAdsService:
             return {"status": "UNKNOWN", "effective_status": "UNKNOWN", "review_feedback": None}
 
     async def check_payment(self) -> Dict:
-        """Check if ad account has payment method configured."""
+        """Check if ad account has payment method and sufficient funds."""
         if self.is_mock:
-            return {"has_payment": False, "is_mock": True}
+            return {"has_payment": False, "balance": 0, "is_prepaid": False, "is_mock": True}
         try:
             response = await self._request_with_retry(
                 "GET",
                 f"{self.base_url}/{self.ad_account_id}",
                 params={
                     "access_token": self.access_token,
-                    "fields": "funding_source,account_status,currency,name",
+                    "fields": "funding_source,funding_source_details,account_status,currency,name,balance,amount_spent,spend_cap",
                 },
             )
             if response.status_code == 200:
                 data = response.json()
                 has_payment = bool(data.get("funding_source"))
+
+                # Balance is in cents (centavos) — convert to reais
+                balance_cents = int(data.get("balance", "0"))
+                balance = balance_cents / 100
+
+                # Detect prepaid accounts: funding_source_details.type == 1 means prepaid
+                funding_details = data.get("funding_source_details", {})
+                is_prepaid = funding_details.get("type", 0) == 1
+
+                # If no funding_source_details, check if balance field exists (prepaid accounts have balance)
+                if not is_prepaid and "balance" in data:
+                    is_prepaid = True
+
                 return {
                     "has_payment": has_payment,
+                    "balance": balance,
+                    "is_prepaid": is_prepaid,
+                    "has_sufficient_funds": balance > 0 if is_prepaid else has_payment,
                     "account_status": data.get("account_status", 0),
                     "currency": data.get("currency", ""),
                     "account_name": data.get("name", ""),
@@ -599,9 +615,9 @@ class MetaAdsService:
             else:
                 error_data = response.json() if response.text else {}
                 parsed = parse_meta_error(error_data, response.status_code)
-                return {"has_payment": False, "error": parsed["user_message"], "is_token_expired": parsed.get("is_token_expired", False)}
+                return {"has_payment": False, "balance": 0, "is_prepaid": False, "error": parsed["user_message"], "is_token_expired": parsed.get("is_token_expired", False)}
         except Exception as e:
-            return {"has_payment": False, "error": str(e)}
+            return {"has_payment": False, "balance": 0, "is_prepaid": False, "error": str(e)}
 
     async def activate_campaign(self, campaign_id: str) -> Dict:
         """Activate a campaign on Meta (change status from PAUSED to ACTIVE)."""
