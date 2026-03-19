@@ -76,7 +76,7 @@ async def generate_creatives(product_id: int, db: Session = Depends(get_db)):
     created = []
     for i, var in enumerate(variations[:3], start=1):
         image_prompt = var.get("image_prompt", "")
-        image_url = service.generate_image_url(image_prompt) if image_prompt else ""
+        image_url = await service.generate_and_save_image(image_prompt, product.name) if image_prompt else ""
 
         status = "approved" if operation_mode == "auto" else "pending"
 
@@ -173,7 +173,7 @@ async def regenerate_creative(creative_id: int, db: Session = Depends(get_db)):
     var = variations[idx]
 
     image_prompt = var.get("image_prompt", "")
-    image_url = service.generate_image_url(image_prompt) if image_prompt else ""
+    image_url = await service.generate_and_save_image(image_prompt, product.name) if image_prompt else ""
 
     creative.headline = var.get("headline", "")
     creative.copy_text = var.get("copy_text", "")

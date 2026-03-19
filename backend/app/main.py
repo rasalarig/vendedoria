@@ -28,6 +28,7 @@ app.include_router(api_router, prefix=settings.API_PREFIX)
 
 # Mount uploads directory for serving static files
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(os.path.join(UPLOAD_DIR, "creatives"), exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
@@ -95,6 +96,28 @@ async def startup_event():
             conn.execute(
                 __import__("sqlalchemy").text(
                     "ALTER TABLE products ADD COLUMN website_url VARCHAR(500)"
+                )
+            )
+            conn.commit()
+    except Exception:
+        pass
+    # Migrate: add tiktok_access_token to settings
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE settings ADD COLUMN tiktok_access_token VARCHAR(500) DEFAULT ''"
+                )
+            )
+            conn.commit()
+    except Exception:
+        pass
+    # Migrate: add tiktok_advertiser_id to settings
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE settings ADD COLUMN tiktok_advertiser_id VARCHAR(100) DEFAULT ''"
                 )
             )
             conn.commit()

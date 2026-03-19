@@ -15,6 +15,8 @@ export interface AppSettings {
   ai_api_key: string;
   ai_provider: string;
   operation_mode: 'manual' | 'semi_auto' | 'auto';
+  tiktok_access_token?: string;
+  tiktok_advertiser_id?: string;
   daily_budget_limit: number;
   monthly_budget_limit: number;
 }

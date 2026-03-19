@@ -1,7 +1,15 @@
 import httpx
 import json
+import os
+import hashlib
+import asyncio
+import random
 from urllib.parse import quote
 from typing import List, Dict
+from pathlib import Path
+
+UPLOADS_DIR = Path(__file__).parent.parent.parent / "uploads" / "creatives"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class AICreativeService:
@@ -117,7 +125,135 @@ Retorne APENAS um array JSON com 3 objetos. Sem explicacoes extras. Seja ASSERTI
         ]
         return variations
 
+    async def generate_and_save_image(self, prompt: str, product_name: str = "", width: int = 800, height: int = 600) -> str:
+        """Generate an image and save it locally. Returns local URL path."""
+        filename = hashlib.md5(f"{prompt}_{width}_{height}".encode()).hexdigest() + ".png"
+        filepath = UPLOADS_DIR / filename
+
+        # If already exists, return it
+        if filepath.exists() and filepath.stat().st_size > 1000:
+            return f"/uploads/creatives/{filename}"
+
+        # Try Pollinations.ai with retries
+        image_data = await self._try_pollinations(prompt, width, height)
+
+        # If Pollinations failed, try DALL-E (if OpenAI key available)
+        if not image_data and self.ai_api_key and self.ai_provider == "openai":
+            image_data = await self._try_dalle(prompt)
+
+        # If all external services failed, generate a placeholder locally
+        if not image_data:
+            image_data = self._generate_placeholder(product_name or prompt, width, height)
+
+        if image_data:
+            filepath.write_bytes(image_data)
+            return f"/uploads/creatives/{filename}"
+
+        # Ultimate fallback - return Pollinations URL (lazy load in browser)
+        return self.generate_image_url(prompt, width, height)
+
+    async def _try_pollinations(self, prompt: str, width: int, height: int) -> bytes | None:
+        """Try Pollinations.ai with retries."""
+        for attempt in range(3):
+            try:
+                seed = random.randint(1, 999999)
+                encoded = quote(prompt)
+                url = f"https://image.pollinations.ai/prompt/{encoded}?width={width}&height={height}&nologo=true&seed={seed}"
+                async with httpx.AsyncClient(timeout=45.0, follow_redirects=True) as client:
+                    response = await client.get(url)
+                    if response.status_code == 200 and len(response.content) > 1000:
+                        content_type = response.headers.get("content-type", "")
+                        if "image" in content_type or len(response.content) > 5000:
+                            return response.content
+            except Exception as e:
+                print(f"Pollinations attempt {attempt+1} failed: {e}")
+            if attempt < 2:
+                await asyncio.sleep(2 * (attempt + 1))
+        return None
+
+    async def _try_dalle(self, prompt: str) -> bytes | None:
+        """Try OpenAI DALL-E for image generation."""
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    "https://api.openai.com/v1/images/generations",
+                    headers={
+                        "Authorization": f"Bearer {self.ai_api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": "dall-e-3",
+                        "prompt": prompt,
+                        "n": 1,
+                        "size": "1024x1024",
+                        "response_format": "url",
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    image_url = data["data"][0]["url"]
+                    # Download the image
+                    img_response = await client.get(image_url)
+                    if img_response.status_code == 200:
+                        return img_response.content
+        except Exception as e:
+            print(f"DALL-E generation failed: {e}")
+        return None
+
+    def _generate_placeholder(self, product_name: str, width: int = 800, height: int = 600) -> bytes | None:
+        """Generate a professional placeholder image with product name using Pillow."""
+        try:
+            from PIL import Image, ImageDraw, ImageFont
+            import io
+
+            # Create gradient background
+            img = Image.new('RGB', (width, height))
+            draw = ImageDraw.Draw(img)
+
+            # Purple gradient (matches VendedorIA brand)
+            for y in range(height):
+                r = int(88 + (y / height) * 30)
+                g = int(28 + (y / height) * 40)
+                b = int(135 + (y / height) * 80)
+                draw.line([(0, y), (width, y)], fill=(r, g, b))
+
+            # Add decorative elements
+            draw.rounded_rectangle([40, 40, width-40, height-40], radius=20, outline=(255, 255, 255, 128), width=2)
+
+            # Add product name text
+            try:
+                font_large = ImageFont.truetype("arial.ttf", 48)
+                font_small = ImageFont.truetype("arial.ttf", 24)
+            except OSError:
+                font_large = ImageFont.load_default()
+                font_small = font_large
+
+            # Center the product name
+            text = product_name[:40]
+            bbox = draw.textbbox((0, 0), text, font=font_large)
+            text_width = bbox[2] - bbox[0]
+            text_x = (width - text_width) // 2
+            text_y = height // 2 - 40
+
+            # Text shadow
+            draw.text((text_x + 2, text_y + 2), text, fill=(0, 0, 0), font=font_large)
+            draw.text((text_x, text_y), text, fill=(255, 255, 255), font=font_large)
+
+            # Subtitle
+            subtitle = "Anuncio Profissional"
+            bbox2 = draw.textbbox((0, 0), subtitle, font=font_small)
+            sub_width = bbox2[2] - bbox2[0]
+            draw.text(((width - sub_width) // 2, text_y + 60), subtitle, fill=(200, 200, 220), font=font_small)
+
+            # Save to bytes
+            buffer = io.BytesIO()
+            img.save(buffer, format='PNG', quality=95)
+            return buffer.getvalue()
+        except ImportError:
+            print("Pillow not installed - cannot generate placeholder")
+            return None
+
     def generate_image_url(self, prompt: str, width: int = 800, height: int = 600) -> str:
-        """Generate image URL using Pollinations.ai (100% free, no API key needed)."""
+        """Generate image URL using Pollinations.ai (fallback for lazy loading)."""
         encoded = quote(prompt)
         return f"https://image.pollinations.ai/prompt/{encoded}?width={width}&height={height}&nologo=true"

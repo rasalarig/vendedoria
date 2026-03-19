@@ -24,31 +24,44 @@ Na PRIMEIRA mensagem do usuario (quando nao ha produtos cadastrados), apresente-
 
 Posso ajudar voce a:
 ✅ Cadastrar seus produtos
-✅ Criar anuncios profissionais com textos e imagens
-✅ Lancar campanhas no Facebook e Instagram (via Meta Ads)
-✅ Acompanhar metricas em tempo real (cliques, conversoes, custo)
+✅ Criar anuncios profissionais com textos e imagens geradas por IA
+✅ Lancar campanhas em multiplas plataformas:
+   📘 **Meta Ads** (Facebook + Instagram)
+   🎵 **TikTok Ads**
+   💬 **WhatsApp Business**
+✅ Acompanhar metricas em tempo real
 
 Para comecar, preciso saber sobre o produto que voce quer vender. Me conte: qual produto ou servico voce gostaria de anunciar?"
 
-REQUISITOS PARA CRIAR CAMPANHA (informe ao usuario quando necessario):
+REQUISITOS POR PLATAFORMA:
+
+META ADS (Facebook + Instagram):
 1. Conta Meta conectada (Configuracoes > Conectar Meta)
 2. Pagina do Facebook criada ([Criar Pagina](https://www.facebook.com/pages/creation/))
 3. Conta de Anuncios ativa
-4. Pelo menos 1 produto cadastrado
-5. Pelo menos 1 criativo gerado e aprovado
+4. Produto cadastrado
+5. Criativo gerado E APROVADO
 6. Metodo de pagamento na conta de anuncios ([Configurar Pagamento](https://www.facebook.com/ads/manager/account_settings/account_billing/))
 
-IMPORTANTE SOBRE PAGAMENTO:
-No Brasil, a maioria das contas Meta Ads usa modelo PRE-PAGO. Isso significa:
-- Ter um cartao cadastrado NAO e suficiente
-- Voce precisa clicar em "Adicionar fundos" e depositar um valor
-- Campanha so roda quando houver saldo disponivel
-- Recomendacao minima: R$50 para comecar (permite pelo menos 1-2 dias de teste)
+TIKTOK ADS:
+1. Produto cadastrado
+2. Criativo gerado E APROVADO
+(Integracao em modo demonstracao - credenciais TikTok Business serao necessarias para publicacao real)
 
-Se o usuario disser que ja tem cartao cadastrado mas a campanha nao roda, explique sobre fundos pre-pagos.
-Quando orientar sobre pagamento, sempre mencione os DOIS passos:
-1. Cadastrar cartao (se ainda nao tem)
-2. Adicionar fundos (clicar em "Adicionar fundos" na pagina de cobranca)
+WHATSAPP BUSINESS:
+1. Credenciais WhatsApp configuradas (Configuracoes > WhatsApp Business)
+2. Produto cadastrado
+3. Contatos importados na aba WhatsApp
+
+IMPORTANTE SOBRE PAGAMENTO:
+Existem dois modelos de cobranca no Meta Ads:
+- **Pos-pago (debito automatico)**: O mais comum. O Meta cobra automaticamente no cartao cadastrado apos os anuncios rodarem. Basta ter um cartao valido — NAO precisa adicionar fundos manualmente.
+- **Pre-pago**: O usuario precisa adicionar fundos manualmente antes de rodar anuncios. Campanha so roda quando houver saldo disponivel.
+
+CREDITOS PROMOCIONAIS DO META:
+Cupons e creditos de boas-vindas do Meta sao gerenciados internamente pelo Facebook. Eles sao aplicados AUTOMATICAMENTE quando os anuncios rodam — o usuario NAO precisa fazer nada especial. Esses creditos nao aparecem como "saldo" na conta, mas sao abatidos do custo dos anuncios.
+
+Para verificar creditos promocionais, o usuario pode acessar: [Gerenciador de Anuncios](https://adsmanager.facebook.com/)
 
 Se o usuario perguntar "como comecar?" ou "o que preciso?", liste esses requisitos.
 Se algum requisito estiver faltando ao tentar criar campanha, informe qual e como resolver.
@@ -78,13 +91,29 @@ ETAPA 3 - CRIAR PRODUTO:
 Somente apos o usuario confirmar, execute:
 [ACTION:CREATE_PRODUCT] {"name": "...", "description": "...", "price": 0, "target_audience": "...", "differentials": "...", "pricing_type": "one_time|monthly|yearly|weekly", "recurrence_period": "...", "website_url": "https://..."}
 
+ETAPA 3.5 - SELECAO DE PLATAFORMA:
+Apos criar o produto com sucesso, pergunte ao usuario onde quer divulgar:
+
+"Produto cadastrado com sucesso! Agora, onde voce quer divulgar?
+
+1️⃣ **Meta Ads** (Facebook + Instagram) — Anuncios em Feed, Stories, Reels e Marketplace
+2️⃣ **TikTok Ads** — Anuncios em video no TikTok (em breve - modo demonstracao)
+3️⃣ **WhatsApp Business** — Campanhas de mensagens diretas para seus contatos
+
+Qual plataforma voce prefere? (pode escolher mais de uma depois!)"
+
+Baseado na escolha do usuario, siga o fluxo adequado:
+- Meta Ads → ETAPA 4 (gerar criativos para Facebook/Instagram) → ETAPA 4.5 (preview + aprovacao) → ETAPA 5-META (criar campanha Meta)
+- TikTok Ads → ETAPA 4 (gerar criativos para TikTok) → ETAPA 4.5 (preview + aprovacao) → ETAPA 5-TIKTOK (criar campanha TikTok)
+- WhatsApp → ETAPA 5-WHATSAPP (criar campanha WhatsApp - nao precisa de criativo de imagem, usa template de mensagem)
+
 ETAPA 4 - CRIATIVOS:
-Apos criar o produto, diga com entusiasmo que foi criado e pergunte:
-"Produto cadastrado com sucesso! Agora posso gerar 3 variacoes de anuncios criativos (textos persuasivos + imagens) para seu produto. Quer que eu gere?"
+Apos o usuario escolher a plataforma (Meta Ads ou TikTok), gere criativos:
+"Vou gerar 3 variacoes de anuncios criativos (textos persuasivos + imagens geradas por IA) otimizados para [PLATAFORMA]. Quer que eu gere?"
 Se sim: [ACTION:GENERATE_CREATIVES] {"product_id": ID_DO_PRODUTO}
 
-ETAPA 4.5 - VALIDACAO DO CRIATIVO (OBRIGATORIA antes de criar campanha):
-Apos gerar os criativos, voce DEVE apresentar um PREVIEW DETALHADO ao usuario antes de prosseguir com a campanha.
+ETAPA 4.5 - VALIDACAO E APROVACAO DO CRIATIVO (OBRIGATORIA):
+Apos gerar os criativos, voce DEVE apresentar um PREVIEW DETALHADO e pedir APROVACAO EXPLICITA.
 
 Apresente assim:
 "Aqui esta o preview do seu anuncio! Revise cada detalhe:
@@ -116,13 +145,22 @@ Voce aprova este anuncio? Pode pedir alteracoes em qualquer parte:
 - 'Mude o botao para...'
 - 'Aprovo, pode criar a campanha!'"
 
-IMPORTANTE:
-- NAO execute [ACTION:CREATE_CAMPAIGN] sem que o usuario diga explicitamente que APROVA/CONFIRMA
-- Se o usuario pedir alteracoes, ajuste e apresente o preview novamente
-- Somente apos receber aprovacao explicita (ex: "aprovo", "pode criar", "esta bom", "ok", "confirmo"), execute CREATE_CAMPAIGN
+O usuario PODE:
+- Aprovar: "aprovo", "pode criar", "esta bom", "ok", "confirmo"
+- Pedir alteracoes: "mude o texto", "ajuste a imagem", "troque o botao"
+- Rejeitar: "nao gostei", "gere outros", "tente novamente"
 
-ETAPA 5 - CAMPANHA (SOMENTE APOS APROVACAO DO PREVIEW):
-Somente execute esta etapa se o usuario JA APROVOU o preview na etapa 4.5.
+BLOQUEIO TOTAL: NAO execute NENHUMA acao de criar campanha sem aprovacao explicita do criativo.
+Se o usuario pedir para criar campanha sem ter aprovado um criativo, diga:
+"Antes de criar a campanha, preciso que voce aprove pelo menos um dos criativos gerados. Qual deles voce mais gostou?"
+
+IMPORTANTE:
+- NAO execute [ACTION:CREATE_CAMPAIGN], [ACTION:CREATE_TIKTOK_CAMPAIGN] ou [ACTION:CREATE_WHATSAPP_CAMPAIGN] sem que o usuario diga explicitamente que APROVA/CONFIRMA o criativo (exceto WhatsApp que usa template de texto)
+- Se o usuario pedir alteracoes, ajuste e apresente o preview novamente
+- Somente apos receber aprovacao explicita (ex: "aprovo", "pode criar", "esta bom", "ok", "confirmo"), execute a acao de criar campanha
+
+ETAPA 5-META - CAMPANHA META ADS (SOMENTE APOS APROVACAO DO PREVIEW):
+Somente execute esta etapa se o usuario JA APROVOU o preview na etapa 4.5 e escolheu Meta Ads.
 
 Antes de criar a campanha, VERIFIQUE o status da integracao Meta Ads abaixo.
 
@@ -130,8 +168,25 @@ Se o Meta Ads NAO esta pronto (veja STATUS META ADS abaixo), guie o usuario pelo
 
 Se o Meta Ads esta totalmente pronto e o usuario JA APROVOU o preview:
 Diga: "Sua campanha sera veiculada no **Facebook** e **Instagram** automaticamente."
-Se Meta Ads: [ACTION:CREATE_CAMPAIGN] {"product_id": ID, "creative_id": ID, "daily_budget": 50}
-Se WhatsApp: instrua sobre campanhas WhatsApp
+[ACTION:CREATE_CAMPAIGN] {"product_id": ID, "creative_id": ID, "daily_budget": 50}
+
+ETAPA 5-TIKTOK - CAMPANHA TIKTOK ADS (SOMENTE APOS APROVACAO DO PREVIEW):
+Se o usuario escolheu TikTok e JA APROVOU o preview na etapa 4.5:
+"Sua campanha TikTok esta sendo preparada!"
+[ACTION:CREATE_TIKTOK_CAMPAIGN] {"product_id": ID, "creative_id": ID, "daily_budget": 50}
+
+NOTA: A integracao TikTok esta em modo demonstracao. A campanha sera criada localmente para preview. Quando as credenciais TikTok forem configuradas, sera possivel publicar diretamente.
+
+ETAPA 5-WHATSAPP - CAMPANHA WHATSAPP BUSINESS:
+Se o usuario escolheu WhatsApp:
+Pergunte:
+1. "Para quem voce quer enviar? (voce pode importar contatos na aba WhatsApp)"
+2. "Qual a mensagem que quer enviar? Posso sugerir uma baseada no seu produto:"
+   Sugira uma mensagem personalizada usando os dados do produto com variaveis {nome}, {produto}, {preco}
+3. "Quando quer enviar? Agora ou agendar?"
+
+Quando tiver todas as informacoes:
+[ACTION:CREATE_WHATSAPP_CAMPAIGN] {"product_id": ID, "message_template": "texto", "campaign_name": "nome"}
 
 ETAPA 6 - ESTRATEGIA (opcional):
 Se o usuario pedir, gere uma estrategia de marketing:
@@ -233,7 +288,10 @@ Quando o usuario quiser remover/deletar/excluir um produto:
 
 COMANDOS RAPIDOS (informe ao usuario quando perguntar o que pode fazer):
 - "cadastrar produto" → Inicia fluxo de cadastro (ETAPA 1)
-- "criar campanha" → Cria campanha para produto existente (ETAPA 5)
+- "criar campanha" → Pergunta a plataforma e cria campanha
+- "campanha meta" → Cria campanha Meta Ads (Facebook + Instagram)
+- "campanha tiktok" → Cria campanha TikTok Ads
+- "campanha whatsapp" → Cria campanha WhatsApp Business
 - "ver campanhas" → Lista campanhas ativas
 - "editar produto [nome]" → Altera dados do produto
 - "remover produto [nome]" → Remove produto
@@ -306,6 +364,14 @@ class ChatAIService:
             action_taken, action_data, ai_response = await self._execute_action(
                 ai_response, "DELETE_PRODUCT", db, attachment_path=attachment_path
             )
+        elif "[ACTION:CREATE_WHATSAPP_CAMPAIGN]" in ai_response:
+            action_taken, action_data, ai_response = await self._execute_action(
+                ai_response, "CREATE_WHATSAPP_CAMPAIGN", db, attachment_path=attachment_path
+            )
+        elif "[ACTION:CREATE_TIKTOK_CAMPAIGN]" in ai_response:
+            action_taken, action_data, ai_response = await self._execute_action(
+                ai_response, "CREATE_TIKTOK_CAMPAIGN", db, attachment_path=attachment_path
+            )
 
         return ai_response, action_taken, action_data, ai_fallback, error_detail
 
@@ -332,7 +398,7 @@ class ChatAIService:
                     else:
                         meta_status += f"\n- Metodo de pagamento: Cartao configurado, MAS saldo R$0,00. Conta PRE-PAGA - usuario precisa ADICIONAR FUNDOS em [Adicionar Fundos](https://www.facebook.com/ads/manager/account_settings/account_billing/)"
                 else:
-                    meta_status += "\n- Metodo de pagamento: Configurado"
+                    meta_status += "\n- Metodo de pagamento: Configurado (Debito automatico no cartao). Creditos promocionais do Meta sao aplicados automaticamente."
             else:
                 meta_status += "\n- Metodo de pagamento: NAO configurado - [Configurar Pagamento](https://www.facebook.com/ads/manager/account_settings/account_billing/)"
 
@@ -346,8 +412,13 @@ class ChatAIService:
         elif not self.meta_configured:
             prompt += "\n\nIMPORTANTE: As credenciais do Meta Ads NAO estao configuradas. Se o usuario pedir para criar campanha no Meta/Facebook/Instagram, guie-o pelo processo de configuracao passo a passo."
 
-        if not self.whatsapp_configured:
-            prompt += "\n\nIMPORTANTE: As credenciais do WhatsApp Business NAO estao configuradas. Se o usuario pedir para enviar mensagens ou criar campanha WhatsApp, instrua-o a ir em Configuracoes > Credenciais > WhatsApp Business para preencher Phone ID e Access Token antes de prosseguir."
+        if self.whatsapp_configured:
+            prompt += "\n\nSTATUS WHATSAPP BUSINESS: Configurado e pronto para campanhas."
+        else:
+            prompt += "\n\nSTATUS WHATSAPP BUSINESS: NAO configurado. Instrua o usuario a ir em Configuracoes > Credenciais > WhatsApp Business."
+
+        # TikTok status (always demo for now)
+        prompt += "\n\nSTATUS TIKTOK ADS: Modo demonstracao. Campanhas sao salvas localmente. Integracao completa em desenvolvimento."
 
         # Inject existing products, creatives, and campaigns from database
         if db:
@@ -574,8 +645,8 @@ class ChatAIService:
                 )
                 created_ids = []
                 for i, v in enumerate(variations[:3]):
-                    image_url = service.generate_image_url(
-                        v.get("image_prompt", product.name)
+                    image_url = await service.generate_and_save_image(
+                        v.get("image_prompt", product.name), product.name
                     )
                     creative = Creative(
                         product_id=product.id,
@@ -838,6 +909,73 @@ class ChatAIService:
                 if not clean_response.strip():
                     clean_response = f"Produto **{product_name}** (ID: {product_id}) removido com sucesso!"
                 return ("product_deleted", json.dumps({"product_id": product_id, "name": product_name}), clean_response)
+            return None, None, clean_response
+
+        elif action_type == "CREATE_WHATSAPP_CAMPAIGN":
+            product_id = action_params.get("product_id")
+            message_template = action_params.get("message_template", "")
+            campaign_name = action_params.get("campaign_name", "")
+            product = db.query(Product).filter(Product.id == product_id).first()
+            if product:
+                from app.models.whatsapp import WhatsAppCampaign
+                campaign = WhatsAppCampaign(
+                    name=campaign_name or f"WhatsApp - {product.name}",
+                    template_text=message_template or f"Ola {{nome}}! Conheca {product.name}: {product.description or ''}. Preco: R${product.price:.2f}. Saiba mais!",
+                    product_id=product.id,
+                    status="draft",
+                )
+                db.add(campaign)
+                db.commit()
+                db.refresh(campaign)
+                if not clean_response.strip():
+                    clean_response = (
+                        f"**Campanha WhatsApp '{campaign.name}' criada com sucesso!**\n\n"
+                        f"**Mensagem:**\n{campaign.template_text}\n\n"
+                        f"**Status:** Rascunho\n\n"
+                        f"Para enviar, va na aba **WhatsApp** e selecione os contatos destinatarios. "
+                        f"Voce tambem pode importar contatos por CSV la."
+                    )
+                return (
+                    "whatsapp_campaign_created",
+                    json.dumps({"campaign_id": campaign.id, "name": campaign.name}),
+                    clean_response,
+                )
+            return None, None, clean_response
+
+        elif action_type == "CREATE_TIKTOK_CAMPAIGN":
+            product_id = action_params.get("product_id")
+            creative_id = action_params.get("creative_id")
+            daily_budget = action_params.get("daily_budget", 50)
+            product = db.query(Product).filter(Product.id == product_id).first()
+            if product:
+                # TikTok is in demo mode - save campaign locally
+                campaign = Campaign(
+                    product_id=product.id,
+                    creative_id=creative_id,
+                    name=f"TikTok - {product.name}",
+                    platform="tiktok",
+                    status="demo",
+                    targeting={"platform": "tiktok", "audience": product.target_audience or ""},
+                    daily_budget=daily_budget,
+                )
+                db.add(campaign)
+                db.commit()
+                db.refresh(campaign)
+                if not clean_response.strip():
+                    clean_response = (
+                        f"**Campanha TikTok '{campaign.name}' criada em modo demonstracao!**\n\n"
+                        f"**Detalhes:**\n"
+                        f"- Produto: {product.name}\n"
+                        f"- Orcamento: R${daily_budget}/dia\n"
+                        f"- Status: **Demonstracao** (aguardando integracao TikTok Business)\n\n"
+                        f"Para publicar no TikTok de verdade, voce precisara configurar as credenciais TikTok Business nas Configuracoes. "
+                        f"Em breve disponibilizaremos essa integracao!"
+                    )
+                return (
+                    "tiktok_campaign_created",
+                    json.dumps({"campaign_id": campaign.id, "name": campaign.name}),
+                    clean_response,
+                )
             return None, None, clean_response
 
         return None, None, clean_response

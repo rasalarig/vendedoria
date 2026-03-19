@@ -187,6 +187,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       product_deleted: '/products',
       creatives_generated: '/creatives',
       campaign_created: '/campaigns',
+      whatsapp_campaign_created: '/whatsapp',
+      tiktok_campaign_created: '/campaigns',
       strategy_generated: '/strategy',
     };
     const route = routes[action];
@@ -202,6 +204,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       product_deleted: 'Produto removido',
       creatives_generated: 'Criativos gerados',
       campaign_created: 'Campanha criada',
+      whatsapp_campaign_created: 'Campanha WhatsApp criada',
+      tiktok_campaign_created: 'Campanha TikTok criada',
       strategy_generated: 'Estrategia gerada',
     };
     return labels[action] || action;
@@ -214,6 +218,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       product_deleted: 'product',
       creatives_generated: 'creative',
       campaign_created: 'campaign',
+      whatsapp_campaign_created: 'whatsapp',
+      tiktok_campaign_created: 'tiktok',
       strategy_generated: 'strategy',
     };
     return classes[action] || '';
@@ -226,6 +232,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       product_deleted: 'delete',
       creatives_generated: 'palette',
       campaign_created: 'bar_chart',
+      whatsapp_campaign_created: 'chat',
+      tiktok_campaign_created: 'music_note',
       strategy_generated: 'psychology',
     };
     return icons[action] || 'info';

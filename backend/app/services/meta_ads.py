@@ -596,21 +596,36 @@ class MetaAdsService:
                 balance = balance_cents / 100
 
                 # Detect prepaid accounts: funding_source_details.type == 1 means prepaid
+                # Type 1 = credit card (postpaid), Type 2 = prepaid/manual
                 funding_details = data.get("funding_source_details", {})
-                is_prepaid = funding_details.get("type", 0) == 1
+                funding_type = funding_details.get("type", 0)
+                is_prepaid = funding_type == 2  # Only type 2 is truly prepaid
 
-                # If no funding_source_details, check if balance field exists (prepaid accounts have balance)
-                if not is_prepaid and "balance" in data:
-                    is_prepaid = True
+                # If has payment method, it's sufficient for postpaid accounts
+                # For prepaid (type 2), also check balance
+                has_sufficient_funds = has_payment if not is_prepaid else (has_payment and balance > 0)
+
+                # Human-readable funding type label
+                funding_type_labels = {
+                    1: "Cartao de credito (debito automatico)",
+                    2: "Pre-pago (adicionar fundos)",
+                }
+                funding_type_label = funding_type_labels.get(funding_type, "Outro")
+
+                # Amount spent is also in cents — convert to reais
+                amount_spent_cents = int(data.get("amount_spent", "0"))
+                amount_spent = amount_spent_cents / 100
 
                 return {
                     "has_payment": has_payment,
                     "balance": balance,
                     "is_prepaid": is_prepaid,
-                    "has_sufficient_funds": balance > 0 if is_prepaid else has_payment,
+                    "has_sufficient_funds": has_sufficient_funds,
                     "account_status": data.get("account_status", 0),
                     "currency": data.get("currency", ""),
                     "account_name": data.get("name", ""),
+                    "funding_type_label": funding_type_label,
+                    "amount_spent": amount_spent,
                 }
             else:
                 error_data = response.json() if response.text else {}

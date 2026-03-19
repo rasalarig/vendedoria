@@ -89,6 +89,50 @@
             </div>
           </div>
         </div>
+
+        <!-- Billing Info Section -->
+        @if (prerequisites.meta_connected && prerequisites.payment_method) {
+          <div class="billing-card">
+            <div class="billing-header">
+              <mat-icon class="billing-icon">receipt_long</mat-icon>
+              <span class="billing-title">Faturamento Meta Ads</span>
+            </div>
+
+            <div class="billing-grid">
+              <div class="billing-row">
+                <span class="billing-label">Conta</span>
+                <span class="billing-value">{{ prerequisites.account_name }}</span>
+              </div>
+              <div class="billing-row">
+                <span class="billing-label">Moeda</span>
+                <span class="billing-value">{{ prerequisites.currency }}</span>
+              </div>
+              <div class="billing-row">
+                <span class="billing-label">Tipo de cobranca</span>
+                <span class="billing-value">{{ prerequisites.funding_type_label }}</span>
+              </div>
+              <div class="billing-row">
+                <span class="billing-label">Metodo de pagamento</span>
+                <span class="billing-value billing-ok">Configurado</span>
+              </div>
+              <div class="billing-row">
+                <span class="billing-label">Status</span>
+                <span class="billing-badge">Pronto para anunciar</span>
+              </div>
+            </div>
+
+            <div class="billing-info-box">
+              <mat-icon>info</mat-icon>
+              <span>
+                Creditos promocionais do Meta (como cupons de boas-vindas) sao gerenciados diretamente pelo Facebook e aplicados automaticamente nos seus anuncios. Consulte o Gerenciador de Anuncios para ver seus creditos.
+              </span>
+            </div>
+            <a href="https://adsmanager.facebook.com/" target="_blank" rel="noopener" class="billing-link-btn">
+              <mat-icon>open_in_new</mat-icon>
+              Abrir Gerenciador de Anuncios
+            </a>
+          </div>
+        }
       </mat-card-content>
     </mat-card>
   }
@@ -221,6 +265,36 @@
               <input matInput [(ngModel)]="settings.whatsapp_business_id" placeholder="ID do Business">
               <mat-icon matPrefix>business</mat-icon>
             </mat-form-field>
+          </div>
+        </div>
+
+        <!-- TikTok Ads -->
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>music_note</mat-icon>
+            TikTok Ads
+            <span class="demo-badge">Demo</span>
+          </h2>
+          <div class="fields-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Access Token</mat-label>
+              <input matInput [(ngModel)]="settings.tiktok_access_token"
+                     [type]="showFields['tiktok_access_token'] ? 'text' : 'password'"
+                     placeholder="Token do TikTok Business">
+              <mat-icon matPrefix>token</mat-icon>
+              <button mat-icon-button matSuffix (click)="toggleVisibility('tiktok_access_token')">
+                <mat-icon>{{ showFields['tiktok_access_token'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Advertiser ID</mat-label>
+              <input matInput [(ngModel)]="settings.tiktok_advertiser_id" placeholder="ID do anunciante TikTok">
+              <mat-icon matPrefix>badge</mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="info-box">
+            <mat-icon>info</mat-icon>
+            <span>Integracao TikTok Ads em modo demonstracao. Campanhas sao salvas localmente. Em breve: publicacao direta no TikTok!</span>
           </div>
         </div>
 

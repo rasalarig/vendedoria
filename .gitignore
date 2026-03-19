@@ -4,3 +4,14 @@
 .worktrees/
 .sprintfy/evidence/
 .sprintfy_session_history.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Database
+*.db
+
+# Uploads (generated at runtime)
+backend/uploads/

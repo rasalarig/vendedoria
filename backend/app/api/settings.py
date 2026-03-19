@@ -25,6 +25,8 @@ class SettingsSchema(BaseModel):
     ai_api_key: Optional[str] = ""
     ai_provider: Optional[str] = "claude"
     operation_mode: Optional[str] = "manual"
+    tiktok_access_token: Optional[str] = ""
+    tiktok_advertiser_id: Optional[str] = ""
     daily_budget_limit: Optional[float] = 0.0
     monthly_budget_limit: Optional[float] = 0.0
 
@@ -128,6 +130,10 @@ async def check_prerequisites(db: Session = Depends(get_db)):
             checks["is_prepaid"] = payment.get("is_prepaid", False)
             checks["balance"] = payment.get("balance", 0)
             checks["has_sufficient_funds"] = payment.get("has_sufficient_funds", False)
+            checks["funding_type_label"] = payment.get("funding_type_label", "")
+            checks["account_name"] = payment.get("account_name", "")
+            checks["amount_spent"] = payment.get("amount_spent", 0)
+            checks["currency"] = payment.get("currency", "")
         except Exception:
             checks["payment_method"] = False
 

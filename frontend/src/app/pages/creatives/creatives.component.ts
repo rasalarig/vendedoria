@@ -110,7 +110,7 @@ import { SettingsService } from '../../services/settings.service';
               <!-- Image -->
               <div class="creative-image">
                 @if (creative.image_url) {
-                  <img [src]="creative.image_url" [alt]="creative.headline"
+                  <img [src]="getImageUrl(creative.image_url)" [alt]="creative.headline"
                        (error)="onImageError($event)"
                        loading="lazy">
                   <div class="image-loading-placeholder">
@@ -361,6 +361,12 @@ export class CreativesComponent implements OnInit {
         this.showMessage('Erro ao regenerar', true);
       },
     });
+  }
+
+  getImageUrl(url: string | undefined | null): string {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8000${url}`;
   }
 
   onImageError(event: Event): void {

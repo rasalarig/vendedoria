@@ -43,6 +43,8 @@ export class SettingsComponent implements OnInit {
     ai_api_key: '',
     ai_provider: 'claude',
     operation_mode: 'manual',
+    tiktok_access_token: '',
+    tiktok_advertiser_id: '',
     daily_budget_limit: 0,
     monthly_budget_limit: 0,
   };
@@ -54,6 +56,7 @@ export class SettingsComponent implements OnInit {
     meta_access_token: false,
     whatsapp_token: false,
     ai_api_key: false,
+    tiktok_access_token: false,
   };
 
   metaConnected = false;

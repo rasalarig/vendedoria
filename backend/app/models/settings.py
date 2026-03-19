@@ -31,6 +31,9 @@ class Settings(Base):
     operation_mode = Column(String(20), default=OperationMode.MANUAL.value)
     # Meta Pixel
     meta_pixel_id = Column(String(100), default="")
+    # TikTok Ads
+    tiktok_access_token = Column(String(500), nullable=True, default="")
+    tiktok_advertiser_id = Column(String(100), nullable=True, default="")
     # Budget Limits
     daily_budget_limit = Column(Float, default=0.0)
     monthly_budget_limit = Column(Float, default=0.0)
