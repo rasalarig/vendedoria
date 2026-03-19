@@ -25,7 +25,7 @@ META_ERROR_MAP = {
 ACCOUNT_STATUS_MAP = {
     1: {"status": "active", "message": "Conta ativa e operacional."},
     2: {"status": "disabled", "message": "Conta desativada. Possivel violacao de politica. Acesse business.facebook.com para mais detalhes."},
-    3: {"status": "unsettled", "message": "Conta com pagamento pendente. Regularize em business.facebook.com/billing."},
+    3: {"status": "unsettled", "message": "Conta com pagamento pendente. Regularize em https://www.facebook.com/ads/manager/account_settings/account_billing/."},
     7: {"status": "pending_review", "message": "Conta em analise pelo Meta. Aguarde a conclusao."},
     8: {"status": "pending_settlement", "message": "Conta aguardando processamento de pagamento."},
     9: {"status": "grace_period", "message": "Problema de pagamento detectado. Regularize antes que a conta seja suspensa."},

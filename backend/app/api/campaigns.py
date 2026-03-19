@@ -127,7 +127,7 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
     if not page_id:
         raise HTTPException(
             status_code=400,
-            detail="Facebook Page nao configurada. Crie uma pagina em facebook.com/pages/create e reconecte sua conta Meta nas Configuracoes."
+            detail="Facebook Page nao configurada. Crie uma pagina em https://www.facebook.com/pages/creation/ e reconecte sua conta Meta nas Configuracoes."
         )
 
     # Enforce budget limits
@@ -379,13 +379,13 @@ async def activate_campaign_on_meta(campaign_id: int, db: Session = Depends(get_
                 return {
                     "success": False,
                     "error": "no_page",
-                    "message": "Voce precisa criar uma Pagina do Facebook antes de ativar campanhas. Acesse facebook.com/pages/create, crie sua pagina, e depois clique em Ativar novamente.",
+                    "message": "Voce precisa criar uma Pagina do Facebook antes de ativar campanhas. Acesse https://www.facebook.com/pages/creation/, crie sua pagina, e depois clique em Ativar novamente.",
                 }
         except Exception:
             return {
                 "success": False,
                 "error": "no_page",
-                "message": "Voce precisa criar uma Pagina do Facebook antes de ativar campanhas. Acesse facebook.com/pages/create, crie sua pagina, e depois clique em Ativar novamente.",
+                "message": "Voce precisa criar uma Pagina do Facebook antes de ativar campanhas. Acesse https://www.facebook.com/pages/creation/, crie sua pagina, e depois clique em Ativar novamente.",
             }
 
     # Step 1: Auto-repair missing components
@@ -498,7 +498,7 @@ async def activate_campaign_on_meta(campaign_id: int, db: Session = Depends(get_
         return {
             "success": False,
             "error": "payment_missing",
-            "message": "Sua conta de anuncios nao tem metodo de pagamento configurado. Adicione um cartao de credito em business.facebook.com/billing antes de ativar a campanha.",
+            "message": "Sua conta de anuncios nao tem metodo de pagamento configurado. Adicione um cartao de credito em https://www.facebook.com/ads/manager/account_settings/account_billing/ antes de ativar a campanha.",
             "steps": steps,
         }
 
@@ -558,7 +558,7 @@ async def repair_campaign(campaign_id: int, db: Session = Depends(get_db)):
 
     page_id = settings.facebook_page_id or ""
     if not page_id:
-        raise HTTPException(status_code=400, detail="Facebook Page nao configurada. Crie uma pagina em facebook.com/pages/create e reconecte sua conta Meta.")
+        raise HTTPException(status_code=400, detail="Facebook Page nao configurada. Crie uma pagina em https://www.facebook.com/pages/creation/ e reconecte sua conta Meta.")
 
     meta_service = MetaAdsService(
         access_token=settings.meta_access_token,

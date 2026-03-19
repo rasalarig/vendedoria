@@ -237,6 +237,12 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     let formatted = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     // Italic
     formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // Markdown links [text](url) -> action button
+    formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener" class="chat-action-btn"><span class="btn-icon">open_in_new</span> $1</a>');
+    // Bare URLs -> clickable button (but not if already in an href)
+    formatted = formatted.replace(/(?<!href="|">)(https?:\/\/[^\s<]+)/g,
+      '<a href="$1" target="_blank" rel="noopener" class="chat-action-btn">$1 &#8599;</a>');
     // Line breaks
     formatted = formatted.replace(/\n/g, '<br>');
     return formatted;

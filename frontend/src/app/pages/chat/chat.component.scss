@@ -352,6 +352,36 @@
   border: 1px solid #27272a;
 }
 
+// Action buttons rendered via innerHTML (needs ::ng-deep for dynamic content)
+:host ::ng-deep .chat-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  margin: 4px 2px;
+  background: #1877f2;
+  color: white !important;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    background: #166fe5;
+    text-decoration: none;
+  }
+
+  .btn-icon {
+    font-family: 'Material Icons';
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1;
+  }
+}
+
 .error-message {
   border-left: 3px solid #ef4444 !important;
   background: rgba(239, 68, 68, 0.08) !important;

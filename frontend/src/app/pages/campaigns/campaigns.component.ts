@@ -242,7 +242,7 @@ import { switchMap } from 'rxjs/operators';
               </div>
               <div class="page-helper-secondary">
                 <span class="secondary-text">Nao tem pagina?</span>
-                <a href="https://www.facebook.com/pages/create" target="_blank" class="create-page-link">
+                <a href="https://www.facebook.com/pages/creation/" target="_blank" class="create-page-link">
                   Criar Pagina do Facebook <mat-icon>open_in_new</mat-icon>
                 </a>
               </div>
@@ -1201,7 +1201,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
           this.showPageHelper = true;
           this.pageHelperCampaignId = campaign.id;
         } else if (result.error === 'payment_missing') {
-          this.showMessage('Adicione um metodo de pagamento em business.facebook.com/billing', true);
+          this.showMessage('Adicione um metodo de pagamento em https://www.facebook.com/ads/manager/account_settings/account_billing/', true);
         } else {
           this.showMessage(result.message || 'Erro ao ativar campanha', true);
         }
