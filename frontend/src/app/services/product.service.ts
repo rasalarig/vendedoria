@@ -12,6 +12,7 @@ export interface Product {
   image_path: string | null;
   pricing_type: string;  // one_time, monthly, yearly, weekly, custom
   recurrence_period?: string;
+  website_url?: string;
   created_at: string;
   updated_at: string | null;
 }

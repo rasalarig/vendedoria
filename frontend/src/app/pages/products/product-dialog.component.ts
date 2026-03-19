@@ -79,6 +79,12 @@ export interface ProductDialogData {
           <textarea matInput formControlName="differentials" rows="3" placeholder="Ex: Certificado incluso, suporte vitalicio"></textarea>
         </mat-form-field>
 
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>URL do Site / Landing Page</mat-label>
+          <input matInput formControlName="website_url" placeholder="https://www.seusite.com.br">
+          <mat-icon matPrefix>link</mat-icon>
+        </mat-form-field>
+
         <div class="image-upload">
           <button type="button" mat-stroked-button (click)="fileInput.click()">
             <mat-icon>upload</mat-icon>
@@ -145,6 +151,7 @@ export class ProductDialogComponent implements OnInit {
       recurrence_period: [p?.recurrence_period || ''],
       target_audience: [p?.target_audience || ''],
       differentials: [p?.differentials || ''],
+      website_url: [p?.website_url || ''],
     });
 
     if (p?.image_path) {
@@ -181,6 +188,7 @@ export class ProductDialogComponent implements OnInit {
     if (values.recurrence_period) formData.append('recurrence_period', values.recurrence_period);
     if (values.target_audience) formData.append('target_audience', values.target_audience);
     if (values.differentials) formData.append('differentials', values.differentials);
+    if (values.website_url) formData.append('website_url', values.website_url);
     if (this.selectedFile) {
       formData.append('image', this.selectedFile);
     }
