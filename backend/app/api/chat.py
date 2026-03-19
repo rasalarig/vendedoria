@@ -76,8 +76,26 @@ async def send_message(
         "is_connected": bool(settings and settings.meta_access_token),
         "user_name": (settings.meta_user_name if settings else "") or "",
         "has_ad_account": bool(settings and settings.meta_ad_account_id),
+        "ad_account_id": (settings.meta_ad_account_id if settings else "") or "",
         "has_page": bool(settings and settings.facebook_page_id),
+        "has_payment": False,
+        "is_prepaid": False,
+        "balance": 0,
+        "has_sufficient_funds": False,
     }
+
+    # Check payment status if connected (async call)
+    if meta_readiness["is_connected"] and meta_readiness["has_ad_account"]:
+        from app.services.meta_ads import MetaAdsService
+        meta_service = MetaAdsService(
+            access_token=settings.meta_access_token,
+            ad_account_id=settings.meta_ad_account_id
+        )
+        payment_info = await meta_service.check_payment()
+        meta_readiness["has_payment"] = payment_info.get("has_payment", False)
+        meta_readiness["is_prepaid"] = payment_info.get("is_prepaid", False)
+        meta_readiness["balance"] = payment_info.get("balance", 0)
+        meta_readiness["has_sufficient_funds"] = payment_info.get("has_sufficient_funds", False)
 
     # Process with AI
     service = ChatAIService(ai_api_key=ai_key, ai_provider=ai_provider, meta_configured=meta_configured, whatsapp_configured=whatsapp_configured, meta_readiness=meta_readiness)

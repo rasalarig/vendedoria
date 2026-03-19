@@ -313,9 +313,23 @@ class ChatAIService:
             meta_status += f"\n- Conta conectada: {'Sim - {}'.format(r.get('user_name', '')) if r.get('is_connected') else 'NAO conectada'}"
             meta_status += f"\n- Conta de anuncios: {'Selecionada ({})'.format(r.get('ad_account_id', '')) if r.get('has_ad_account') else 'NAO selecionada'}"
             meta_status += f"\n- Pagina do Facebook: {'Configurada' if r.get('has_page') else 'NAO configurada'}"
-            meta_status += f"\n- Metodo de pagamento: {'Verificar' if not r.get('has_ad_account') else ('Configurado' if r.get('has_payment') else 'NAO configurado')}"
+            # Payment status with prepaid detection
+            if not r.get('has_ad_account'):
+                meta_status += "\n- Metodo de pagamento: Verificar (sem conta de anuncios)"
+            elif r.get('has_payment'):
+                if r.get('is_prepaid'):
+                    balance = r.get('balance', 0)
+                    if balance > 0:
+                        meta_status += f"\n- Metodo de pagamento: Configurado (Pre-pago, saldo: R${balance:.2f})"
+                    else:
+                        meta_status += f"\n- Metodo de pagamento: Cartao configurado, MAS saldo R$0,00. Conta PRE-PAGA - usuario precisa ADICIONAR FUNDOS em [Adicionar Fundos](https://www.facebook.com/ads/manager/account_settings/account_billing/)"
+                else:
+                    meta_status += "\n- Metodo de pagamento: Configurado"
+            else:
+                meta_status += "\n- Metodo de pagamento: NAO configurado - [Configurar Pagamento](https://www.facebook.com/ads/manager/account_settings/account_billing/)"
 
-            all_ready = r.get('has_app_credentials') and r.get('is_connected') and r.get('has_ad_account') and r.get('has_page')
+            has_funds = r.get('has_sufficient_funds', r.get('has_payment', False))
+            all_ready = r.get('has_app_credentials') and r.get('is_connected') and r.get('has_ad_account') and r.get('has_page') and has_funds
             if all_ready:
                 meta_status += "\n- STATUS GERAL: PRONTO para criar campanhas!"
             else:
