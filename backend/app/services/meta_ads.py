@@ -270,6 +270,7 @@ class MetaAdsService:
                 "age_min": targeting.get("age_min", 25),
                 "age_max": targeting.get("age_max", 55),
                 "geo_locations": {"countries": ["BR"]},
+                "targeting_automation": {"advantage_audience": 0},
             }
             # Only add genders if specified (0 = all)
             genders = targeting.get("genders", [0])
