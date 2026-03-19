@@ -27,6 +27,8 @@ class SettingsSchema(BaseModel):
     operation_mode: Optional[str] = "manual"
     tiktok_access_token: Optional[str] = ""
     tiktok_advertiser_id: Optional[str] = ""
+    image_api_key: Optional[str] = ""
+    image_api_provider: Optional[str] = "together"
     daily_budget_limit: Optional[float] = 0.0
     monthly_budget_limit: Optional[float] = 0.0
 

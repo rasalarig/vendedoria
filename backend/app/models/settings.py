@@ -34,6 +34,9 @@ class Settings(Base):
     # TikTok Ads
     tiktok_access_token = Column(String(500), nullable=True, default="")
     tiktok_advertiser_id = Column(String(100), nullable=True, default="")
+    # Image Generation API
+    image_api_key = Column(String(500), nullable=True, default="")
+    image_api_provider = Column(String(50), nullable=True, default="together")
     # Budget Limits
     daily_budget_limit = Column(Float, default=0.0)
     monthly_budget_limit = Column(Float, default=0.0)

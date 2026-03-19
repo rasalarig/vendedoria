@@ -60,7 +60,11 @@ async def generate_creatives(product_id: int, db: Session = Depends(get_db)):
         ai_provider = settings.ai_provider or "claude"
         operation_mode = settings.operation_mode or "manual"
 
-    service = AICreativeService(ai_api_key=ai_key, ai_provider=ai_provider)
+    service = AICreativeService(
+        ai_api_key=ai_key,
+        ai_provider=ai_provider,
+        image_api_key=settings.image_api_key if settings else "",
+    )
 
     # Generate copy variations
     variations = await service.generate_copy(
@@ -156,7 +160,11 @@ async def regenerate_creative(creative_id: int, db: Session = Depends(get_db)):
         ai_provider = settings.ai_provider or "claude"
         operation_mode = settings.operation_mode or "manual"
 
-    service = AICreativeService(ai_api_key=ai_key, ai_provider=ai_provider)
+    service = AICreativeService(
+        ai_api_key=ai_key,
+        ai_provider=ai_provider,
+        image_api_key=settings.image_api_key if settings else "",
+    )
 
     variations = await service.generate_copy(
         product_name=product.name,

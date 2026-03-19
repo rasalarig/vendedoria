@@ -112,8 +112,10 @@ import { SettingsService } from '../../services/settings.service';
                 @if (creative.image_url) {
                   <img [src]="getImageUrl(creative.image_url)" [alt]="creative.headline"
                        (error)="onImageError($event)"
-                       loading="lazy">
-                  <div class="image-loading-placeholder">
+                       (load)="onImageLoad($event)"
+                       loading="lazy"
+                       [style.display]="'block'">
+                  <div class="image-loading-placeholder" [attr.data-creative-id]="creative.id">
                     <mat-spinner diameter="32"></mat-spinner>
                   </div>
                 } @else {
@@ -372,6 +374,29 @@ export class CreativesComponent implements OnInit {
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
+    const parent = img.parentElement;
+    if (parent) {
+      // Hide the spinner
+      const spinner = parent.querySelector('.image-loading-placeholder') as HTMLElement;
+      if (spinner) spinner.style.display = 'none';
+      // Show a fallback
+      const fallback = document.createElement('div');
+      fallback.className = 'image-error-fallback';
+      fallback.innerHTML = '<span class="material-icons">broken_image</span><span>Imagem indisponivel — Regenere o criativo</span>';
+      fallback.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#71717a;font-size:13px;background:linear-gradient(135deg,#1a1025,#0f0a18);position:absolute;top:0;left:0;z-index:2;';
+      const icon = fallback.querySelector('.material-icons') as HTMLElement;
+      if (icon) icon.style.cssText = 'font-size:48px;opacity:0.3;';
+      parent.appendChild(fallback);
+    }
+  }
+
+  onImageLoad(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    const parent = img.parentElement;
+    if (parent) {
+      const spinner = parent.querySelector('.image-loading-placeholder') as HTMLElement;
+      if (spinner) spinner.style.display = 'none';
+    }
   }
 
   private showMessage(message: string, isError = false): void {

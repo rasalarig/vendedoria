@@ -14,9 +14,10 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 class AICreativeService:
 
-    def __init__(self, ai_api_key: str = "", ai_provider: str = "claude"):
+    def __init__(self, ai_api_key: str = "", ai_provider: str = "claude", image_api_key: str = ""):
         self.ai_api_key = ai_api_key
         self.ai_provider = ai_provider
+        self.image_api_key = image_api_key
 
     def _format_price_context(self, price: float, pricing_type: str, recurrence_period: str = "") -> str:
         """Format price string with pricing type context for AI prompts."""
@@ -134,14 +135,18 @@ Retorne APENAS um array JSON com 3 objetos. Sem explicacoes extras. Seja ASSERTI
         if filepath.exists() and filepath.stat().st_size > 1000:
             return f"/uploads/creatives/{filename}"
 
-        # Try Pollinations.ai with retries
-        image_data = await self._try_pollinations(prompt, width, height)
+        # 1. Try Together AI FLUX (reliable, free with API key)
+        image_data = await self._try_together_flux(prompt)
 
-        # If Pollinations failed, try DALL-E (if OpenAI key available)
+        # 2. Try Pollinations.ai (free, no key, but unreliable)
+        if not image_data:
+            image_data = await self._try_pollinations(prompt, width, height)
+
+        # 3. Try DALL-E (if OpenAI key available)
         if not image_data and self.ai_api_key and self.ai_provider == "openai":
             image_data = await self._try_dalle(prompt)
 
-        # If all external services failed, generate a placeholder locally
+        # 4. Pillow placeholder (always works)
         if not image_data:
             image_data = self._generate_placeholder(product_name or prompt, width, height)
 
@@ -151,6 +156,39 @@ Retorne APENAS um array JSON com 3 objetos. Sem explicacoes extras. Seja ASSERTI
 
         # Ultimate fallback - return Pollinations URL (lazy load in browser)
         return self.generate_image_url(prompt, width, height)
+
+    async def _try_together_flux(self, prompt: str) -> bytes | None:
+        """Generate image using Together AI FLUX model (free tier)."""
+        if not self.image_api_key:
+            return None
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    "https://api.together.xyz/v1/images/generations",
+                    headers={
+                        "Authorization": f"Bearer {self.image_api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": "black-forest-labs/FLUX.1-schnell-Free",
+                        "prompt": prompt,
+                        "width": 768,
+                        "height": 512,
+                        "steps": 4,
+                        "n": 1,
+                        "response_format": "b64_json",
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    import base64
+                    b64_data = data["data"][0]["b64_json"]
+                    return base64.b64decode(b64_data)
+                else:
+                    print(f"Together AI error {response.status_code}: {response.text[:200]}")
+        except Exception as e:
+            print(f"Together AI FLUX generation failed: {e}")
+        return None
 
     async def _try_pollinations(self, prompt: str, width: int, height: int) -> bytes | None:
         """Try Pollinations.ai with retries."""

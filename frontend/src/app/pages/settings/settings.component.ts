@@ -45,6 +45,8 @@ export class SettingsComponent implements OnInit {
     operation_mode: 'manual',
     tiktok_access_token: '',
     tiktok_advertiser_id: '',
+    image_api_key: '',
+    image_api_provider: 'together',
     daily_budget_limit: 0,
     monthly_budget_limit: 0,
   };
@@ -56,6 +58,7 @@ export class SettingsComponent implements OnInit {
     meta_access_token: false,
     whatsapp_token: false,
     ai_api_key: false,
+    image_api_key: false,
     tiktok_access_token: false,
   };
 

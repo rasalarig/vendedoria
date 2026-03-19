@@ -633,7 +633,10 @@ class ChatAIService:
             if product:
                 settings = db.query(Settings).filter(Settings.id == 1).first()
                 ai_key = settings.ai_api_key if settings else ""
-                service = AICreativeService(ai_api_key=ai_key)
+                service = AICreativeService(
+                    ai_api_key=ai_key,
+                    image_api_key=settings.image_api_key if settings else "",
+                )
                 variations = await service.generate_copy(
                     product.name,
                     product.description or "",

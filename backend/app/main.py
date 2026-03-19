@@ -123,3 +123,25 @@ async def startup_event():
             conn.commit()
     except Exception:
         pass
+    # Migrate: add image_api_key to settings
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE settings ADD COLUMN image_api_key VARCHAR(500) DEFAULT ''"
+                )
+            )
+            conn.commit()
+    except Exception:
+        pass
+    # Migrate: add image_api_provider to settings
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE settings ADD COLUMN image_api_provider VARCHAR(50) DEFAULT 'together'"
+                )
+            )
+            conn.commit()
+    except Exception:
+        pass

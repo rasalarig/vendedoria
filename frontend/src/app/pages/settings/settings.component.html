@@ -326,6 +326,40 @@
             </mat-form-field>
           </div>
         </div>
+
+        <!-- Image Generation API -->
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>image</mat-icon>
+            Geracao de Imagens (IA)
+          </h2>
+          <p class="section-desc">Configure uma API para gerar imagens reais dos seus anuncios com IA. Recomendamos Together AI (gratuito).</p>
+          <div class="fields-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Provedor de Imagem</mat-label>
+              <mat-select [(ngModel)]="settings.image_api_provider">
+                <mat-option value="together">Together AI (FLUX - Gratuito)</mat-option>
+                <mat-option value="openai">OpenAI (DALL-E 3 - Pago)</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>palette</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>API Key de Imagem</mat-label>
+              <input matInput [(ngModel)]="settings.image_api_key"
+                     [type]="showFields['image_api_key'] ? 'text' : 'password'"
+                     placeholder="Sua chave de API para geracao de imagens">
+              <mat-icon matPrefix>key</mat-icon>
+              <button mat-icon-button matSuffix (click)="toggleVisibility('image_api_key')">
+                <mat-icon>{{ showFields['image_api_key'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+          <div class="info-box">
+            <mat-icon>info</mat-icon>
+            <span>Together AI oferece geracao de imagens GRATUITA com FLUX. Crie sua chave em api.together.xyz. Sem essa chave, usamos imagens placeholder.</span>
+          </div>
+        </div>
       </div>
     </mat-tab>
 
