@@ -25,7 +25,7 @@ Na PRIMEIRA mensagem do usuario (quando nao ha produtos cadastrados), apresente-
 Posso ajudar voce a:
 ✅ Cadastrar seus produtos
 ✅ Criar anuncios profissionais com textos e imagens
-✅ Lancar campanhas no Meta Ads (Facebook e Instagram)
+✅ Lancar campanhas no Facebook e Instagram (via Meta Ads)
 ✅ Acompanhar metricas em tempo real (cliques, conversoes, custo)
 
 Para comecar, preciso saber sobre o produto que voce quer vender. Me conte: qual produto ou servico voce gostaria de anunciar?"
@@ -105,6 +105,11 @@ Apresente assim:
 
 💰 **ORCAMENTO SUGERIDO:** R$[valor]/dia
 
+📱 **PLATAFORMAS DE VEICULACAO:**
+- Facebook (Feed, Stories, Marketplace, Reels)
+- Instagram (Feed, Stories, Reels, Explore)
+O Meta distribui automaticamente onde seu publico esta mais ativo.
+
 Voce aprova este anuncio? Pode pedir alteracoes em qualquer parte:
 - 'Mude o texto para...'
 - 'Ajuste o publico para...'
@@ -124,6 +129,7 @@ Antes de criar a campanha, VERIFIQUE o status da integracao Meta Ads abaixo.
 Se o Meta Ads NAO esta pronto (veja STATUS META ADS abaixo), guie o usuario pelo processo de configuracao de forma amigavel e passo a passo. NAO tente criar a campanha sem todos os pre-requisitos atendidos.
 
 Se o Meta Ads esta totalmente pronto e o usuario JA APROVOU o preview:
+Diga: "Sua campanha sera veiculada no **Facebook** e **Instagram** automaticamente."
 Se Meta Ads: [ACTION:CREATE_CAMPAIGN] {"product_id": ID, "creative_id": ID, "daily_budget": 50}
 Se WhatsApp: instrua sobre campanhas WhatsApp
 
@@ -752,18 +758,19 @@ class ChatAIService:
                         account_num = (settings.meta_ad_account_id or "").replace("act_", "")
                         ads_link = f"https://www.facebook.com/adsmanager/manage/campaigns?act={account_num}&selected_campaign_ids={full_result['campaign_id']}"
                         clean_response = (
-                            f"**Campanha '{campaign.name}' criada com sucesso no Meta Ads!**\n\n"
+                            f"**Campanha '{campaign.name}' criada com sucesso!** Seu anuncio sera veiculado no **Facebook** e **Instagram** automaticamente.\n\n"
                             f"Campanha completa com:\n"
                             f"- Campanha (ID: {full_result['campaign_id']})\n"
                             f"- Conjunto de Anuncios com targeting configurado\n"
                             f"- Anuncio com criativo (imagem + texto)\n"
                             f"- Orcamento: R${daily_budget}/dia\n"
+                            f"- Plataformas: **Facebook** (Feed, Stories, Marketplace, Reels) + **Instagram** (Feed, Stories, Reels, Explore)\n"
                             f"- Status: **PAUSADA** (ative quando estiver pronto)\n\n"
                             f"[Abrir no Gerenciador de Anuncios]({ads_link})\n\n"
                             f"Voce tambem pode acompanhar na aba Campanhas."
                         )
                     else:
-                        clean_response = f"**Campanha '{campaign.name}' criada com sucesso!** Orcamento: R${daily_budget}/dia. Voce pode acompanhar na aba Campanhas."
+                        clean_response = f"**Campanha '{campaign.name}' criada com sucesso!** Seu anuncio sera veiculado no **Facebook** e **Instagram** automaticamente. Orcamento: R${daily_budget}/dia. Voce pode acompanhar na aba Campanhas."
                 return (
                     "campaign_created",
                     json.dumps(

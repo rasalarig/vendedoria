@@ -42,6 +42,7 @@ import { switchMap } from 'rxjs/operators';
   template: `
     <div class="campaigns-page">
       <h1>Campanhas Meta Ads</h1>
+      <p class="page-subtitle">Seus anuncios sao veiculados automaticamente no Facebook e Instagram</p>
 
       <!-- Section 1: Create Campaign -->
       <mat-card class="create-section">
@@ -269,6 +270,16 @@ import { switchMap } from 'rxjs/operators';
                 </div>
 
                 <mat-card-content>
+                  <!-- Platform Badges -->
+                  <div class="platform-badges">
+                    <span class="platform-badge facebook">
+                      <mat-icon>facebook</mat-icon> Facebook
+                    </span>
+                    <span class="platform-badge instagram">
+                      <mat-icon>photo_camera</mat-icon> Instagram
+                    </span>
+                  </div>
+
                   <!-- Metrics -->
                   <div class="metrics-grid">
                     <div class="metric-item">
@@ -551,8 +562,49 @@ import { switchMap } from 'rxjs/operators';
       font-size: 32px;
       font-weight: 800;
       color: #fafafa;
-      margin: 0 0 28px;
+      margin: 0 0 8px;
       letter-spacing: -1px;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #a1a1aa;
+      margin: 0 0 28px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .platform-badges {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .platform-badge.facebook {
+      background: #1877f2;
+      color: white;
+    }
+
+    .platform-badge.instagram {
+      background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+      color: white;
+    }
+
+    .platform-badge mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
     }
 
     h2 {
