@@ -89,3 +89,14 @@ async def startup_event():
             conn.commit()
     except Exception:
         pass
+    # Migrate: add website_url to products
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE products ADD COLUMN website_url VARCHAR(500)"
+                )
+            )
+            conn.commit()
+    except Exception:
+        pass

@@ -24,6 +24,7 @@ class ProductResponse(BaseModel):
     image_path: Optional[str] = None
     pricing_type: Optional[str] = "one_time"
     recurrence_period: Optional[str] = None
+    website_url: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -42,6 +43,7 @@ def product_to_response(product: Product) -> dict:
         "image_path": product.image_path,
         "pricing_type": product.pricing_type or "one_time",
         "recurrence_period": product.recurrence_period,
+        "website_url": product.website_url,
         "created_at": str(product.created_at) if product.created_at else None,
         "updated_at": str(product.updated_at) if product.updated_at else None,
     }
@@ -56,6 +58,7 @@ async def create_product(
     differentials: Optional[str] = Form(None),
     pricing_type: Optional[str] = Form("one_time"),
     recurrence_period: Optional[str] = Form(None),
+    website_url: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
@@ -78,6 +81,7 @@ async def create_product(
         image_path=image_path,
         pricing_type=pricing_type or "one_time",
         recurrence_period=recurrence_period,
+        website_url=website_url,
     )
     db.add(product)
     db.commit()
@@ -109,6 +113,7 @@ async def update_product(
     differentials: Optional[str] = Form(None),
     pricing_type: Optional[str] = Form("one_time"),
     recurrence_period: Optional[str] = Form(None),
+    website_url: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
@@ -123,6 +128,7 @@ async def update_product(
     product.differentials = differentials
     product.pricing_type = pricing_type or "one_time"
     product.recurrence_period = recurrence_period
+    product.website_url = website_url
 
     if image and image.filename:
         # Remove old image if exists

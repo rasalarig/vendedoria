@@ -15,5 +15,6 @@ class Product(Base):
     image_path = Column(String(500), nullable=True)
     pricing_type = Column(String(20), default="one_time")  # one_time, monthly, yearly, weekly, custom
     recurrence_period = Column(String(50), nullable=True)  # custom period description if pricing_type is "custom"
+    website_url = Column(String(500), nullable=True)  # Landing page URL for ad campaigns
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

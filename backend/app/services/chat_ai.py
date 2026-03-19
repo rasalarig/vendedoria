@@ -61,6 +61,7 @@ Pergunte UMA informacao por vez, nesta ordem:
 4. Publico-alvo ideal (idade, perfil, interesses)
 5. Diferenciais do produto (o que o torna unico)
 6. Imagem do produto - pergunte: "Voce tem uma foto ou imagem do produto? Pode enviar aqui que uso nos anuncios! Se preferir, posso continuar sem."
+7. URL do site/landing page - pergunte: "Qual o link do site ou pagina de vendas do seu produto? (ex: www.allize.com.br) Esse link sera usado nos anuncios para direcionar os clientes."
 
 ETAPA 2 - CONFIRMACAO:
 Apos coletar TODOS os dados, apresente um RESUMO ao usuario e peca confirmacao:
@@ -70,11 +71,12 @@ Apos coletar TODOS os dados, apresente um RESUMO ao usuario e peca confirmacao:
 - Preco: ...
 - Publico: ...
 - Diferenciais: ...
+- Site: ...
 Confirma?"
 
 ETAPA 3 - CRIAR PRODUTO:
 Somente apos o usuario confirmar, execute:
-[ACTION:CREATE_PRODUCT] {"name": "...", "description": "...", "price": 0, "target_audience": "...", "differentials": "...", "pricing_type": "one_time|monthly|yearly|weekly", "recurrence_period": "..."}
+[ACTION:CREATE_PRODUCT] {"name": "...", "description": "...", "price": 0, "target_audience": "...", "differentials": "...", "pricing_type": "one_time|monthly|yearly|weekly", "recurrence_period": "...", "website_url": "https://..."}
 
 ETAPA 4 - CRIATIVOS:
 Apos criar o produto, diga com entusiasmo que foi criado e pergunte:
@@ -532,6 +534,7 @@ class ChatAIService:
                 differentials=action_params.get("differentials", ""),
                 pricing_type=action_params.get("pricing_type", "one_time"),
                 recurrence_period=action_params.get("recurrence_period"),
+                website_url=action_params.get("website_url", ""),
             )
             # Save product image if user uploaded one
             if attachment_path and any(ext in attachment_path.lower() for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']):
@@ -676,6 +679,9 @@ class ChatAIService:
                     ad_image_url = creative_obj.image_url or ""
                     ad_cta = creative_obj.cta or "LEARN_MORE"
 
+                # Get product website URL for the ad link
+                ad_link = product.website_url or "https://example.com"
+
                 # Create full campaign (Campaign + Ad Set + Creative + Ad)
                 full_result = await meta_service.create_full_campaign(
                     campaign_name=f"Campanha - {product.name}",
@@ -685,6 +691,7 @@ class ChatAIService:
                     ad_headline=ad_headline,
                     ad_image_url=ad_image_url,
                     ad_cta=ad_cta,
+                    ad_link=ad_link,
                 )
 
                 # Check for errors
@@ -805,6 +812,8 @@ class ChatAIService:
                     product.pricing_type = action_params["pricing_type"]
                 if "recurrence_period" in action_params:
                     product.recurrence_period = action_params["recurrence_period"]
+                if "website_url" in action_params:
+                    product.website_url = action_params["website_url"]
                 db.commit()
                 db.refresh(product)
                 if not clean_response.strip():

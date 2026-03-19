@@ -182,6 +182,9 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
     # Get pixel_id from settings for conversion tracking
     pixel_id = settings.meta_pixel_id or "" if settings else ""
 
+    # Get product website URL for the ad link
+    ad_link = product.website_url if hasattr(product, 'website_url') and product.website_url else "https://example.com"
+
     # Create full campaign on Meta (campaign + adset + creative + ad)
     result = await meta_service.create_full_campaign(
         campaign_name=campaign_name,
@@ -192,6 +195,7 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
         ad_image_url=ad_image_url,
         ad_cta=ad_cta,
         pixel_id=pixel_id,
+        ad_link=ad_link,
     )
 
     # Check for errors
