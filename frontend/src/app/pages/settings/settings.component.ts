@@ -1,10 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -19,10 +17,8 @@ import { SettingsService, AppSettings } from '../../services/settings.service';
     CommonModule,
     FormsModule,
     RouterModule,
-    MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatTabsModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -52,6 +48,7 @@ export class SettingsComponent implements OnInit {
   };
 
   saving = false;
+  showOptional = false;
 
   showFields: Record<string, boolean> = {
     meta_app_secret: false,
@@ -78,6 +75,15 @@ export class SettingsComponent implements OnInit {
   helpModalLinkText = '';
 
   private helpContent: Record<string, { title: string; steps: string[]; link?: string; linkText?: string }> = {
+    overview: {
+      title: 'Como comecar a criar campanhas',
+      steps: [
+        'Complete todos os itens obrigatorios marcados com X vermelho',
+        'Os itens opcionais podem ser configurados depois',
+        'Quando todos os itens estiverem verdes, voce pode criar campanhas pelo chat',
+        'Dica: siga os itens de cima para baixo na ordem apresentada'
+      ]
+    },
     meta_connected: {
       title: 'Como conectar sua conta Meta',
       steps: [
@@ -175,6 +181,27 @@ export class SettingsComponent implements OnInit {
       linkText: 'Abrir Meta for Developers'
     }
   };
+
+  getCompletedCount(): number {
+    if (!this.prerequisites) return 0;
+    let count = 0;
+    if (this.prerequisites.meta_connected) count++;
+    if (this.prerequisites.ad_account) count++;
+    if (this.prerequisites.facebook_page) count++;
+    if (this.prerequisites.payment_method) count++;
+    if (this.prerequisites.app_mode_live) count++;
+    if (this.prerequisites.has_product) count++;
+    if (this.prerequisites.has_creative) count++;
+    return count;
+  }
+
+  getTotalRequired(): number {
+    return 7;
+  }
+
+  getProgressPercent(): number {
+    return (this.getCompletedCount() / this.getTotalRequired()) * 100;
+  }
 
   constructor(
     private settingsService: SettingsService,

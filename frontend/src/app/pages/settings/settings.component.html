@@ -1,472 +1,489 @@
 <div class="settings-container">
   <h1 class="page-title">Configuracoes</h1>
 
-  <!-- Prerequisites Checklist -->
+  <!-- Progress bar at top -->
   @if (prerequisites) {
-    <mat-card class="prerequisites-card" [class.all-ready]="prerequisites.ready_for_campaign">
-      <mat-card-header>
-        <mat-icon mat-card-avatar class="prereq-header-icon"
-                  [class.ready]="prerequisites.ready_for_campaign"
-                  [class.not-ready]="!prerequisites.ready_for_campaign">
-          {{ prerequisites.ready_for_campaign ? 'verified' : 'checklist' }}
-        </mat-icon>
-        <mat-card-title class="prereq-title">
-          {{ prerequisites.ready_for_campaign ? 'Pronto para criar campanhas!' : 'Pre-requisitos para Campanhas' }}
-        </mat-card-title>
-        <mat-card-subtitle class="prereq-subtitle">
-          {{ prerequisites.ready_for_campaign ? 'Todos os itens essenciais estao configurados.' : 'Complete os itens abaixo para criar sua primeira campanha.' }}
-        </mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="prereq-grid">
-          <!-- Meta Conectado -->
-          <div class="prereq-item-wrapper">
-            <div class="prereq-item" [class.done]="prerequisites.meta_connected">
-              <mat-icon [class.check]="prerequisites.meta_connected" [class.missing]="!prerequisites.meta_connected">
-                {{ prerequisites.meta_connected ? 'check_circle' : 'cancel' }}
-              </mat-icon>
-              <div class="prereq-info">
-                <span class="prereq-label">Conta Meta conectada</span>
-                <span class="prereq-hint">{{ prerequisites.meta_connected ? 'Conectado' : 'Conecte na aba Credenciais > Meta Ads' }}</span>
-              </div>
-              <button mat-icon-button class="help-btn" (click)="openHelpModal('meta_connected'); $event.stopPropagation()">
-                <mat-icon>help_outline</mat-icon>
-              </button>
-            </div>
-          </div>
-
-          <!-- Conta de Anuncios -->
-          <div class="prereq-item-wrapper">
-            <div class="prereq-item" [class.done]="prerequisites.ad_account">
-              <mat-icon [class.check]="prerequisites.ad_account" [class.missing]="!prerequisites.ad_account">
-                {{ prerequisites.ad_account ? 'check_circle' : 'cancel' }}
-              </mat-icon>
-              <div class="prereq-info">
-                <span class="prereq-label">Conta de Anuncios</span>
-                <span class="prereq-hint">{{ prerequisites.ad_account ? 'Selecionada' : 'Selecione apos conectar o Meta' }}</span>
-              </div>
-              <button mat-icon-button class="help-btn" (click)="openHelpModal('ad_account'); $event.stopPropagation()">
-                <mat-icon>help_outline</mat-icon>
-              </button>
-            </div>
-          </div>
-
-          <!-- Pagina do Facebook -->
-          <div class="prereq-item-wrapper">
-            <div class="prereq-item" [class.done]="prerequisites.facebook_page">
-              <mat-icon [class.check]="prerequisites.facebook_page" [class.missing]="!prerequisites.facebook_page">
-                {{ prerequisites.facebook_page ? 'check_circle' : 'cancel' }}
-              </mat-icon>
-              <div class="prereq-info">
-                <span class="prereq-label">Pagina do Facebook</span>
-                <span class="prereq-hint">{{ prerequisites.facebook_page ? 'Vinculada' : 'Crie em https://www.facebook.com/pages/creation/' }}</span>
-              </div>
-              <button mat-icon-button class="help-btn" (click)="openHelpModal('facebook_page'); $event.stopPropagation()">
-                <mat-icon>help_outline</mat-icon>
-              </button>
-            </div>
-          </div>
-
-          <!-- Pixel -->
-          <div class="prereq-item-wrapper">
-            <div class="prereq-item" [class.done]="prerequisites.pixel_configured">
-              <mat-icon [class.check]="prerequisites.pixel_configured" [class.missing]="!prerequisites.pixel_configured">
-                {{ prerequisites.pixel_configured ? 'check_circle' : 'cancel' }}
-              </mat-icon>
-              <div class="prereq-info">
-                <span class="prereq-label">Meta Pixel</span>
-                <span class="prereq-hint">{{ prerequisites.pixel_configured ? 'Configurado' : 'Opcional - configure para rastrear conversoes' }}</span>
-              </div>
-              <button mat-icon-button class="help-btn" (click)="openHelpModal('pixel_configured'); $event.stopPropagation()">
-                <mat-icon>help_outline</mat-icon>
-              </button>
-            </div>
-          </div>
-
-          <!-- Produto cadastrado -->
-          <div class="prereq-item-wrapper">
-            <div class="prereq-item" [class.done]="prerequisites.has_product">
-              <mat-icon [class.check]="prerequisites.has_product" [class.missing]="!prerequisites.has_product">
-                {{ prerequisites.has_product ? 'check_circle' : 'cancel' }}
-              </mat-icon>
-              <div class="prereq-info">
-                <span class="prereq-label">Produto cadastrado</span>
-                <span class="prereq-hint">{{ prerequisites.has_product ? 'Pelo menos 1 produto' : 'Cadastre pelo chat ou aba Produtos' }}</span>
-              </div>
-              <button mat-icon-button class="help-btn" (click)="openHelpModal('has_product'); $event.stopPropagation()">
-                <mat-icon>help_outline</mat-icon>
-              </button>
-            </div>
-          </div>
-
-          <!-- Criativo gerado -->
-          <div class="prereq-item-wrapper">
-            <div class="prereq-item" [class.done]="prerequisites.has_creative">
-              <mat-icon [class.check]="prerequisites.has_creative" [class.missing]="!prerequisites.has_creative">
-                {{ prerequisites.has_creative ? 'check_circle' : 'cancel' }}
-              </mat-icon>
-              <div class="prereq-info">
-                <span class="prereq-label">Criativo gerado</span>
-                <span class="prereq-hint">{{ prerequisites.has_creative ? 'Pelo menos 1 criativo' : 'Gere pelo chat apos cadastrar produto' }}</span>
-              </div>
-              <button mat-icon-button class="help-btn" (click)="openHelpModal('has_creative'); $event.stopPropagation()">
-                <mat-icon>help_outline</mat-icon>
-              </button>
-            </div>
-          </div>
-
-          <!-- Metodo de pagamento -->
-          <div class="prereq-item-wrapper">
-            <div class="prereq-item" [class.done]="prerequisites.payment_method">
-              <mat-icon [class.check]="prerequisites.payment_method" [class.missing]="!prerequisites.payment_method">
-                {{ prerequisites.payment_method ? 'check_circle' : 'cancel' }}
-              </mat-icon>
-              <div class="prereq-info">
-                <span class="prereq-label">Metodo de pagamento</span>
-                <span class="prereq-hint">{{ prerequisites.payment_method ? 'Configurado' : 'Adicione em https://www.facebook.com/ads/manager/account_settings/account_billing/' }}</span>
-              </div>
-              <button mat-icon-button class="help-btn" (click)="openHelpModal('payment_method'); $event.stopPropagation()">
-                <mat-icon>help_outline</mat-icon>
-              </button>
-            </div>
-          </div>
-
-          <!-- App Mode Live -->
-          <div class="prereq-item-wrapper">
-            <div class="prereq-item" [class.done]="prerequisites.app_mode_live">
-              <mat-icon [class.check]="prerequisites.app_mode_live" [class.missing]="!prerequisites.app_mode_live && prerequisites.app_mode === 'development'">
-                {{ prerequisites.app_mode_live ? 'check_circle' : (prerequisites.app_mode === 'development' ? 'cancel' : 'help_outline') }}
-              </mat-icon>
-              <div class="prereq-info">
-                <span class="prereq-label">App Meta em modo Live</span>
-                @if (prerequisites.app_mode_live) {
-                  <span class="prereq-hint">App em modo Live (producao)</span>
-                } @else if (prerequisites.app_mode === 'development') {
-                  <span class="prereq-hint prereq-hint-warn">App em modo Development - mude para Live em developers.facebook.com/apps/</span>
-                } @else {
-                  <span class="prereq-hint">Modo desconhecido - conecte o Meta para verificar</span>
-                }
-              </div>
-              <button mat-icon-button class="help-btn" (click)="openHelpModal('app_mode_live'); $event.stopPropagation()">
-                <mat-icon>help_outline</mat-icon>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Development Mode Warning -->
-        @if (prerequisites.app_mode === 'development') {
-          <div class="dev-mode-warning">
-            <div class="dev-mode-warning-header">
-              <mat-icon>warning</mat-icon>
-              <span>Seu App Meta esta em modo Development</span>
-            </div>
-            <p class="dev-mode-warning-text">
-              Para criar campanhas reais, voce precisa ativar o modo Live:
-            </p>
-            <ol class="dev-mode-steps">
-              <li>Acesse developers.facebook.com/apps/</li>
-              <li>Selecione seu aplicativo</li>
-              <li>No topo da pagina, mude o toggle de "Development" para "Live"</li>
-              <li>O Meta pode exigir URL de Politica de Privacidade e verificacao do Business Manager</li>
-            </ol>
-            <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener" class="dev-mode-link-btn">
-              <mat-icon>open_in_new</mat-icon>
-              Abrir Meta Developers
-            </a>
-          </div>
-        }
-
-        <!-- Billing Info Section -->
-        @if (prerequisites.meta_connected && prerequisites.payment_method) {
-          <div class="billing-card">
-            <div class="billing-header">
-              <mat-icon class="billing-icon">receipt_long</mat-icon>
-              <span class="billing-title">Faturamento Meta Ads</span>
-            </div>
-
-            <div class="billing-grid">
-              <div class="billing-row">
-                <span class="billing-label">Conta</span>
-                <span class="billing-value">{{ prerequisites.account_name }}</span>
-              </div>
-              <div class="billing-row">
-                <span class="billing-label">Moeda</span>
-                <span class="billing-value">{{ prerequisites.currency }}</span>
-              </div>
-              <div class="billing-row">
-                <span class="billing-label">Tipo de cobranca</span>
-                <span class="billing-value">{{ prerequisites.funding_type_label }}</span>
-              </div>
-              <div class="billing-row">
-                <span class="billing-label">Metodo de pagamento</span>
-                <span class="billing-value billing-ok">Configurado</span>
-              </div>
-              <div class="billing-row">
-                <span class="billing-label">Status</span>
-                <span class="billing-badge">Pronto para anunciar</span>
-              </div>
-            </div>
-
-            <div class="billing-info-box">
-              <mat-icon>info</mat-icon>
-              <span>
-                Creditos promocionais do Meta (como cupons de boas-vindas) sao gerenciados diretamente pelo Facebook e aplicados automaticamente nos seus anuncios. Consulte o Gerenciador de Anuncios para ver seus creditos.
-              </span>
-            </div>
-            <a href="https://adsmanager.facebook.com/" target="_blank" rel="noopener" class="billing-link-btn">
-              <mat-icon>open_in_new</mat-icon>
-              Abrir Gerenciador de Anuncios
-            </a>
-          </div>
-        }
-      </mat-card-content>
-    </mat-card>
+    <div class="progress-overview" [class.all-done]="prerequisites.ready_for_campaign">
+      <div class="progress-header">
+        <mat-icon>{{ prerequisites.ready_for_campaign ? 'verified' : 'pending' }}</mat-icon>
+        <span>{{ getCompletedCount() }}/{{ getTotalRequired() }} itens configurados</span>
+        <button mat-icon-button class="help-btn" (click)="openHelpModal('overview'); $event.stopPropagation()">
+          <mat-icon>help_outline</mat-icon>
+        </button>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" [style.width.%]="getProgressPercent()"></div>
+      </div>
+    </div>
   }
 
-  <mat-tab-group animationDuration="200ms" class="settings-tabs">
-    <!-- Tab 1: Credenciais -->
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <mat-icon class="tab-icon">vpn_key</mat-icon>
-        Credenciais
-      </ng-template>
-      <div class="tab-content">
-        <!-- Meta Ads -->
-        <div class="section">
-          <h2 class="section-title">
-            <mat-icon>ads_click</mat-icon>
-            Meta Ads
-            @if (prerequisites) {
-              @if (prerequisites.app_mode === 'live') {
-                <span class="app-mode-badge app-mode-live">Live</span>
-              } @else if (prerequisites.app_mode === 'development') {
-                <span class="app-mode-badge app-mode-dev">Development</span>
-              } @else {
-                <span class="app-mode-badge app-mode-unknown">Desconhecido</span>
-              }
-            }
-          </h2>
-
-          @if (metaConnected) {
-            <!-- Connected State -->
-            <div class="meta-connected-card">
-              <div class="meta-status">
-                <mat-icon class="status-icon connected">check_circle</mat-icon>
-                <div class="status-info">
-                  <span class="status-label">Conectado como</span>
-                  <span class="status-name">{{ metaUserName }}</span>
-                </div>
-                <button mat-stroked-button color="warn" (click)="disconnectMeta()" class="disconnect-btn">
-                  <mat-icon>link_off</mat-icon>
-                  Desconectar
-                </button>
-              </div>
-
-              @if (metaAccounts.length > 0) {
-                <div class="account-selector">
-                  <mat-form-field appearance="outline" class="account-select">
-                    <mat-label>Conta de Anuncios</mat-label>
-                    <mat-select [value]="metaSelectedAccount" (selectionChange)="selectMetaAccount($event.value)">
-                      @for (account of metaAccounts; track account.id) {
-                        <mat-option [value]="account.id">
-                          {{ account.name }} ({{ account.id }})
-                          @if (account.business_name) {
-                            - {{ account.business_name }}
-                          }
-                        </mat-option>
-                      }
-                    </mat-select>
-                    <mat-icon matPrefix>account_box</mat-icon>
-                  </mat-form-field>
-                </div>
-              }
-
-              @if (metaAccounts.length === 0 && !metaLoading) {
-                <div class="no-accounts-warning">
-                  <mat-icon>warning</mat-icon>
-                  <span>Nenhuma conta de anuncios encontrada. Verifique se sua conta Facebook tem acesso a contas de anuncios.</span>
-                </div>
-              }
+  <!-- Section 1: Meta Ads (REQUIRED) -->
+  <div class="config-section" [class.section-done]="prerequisites?.meta_connected" [class.section-pending]="!prerequisites?.meta_connected">
+    <div class="section-header">
+      <mat-icon class="status-dot" [class.done]="prerequisites?.meta_connected" [class.pending]="!prerequisites?.meta_connected">
+        {{ prerequisites?.meta_connected ? 'check_circle' : 'cancel' }}
+      </mat-icon>
+      <div class="section-title-group">
+        <h2>Meta Ads</h2>
+        <span class="section-status">{{ prerequisites?.meta_connected ? 'Conectado' : 'Pendente' }}</span>
+      </div>
+      @if (prerequisites) {
+        @if (prerequisites.app_mode === 'live') {
+          <span class="app-mode-badge app-mode-live">Live</span>
+        } @else if (prerequisites.app_mode === 'development') {
+          <span class="app-mode-badge app-mode-dev">Development</span>
+        }
+      }
+      <button mat-icon-button class="help-btn" (click)="openHelpModal('meta_connected'); $event.stopPropagation()">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
+    <div class="section-body">
+      @if (metaConnected) {
+        <!-- Connected State -->
+        <div class="meta-connected-card">
+          <div class="meta-status">
+            <mat-icon class="status-icon connected">check_circle</mat-icon>
+            <div class="status-info">
+              <span class="status-label">Conectado como</span>
+              <span class="status-name">{{ metaUserName }}</span>
             </div>
-          } @else {
-            <!-- Not Connected State -->
-            <div class="meta-connect-card">
-              <div class="connect-info">
-                <mat-icon class="connect-icon">facebook</mat-icon>
-                <div>
-                  <p class="connect-title">Conecte sua conta do Facebook</p>
-                  <p class="connect-desc">Clique no botao abaixo para autorizar o acesso ao Meta Ads. Voce podera criar campanhas diretamente pelo chat.</p>
-                </div>
-              </div>
+            <button mat-stroked-button color="warn" (click)="disconnectMeta()" class="disconnect-btn">
+              <mat-icon>link_off</mat-icon>
+              Desconectar
+            </button>
+          </div>
 
-              <div class="fields-grid" style="margin-bottom: 16px;">
-                <mat-form-field appearance="outline">
-                  <mat-label>App ID</mat-label>
-                  <input matInput [(ngModel)]="settings.meta_app_id" placeholder="Seu Meta App ID">
-                  <mat-icon matPrefix>fingerprint</mat-icon>
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>App Secret</mat-label>
-                  <input matInput [(ngModel)]="settings.meta_app_secret"
-                         [type]="showFields['meta_app_secret'] ? 'text' : 'password'"
-                         placeholder="Seu App Secret">
-                  <mat-icon matPrefix>lock</mat-icon>
-                  <button mat-icon-button matSuffix (click)="toggleVisibility('meta_app_secret')">
-                    <mat-icon>{{ showFields['meta_app_secret'] ? 'visibility_off' : 'visibility' }}</mat-icon>
-                  </button>
-                </mat-form-field>
-              </div>
+          @if (metaAccounts.length > 0) {
+            <div class="account-selector">
+              <mat-form-field appearance="outline" class="account-select">
+                <mat-label>Conta de Anuncios</mat-label>
+                <mat-select [value]="metaSelectedAccount" (selectionChange)="selectMetaAccount($event.value)">
+                  @for (account of metaAccounts; track account.id) {
+                    <mat-option [value]="account.id">
+                      {{ account.name }} ({{ account.id }})
+                      @if (account.business_name) {
+                        - {{ account.business_name }}
+                      }
+                    </mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>account_box</mat-icon>
+              </mat-form-field>
+            </div>
+          }
 
-              <button mat-raised-button class="meta-connect-btn"
-                      (click)="connectMeta()" [disabled]="metaLoading">
-                @if (metaLoading) {
-                  <mat-icon class="spinning">sync</mat-icon>
-                  Conectando...
-                } @else {
-                  <mat-icon>login</mat-icon>
-                  Conectar com Facebook
-                }
-              </button>
+          @if (metaAccounts.length === 0 && !metaLoading) {
+            <div class="no-accounts-warning">
+              <mat-icon>warning</mat-icon>
+              <span>Nenhuma conta de anuncios encontrada. Verifique se sua conta Facebook tem acesso a contas de anuncios.</span>
             </div>
           }
         </div>
+      } @else {
+        <!-- Not Connected State -->
+        <div class="meta-connect-card">
+          <div class="connect-info">
+            <mat-icon class="connect-icon">facebook</mat-icon>
+            <div>
+              <p class="connect-title">Conecte sua conta do Facebook</p>
+              <p class="connect-desc">Clique no botao abaixo para autorizar o acesso ao Meta Ads. Voce podera criar campanhas diretamente pelo chat.</p>
+            </div>
+          </div>
 
-        <!-- WhatsApp Business -->
-        <div class="section">
-          <h2 class="section-title">
-            <mat-icon>chat</mat-icon>
-            WhatsApp Business
-          </h2>
-          <div class="fields-grid">
+          <div class="fields-grid" style="margin-bottom: 16px;">
             <mat-form-field appearance="outline">
-              <mat-label>Phone Number ID</mat-label>
-              <input matInput [(ngModel)]="settings.whatsapp_phone_id" placeholder="ID do numero">
-              <mat-icon matPrefix>phone</mat-icon>
+              <mat-label>App ID</mat-label>
+              <input matInput [(ngModel)]="settings.meta_app_id" placeholder="Seu Meta App ID">
+              <mat-icon matPrefix>fingerprint</mat-icon>
             </mat-form-field>
-
             <mat-form-field appearance="outline">
-              <mat-label>Access Token</mat-label>
-              <input matInput [(ngModel)]="settings.whatsapp_token"
-                     [type]="showFields['whatsapp_token'] ? 'text' : 'password'"
-                     placeholder="Token do WhatsApp">
-              <mat-icon matPrefix>token</mat-icon>
-              <button mat-icon-button matSuffix (click)="toggleVisibility('whatsapp_token')">
-                <mat-icon>{{ showFields['whatsapp_token'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+              <mat-label>App Secret</mat-label>
+              <input matInput [(ngModel)]="settings.meta_app_secret"
+                     [type]="showFields['meta_app_secret'] ? 'text' : 'password'"
+                     placeholder="Seu App Secret">
+              <mat-icon matPrefix>lock</mat-icon>
+              <button mat-icon-button matSuffix (click)="toggleVisibility('meta_app_secret')">
+                <mat-icon>{{ showFields['meta_app_secret'] ? 'visibility_off' : 'visibility' }}</mat-icon>
               </button>
             </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Business ID</mat-label>
-              <input matInput [(ngModel)]="settings.whatsapp_business_id" placeholder="ID do Business">
-              <mat-icon matPrefix>business</mat-icon>
-            </mat-form-field>
           </div>
+
+          <button mat-raised-button class="meta-connect-btn"
+                  (click)="connectMeta()" [disabled]="metaLoading">
+            @if (metaLoading) {
+              <mat-icon class="spinning">sync</mat-icon>
+              Conectando...
+            } @else {
+              <mat-icon>login</mat-icon>
+              Conectar com Facebook
+            }
+          </button>
         </div>
+      }
+    </div>
+  </div>
 
-        <!-- TikTok Ads -->
-        <div class="section">
-          <h2 class="section-title">
-            <mat-icon>music_note</mat-icon>
-            TikTok Ads
-            <span class="demo-badge">Demo</span>
-          </h2>
-          <div class="fields-grid">
-            <mat-form-field appearance="outline">
-              <mat-label>Access Token</mat-label>
-              <input matInput [(ngModel)]="settings.tiktok_access_token"
-                     [type]="showFields['tiktok_access_token'] ? 'text' : 'password'"
-                     placeholder="Token do TikTok Business">
-              <mat-icon matPrefix>token</mat-icon>
-              <button mat-icon-button matSuffix (click)="toggleVisibility('tiktok_access_token')">
-                <mat-icon>{{ showFields['tiktok_access_token'] ? 'visibility_off' : 'visibility' }}</mat-icon>
-              </button>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Advertiser ID</mat-label>
-              <input matInput [(ngModel)]="settings.tiktok_advertiser_id" placeholder="ID do anunciante TikTok">
-              <mat-icon matPrefix>badge</mat-icon>
-            </mat-form-field>
+  <!-- Section 2: Conta de Anuncios (REQUIRED) -->
+  <div class="config-section" [class.section-done]="prerequisites?.ad_account" [class.section-pending]="!prerequisites?.ad_account">
+    <div class="section-header">
+      <mat-icon class="status-dot" [class.done]="prerequisites?.ad_account" [class.pending]="!prerequisites?.ad_account">
+        {{ prerequisites?.ad_account ? 'check_circle' : 'cancel' }}
+      </mat-icon>
+      <div class="section-title-group">
+        <h2>Conta de Anuncios</h2>
+        <span class="section-status">{{ prerequisites?.ad_account ? 'Selecionada' : 'Selecione apos conectar' }}</span>
+      </div>
+      <button mat-icon-button class="help-btn" (click)="openHelpModal('ad_account'); $event.stopPropagation()">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
+    <div class="section-body">
+      <p class="section-hint">A conta de anuncios e selecionada automaticamente na secao Meta Ads acima.</p>
+    </div>
+  </div>
+
+  <!-- Section 3: Pagina do Facebook (REQUIRED) -->
+  <div class="config-section" [class.section-done]="prerequisites?.facebook_page" [class.section-pending]="!prerequisites?.facebook_page">
+    <div class="section-header">
+      <mat-icon class="status-dot" [class.done]="prerequisites?.facebook_page" [class.pending]="!prerequisites?.facebook_page">
+        {{ prerequisites?.facebook_page ? 'check_circle' : 'cancel' }}
+      </mat-icon>
+      <div class="section-title-group">
+        <h2>Pagina do Facebook</h2>
+        <span class="section-status">{{ prerequisites?.facebook_page ? 'Vinculada' : 'Pendente' }}</span>
+      </div>
+      <button mat-icon-button class="help-btn" (click)="openHelpModal('facebook_page'); $event.stopPropagation()">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
+    <div class="section-body">
+      <p class="section-hint">Vinculada automaticamente ao conectar o Meta. Se nao aparecer, crie uma pagina no Facebook.</p>
+    </div>
+  </div>
+
+  <!-- Section 4: Pagamento (REQUIRED) -->
+  <div class="config-section" [class.section-done]="prerequisites?.payment_method" [class.section-pending]="!prerequisites?.payment_method">
+    <div class="section-header">
+      <mat-icon class="status-dot" [class.done]="prerequisites?.payment_method" [class.pending]="!prerequisites?.payment_method">
+        {{ prerequisites?.payment_method ? 'check_circle' : 'cancel' }}
+      </mat-icon>
+      <div class="section-title-group">
+        <h2>Metodo de Pagamento</h2>
+        <span class="section-status">{{ prerequisites?.payment_method ? 'Configurado' : 'Pendente' }}</span>
+      </div>
+      <button mat-icon-button class="help-btn" (click)="openHelpModal('payment_method'); $event.stopPropagation()">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
+    <div class="section-body">
+      @if (prerequisites?.meta_connected && prerequisites?.payment_method) {
+        <div class="billing-card">
+          <div class="billing-header">
+            <mat-icon class="billing-icon">receipt_long</mat-icon>
+            <span class="billing-title">Faturamento Meta Ads</span>
           </div>
-          <div class="info-box">
+
+          <div class="billing-grid">
+            <div class="billing-row">
+              <span class="billing-label">Conta</span>
+              <span class="billing-value">{{ prerequisites.account_name }}</span>
+            </div>
+            <div class="billing-row">
+              <span class="billing-label">Moeda</span>
+              <span class="billing-value">{{ prerequisites.currency }}</span>
+            </div>
+            <div class="billing-row">
+              <span class="billing-label">Tipo de cobranca</span>
+              <span class="billing-value">{{ prerequisites.funding_type_label }}</span>
+            </div>
+            <div class="billing-row">
+              <span class="billing-label">Metodo de pagamento</span>
+              <span class="billing-value billing-ok">Configurado</span>
+            </div>
+            <div class="billing-row">
+              <span class="billing-label">Status</span>
+              <span class="billing-badge">Pronto para anunciar</span>
+            </div>
+          </div>
+
+          <div class="billing-info-box">
             <mat-icon>info</mat-icon>
-            <span>Integracao TikTok Ads em modo demonstracao. Campanhas sao salvas localmente. Em breve: publicacao direta no TikTok!</span>
+            <span>
+              Creditos promocionais do Meta (como cupons de boas-vindas) sao gerenciados diretamente pelo Facebook e aplicados automaticamente nos seus anuncios. Consulte o Gerenciador de Anuncios para ver seus creditos.
+            </span>
           </div>
+          <a href="https://adsmanager.facebook.com/" target="_blank" rel="noopener" class="billing-link-btn">
+            <mat-icon>open_in_new</mat-icon>
+            Abrir Gerenciador de Anuncios
+          </a>
         </div>
+      } @else {
+        <p class="section-hint">Configure o pagamento no Gerenciador de Anuncios do Meta.</p>
+        <a class="section-link" href="https://www.facebook.com/ads/manager/account_settings/account_billing/" target="_blank" rel="noopener">
+          <mat-icon>open_in_new</mat-icon> Configurar pagamento
+        </a>
+      }
+    </div>
+  </div>
 
-        <!-- AI -->
-        <div class="section">
-          <h2 class="section-title">
-            <mat-icon>psychology</mat-icon>
-            Inteligencia Artificial
-          </h2>
-          <div class="fields-grid">
-            <mat-form-field appearance="outline">
-              <mat-label>Provedor de IA</mat-label>
-              <mat-select [(ngModel)]="settings.ai_provider">
-                <mat-option value="claude">Claude (Anthropic)</mat-option>
-                <mat-option value="openai">OpenAI (GPT)</mat-option>
-              </mat-select>
-              <mat-icon matPrefix>smart_toy</mat-icon>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>API Key</mat-label>
-              <input matInput [(ngModel)]="settings.ai_api_key"
-                     [type]="showFields['ai_api_key'] ? 'text' : 'password'"
-                     placeholder="Sua chave de API">
-              <mat-icon matPrefix>key</mat-icon>
-              <button mat-icon-button matSuffix (click)="toggleVisibility('ai_api_key')">
-                <mat-icon>{{ showFields['ai_api_key'] ? 'visibility_off' : 'visibility' }}</mat-icon>
-              </button>
-            </mat-form-field>
+  <!-- Section 5: App Mode Live (REQUIRED) -->
+  <div class="config-section" [class.section-done]="prerequisites?.app_mode_live" [class.section-pending]="!prerequisites?.app_mode_live">
+    <div class="section-header">
+      <mat-icon class="status-dot" [class.done]="prerequisites?.app_mode_live" [class.pending]="!prerequisites?.app_mode_live">
+        {{ prerequisites?.app_mode_live ? 'check_circle' : 'cancel' }}
+      </mat-icon>
+      <div class="section-title-group">
+        <h2>App Meta em modo Live</h2>
+        <span class="section-status">{{ prerequisites?.app_mode_live ? 'Ativo' : (prerequisites?.app_mode === 'development' ? 'Em Development' : 'Desconhecido') }}</span>
+      </div>
+      <button mat-icon-button class="help-btn" (click)="openHelpModal('app_mode_live'); $event.stopPropagation()">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
+    <div class="section-body">
+      @if (prerequisites?.app_mode === 'development') {
+        <div class="dev-mode-warning">
+          <div class="dev-mode-warning-header">
+            <mat-icon>warning</mat-icon>
+            <span>Seu App Meta esta em modo Development</span>
           </div>
+          <p class="dev-mode-warning-text">
+            Para criar campanhas reais, voce precisa ativar o modo Live:
+          </p>
+          <ol class="dev-mode-steps">
+            <li>Acesse developers.facebook.com/apps/</li>
+            <li>Selecione seu aplicativo</li>
+            <li>No topo da pagina, mude o toggle de "Development" para "Live"</li>
+            <li>O Meta pode exigir URL de Politica de Privacidade e verificacao do Business Manager</li>
+          </ol>
+          <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener" class="dev-mode-link-btn">
+            <mat-icon>open_in_new</mat-icon>
+            Abrir Meta Developers
+          </a>
         </div>
+      }
+    </div>
+  </div>
 
-        <!-- Image Generation API -->
-        <div class="section">
-          <h2 class="section-title">
-            <mat-icon>image</mat-icon>
-            Geracao de Imagens (IA)
-          </h2>
-          <p class="section-desc">Configure uma API para gerar imagens reais dos seus anuncios com IA. Recomendamos Together AI (gratuito).</p>
-          <div class="fields-grid">
-            <mat-form-field appearance="outline">
-              <mat-label>Provedor de Imagem</mat-label>
-              <mat-select [(ngModel)]="settings.image_api_provider">
-                <mat-option value="together">Together AI (FLUX - Gratuito)</mat-option>
-                <mat-option value="openai">OpenAI (DALL-E 3 - Pago)</mat-option>
-              </mat-select>
-              <mat-icon matPrefix>palette</mat-icon>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>API Key de Imagem</mat-label>
-              <input matInput [(ngModel)]="settings.image_api_key"
-                     [type]="showFields['image_api_key'] ? 'text' : 'password'"
-                     placeholder="Sua chave de API para geracao de imagens">
-              <mat-icon matPrefix>key</mat-icon>
-              <button mat-icon-button matSuffix (click)="toggleVisibility('image_api_key')">
-                <mat-icon>{{ showFields['image_api_key'] ? 'visibility_off' : 'visibility' }}</mat-icon>
-              </button>
-            </mat-form-field>
-          </div>
-          <div class="info-box">
-            <mat-icon>info</mat-icon>
-            <span>Together AI oferece geracao de imagens GRATUITA com FLUX. Crie sua chave em api.together.xyz. Sem essa chave, usamos imagens placeholder.</span>
-          </div>
+  <!-- Section 6: Produto + Criativo (REQUIRED) -->
+  <div class="config-section" [class.section-done]="prerequisites?.has_product && prerequisites?.has_creative" [class.section-pending]="!prerequisites?.has_product || !prerequisites?.has_creative">
+    <div class="section-header">
+      <mat-icon class="status-dot" [class.done]="prerequisites?.has_product && prerequisites?.has_creative" [class.pending]="!prerequisites?.has_product || !prerequisites?.has_creative">
+        {{ (prerequisites?.has_product && prerequisites?.has_creative) ? 'check_circle' : 'cancel' }}
+      </mat-icon>
+      <div class="section-title-group">
+        <h2>Produto e Criativo</h2>
+        <span class="section-status">
+          @if (prerequisites?.has_product && prerequisites?.has_creative) { Pronto }
+          @else if (!prerequisites?.has_product) { Cadastre um produto }
+          @else { Gere um criativo }
+        </span>
+      </div>
+      <button mat-icon-button class="help-btn" (click)="openHelpModal('has_product'); $event.stopPropagation()">
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
+    <div class="section-body">
+      <div class="inline-checks">
+        <div class="inline-check" [class.done]="prerequisites?.has_product">
+          <mat-icon>{{ prerequisites?.has_product ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+          <span>Produto cadastrado</span>
+        </div>
+        <div class="inline-check" [class.done]="prerequisites?.has_creative">
+          <mat-icon>{{ prerequisites?.has_creative ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+          <span>Criativo gerado</span>
         </div>
       </div>
-    </mat-tab>
+      <p class="section-hint">Use o chat para cadastrar produtos e gerar criativos automaticamente.</p>
+    </div>
+  </div>
 
-    <!-- Tab 2: Modo de Operacao -->
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <mat-icon class="tab-icon">tune</mat-icon>
-        Modo de Operacao
-      </ng-template>
-      <div class="tab-content">
-        <h2 class="section-title">Escolha o modo de operacao da IA</h2>
+  <!-- OPTIONAL SECTION (collapsible) -->
+  <div class="optional-divider" (click)="showOptional = !showOptional">
+    <mat-icon>{{ showOptional ? 'expand_less' : 'expand_more' }}</mat-icon>
+    <span>Configuracoes opcionais</span>
+  </div>
+
+  @if (showOptional) {
+    <!-- Section: Pixel (OPTIONAL) -->
+    <div class="config-section optional" [class.section-done]="prerequisites?.pixel_configured">
+      <div class="section-header">
+        <mat-icon class="status-dot optional-dot" [class.done]="prerequisites?.pixel_configured">
+          {{ prerequisites?.pixel_configured ? 'check_circle' : 'radio_button_unchecked' }}
+        </mat-icon>
+        <div class="section-title-group">
+          <h2>Meta Pixel</h2>
+          <span class="section-status optional-status">{{ prerequisites?.pixel_configured ? 'Configurado' : 'Opcional - melhora otimizacao' }}</span>
+        </div>
+        <span class="optional-badge">Opcional</span>
+        <button mat-icon-button class="help-btn" (click)="openHelpModal('pixel_configured'); $event.stopPropagation()">
+          <mat-icon>help_outline</mat-icon>
+        </button>
+      </div>
+      <div class="section-body">
+        <p class="section-hint">O Pixel rastreia conversoes no seu site, permitindo que o Meta otimize campanhas automaticamente.</p>
+      </div>
+    </div>
+
+    <!-- Section: IA Config (OPTIONAL) -->
+    <div class="config-section optional">
+      <div class="section-header">
+        <mat-icon class="status-dot optional-dot done">check_circle</mat-icon>
+        <div class="section-title-group">
+          <h2>Inteligencia Artificial</h2>
+          <span class="section-status optional-status">Configurado</span>
+        </div>
+        <span class="optional-badge">Opcional</span>
+      </div>
+      <div class="section-body">
+        <div class="fields-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Provedor de IA</mat-label>
+            <mat-select [(ngModel)]="settings.ai_provider">
+              <mat-option value="claude">Claude (Anthropic)</mat-option>
+              <mat-option value="openai">OpenAI (GPT)</mat-option>
+            </mat-select>
+            <mat-icon matPrefix>smart_toy</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>API Key</mat-label>
+            <input matInput [(ngModel)]="settings.ai_api_key"
+                   [type]="showFields['ai_api_key'] ? 'text' : 'password'"
+                   placeholder="Sua chave de API">
+            <mat-icon matPrefix>key</mat-icon>
+            <button mat-icon-button matSuffix (click)="toggleVisibility('ai_api_key')">
+              <mat-icon>{{ showFields['ai_api_key'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Image Gen (OPTIONAL) -->
+    <div class="config-section optional">
+      <div class="section-header">
+        <mat-icon class="status-dot optional-dot done">check_circle</mat-icon>
+        <div class="section-title-group">
+          <h2>Geracao de Imagens (IA)</h2>
+          <span class="section-status optional-status">Configurado</span>
+        </div>
+        <span class="optional-badge">Opcional</span>
+      </div>
+      <div class="section-body">
+        <div class="fields-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Provedor de Imagem</mat-label>
+            <mat-select [(ngModel)]="settings.image_api_provider">
+              <mat-option value="together">Together AI (FLUX - Gratuito)</mat-option>
+              <mat-option value="openai">OpenAI (DALL-E 3 - Pago)</mat-option>
+            </mat-select>
+            <mat-icon matPrefix>palette</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>API Key de Imagem</mat-label>
+            <input matInput [(ngModel)]="settings.image_api_key"
+                   [type]="showFields['image_api_key'] ? 'text' : 'password'"
+                   placeholder="Sua chave de API para geracao de imagens">
+            <mat-icon matPrefix>key</mat-icon>
+            <button mat-icon-button matSuffix (click)="toggleVisibility('image_api_key')">
+              <mat-icon>{{ showFields['image_api_key'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+        <div class="info-box">
+          <mat-icon>info</mat-icon>
+          <span>Together AI oferece geracao de imagens GRATUITA com FLUX. Crie sua chave em api.together.xyz. Sem essa chave, usamos imagens placeholder.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: WhatsApp (OPTIONAL) -->
+    <div class="config-section optional">
+      <div class="section-header">
+        <mat-icon class="status-dot optional-dot">radio_button_unchecked</mat-icon>
+        <div class="section-title-group">
+          <h2>WhatsApp Business</h2>
+          <span class="section-status optional-status">Opcional</span>
+        </div>
+        <span class="optional-badge">Opcional</span>
+      </div>
+      <div class="section-body">
+        <div class="fields-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Phone Number ID</mat-label>
+            <input matInput [(ngModel)]="settings.whatsapp_phone_id" placeholder="ID do numero">
+            <mat-icon matPrefix>phone</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Access Token</mat-label>
+            <input matInput [(ngModel)]="settings.whatsapp_token"
+                   [type]="showFields['whatsapp_token'] ? 'text' : 'password'"
+                   placeholder="Token do WhatsApp">
+            <mat-icon matPrefix>token</mat-icon>
+            <button mat-icon-button matSuffix (click)="toggleVisibility('whatsapp_token')">
+              <mat-icon>{{ showFields['whatsapp_token'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Business ID</mat-label>
+            <input matInput [(ngModel)]="settings.whatsapp_business_id" placeholder="ID do Business">
+            <mat-icon matPrefix>business</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: TikTok (OPTIONAL) -->
+    <div class="config-section optional">
+      <div class="section-header">
+        <mat-icon class="status-dot optional-dot">radio_button_unchecked</mat-icon>
+        <div class="section-title-group">
+          <h2>TikTok Ads</h2>
+          <span class="section-status optional-status">Demo</span>
+        </div>
+        <span class="optional-badge demo-badge">Demo</span>
+      </div>
+      <div class="section-body">
+        <div class="fields-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Access Token</mat-label>
+            <input matInput [(ngModel)]="settings.tiktok_access_token"
+                   [type]="showFields['tiktok_access_token'] ? 'text' : 'password'"
+                   placeholder="Token do TikTok Business">
+            <mat-icon matPrefix>token</mat-icon>
+            <button mat-icon-button matSuffix (click)="toggleVisibility('tiktok_access_token')">
+              <mat-icon>{{ showFields['tiktok_access_token'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Advertiser ID</mat-label>
+            <input matInput [(ngModel)]="settings.tiktok_advertiser_id" placeholder="ID do anunciante TikTok">
+            <mat-icon matPrefix>badge</mat-icon>
+          </mat-form-field>
+        </div>
+        <div class="info-box">
+          <mat-icon>info</mat-icon>
+          <span>Integracao TikTok Ads em modo demonstracao. Campanhas sao salvas localmente. Em breve: publicacao direta no TikTok!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Modo de Operacao (OPTIONAL) -->
+    <div class="config-section optional">
+      <div class="section-header">
+        <mat-icon class="status-dot optional-dot done">check_circle</mat-icon>
+        <div class="section-title-group">
+          <h2>Modo de Operacao</h2>
+          <span class="section-status optional-status">{{ settings.operation_mode === 'manual' ? 'Manual' : (settings.operation_mode === 'semi_auto' ? 'Semi-Auto' : 'Piloto Auto') }}</span>
+        </div>
+        <span class="optional-badge">Opcional</span>
+      </div>
+      <div class="section-body">
         <div class="mode-cards">
           <div class="mode-card mode-manual"
                [class.mode-selected]="settings.operation_mode === 'manual'"
@@ -518,73 +535,70 @@
           </div>
         }
       </div>
-    </mat-tab>
+    </div>
 
-    <!-- Tab 3: Limites de Gasto -->
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <mat-icon class="tab-icon">account_balance_wallet</mat-icon>
-        Limites de Gasto
-      </ng-template>
-      <div class="tab-content">
-        <div class="section">
-          <h2 class="section-title">
-            <mat-icon>attach_money</mat-icon>
-            Limites de Orcamento
-          </h2>
-
-          <div class="budget-grid">
-            <div class="budget-card">
-              <mat-form-field appearance="outline" class="budget-field">
-                <mat-label>Limite Diario (R$)</mat-label>
-                <input matInput type="number" [(ngModel)]="settings.daily_budget_limit"
-                       min="0" step="10" placeholder="0.00">
-                <span matPrefix class="currency-prefix">R$&nbsp;</span>
-              </mat-form-field>
-              <div class="progress-section">
-                <div class="progress-label">
-                  <span>Gasto hoje</span>
-                  <span>R$ 0,00 / R$ {{ settings.daily_budget_limit | number:'1.2-2' }}</span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-fill" [style.width]="'0%'"></div>
-                </div>
-                <span class="progress-percent">0% utilizado</span>
+    <!-- Section: Limites de Gasto (OPTIONAL) -->
+    <div class="config-section optional">
+      <div class="section-header">
+        <mat-icon class="status-dot optional-dot done">check_circle</mat-icon>
+        <div class="section-title-group">
+          <h2>Limites de Gasto</h2>
+          <span class="section-status optional-status">Configurado</span>
+        </div>
+        <span class="optional-badge">Opcional</span>
+      </div>
+      <div class="section-body">
+        <div class="budget-grid">
+          <div class="budget-card">
+            <mat-form-field appearance="outline" class="budget-field">
+              <mat-label>Limite Diario (R$)</mat-label>
+              <input matInput type="number" [(ngModel)]="settings.daily_budget_limit"
+                     min="0" step="10" placeholder="0.00">
+              <span matPrefix class="currency-prefix">R$&nbsp;</span>
+            </mat-form-field>
+            <div class="progress-section">
+              <div class="progress-label">
+                <span>Gasto hoje</span>
+                <span>R$ 0,00 / R$ {{ settings.daily_budget_limit | number:'1.2-2' }}</span>
               </div>
-            </div>
-
-            <div class="budget-card">
-              <mat-form-field appearance="outline" class="budget-field">
-                <mat-label>Limite Mensal (R$)</mat-label>
-                <input matInput type="number" [(ngModel)]="settings.monthly_budget_limit"
-                       min="0" step="100" placeholder="0.00">
-                <span matPrefix class="currency-prefix">R$&nbsp;</span>
-              </mat-form-field>
-              <div class="progress-section">
-                <div class="progress-label">
-                  <span>Gasto este mes</span>
-                  <span>R$ 0,00 / R$ {{ settings.monthly_budget_limit | number:'1.2-2' }}</span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-fill" [style.width]="'0%'"></div>
-                </div>
-                <span class="progress-percent">0% utilizado</span>
+              <div class="progress-bar">
+                <div class="progress-fill-budget" [style.width]="'0%'"></div>
               </div>
+              <span class="progress-percent">0% utilizado</span>
             </div>
           </div>
 
-          <div class="info-box">
-            <mat-icon>info</mat-icon>
-            <span>A IA nunca ultrapassara estes limites, independente do modo de operacao.</span>
+          <div class="budget-card">
+            <mat-form-field appearance="outline" class="budget-field">
+              <mat-label>Limite Mensal (R$)</mat-label>
+              <input matInput type="number" [(ngModel)]="settings.monthly_budget_limit"
+                     min="0" step="100" placeholder="0.00">
+              <span matPrefix class="currency-prefix">R$&nbsp;</span>
+            </mat-form-field>
+            <div class="progress-section">
+              <div class="progress-label">
+                <span>Gasto este mes</span>
+                <span>R$ 0,00 / R$ {{ settings.monthly_budget_limit | number:'1.2-2' }}</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill-budget" [style.width]="'0%'"></div>
+              </div>
+              <span class="progress-percent">0% utilizado</span>
+            </div>
           </div>
         </div>
-      </div>
-    </mat-tab>
-  </mat-tab-group>
 
+        <div class="info-box">
+          <mat-icon>info</mat-icon>
+          <span>A IA nunca ultrapassara estes limites, independente do modo de operacao.</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Save button -->
   <div class="save-section">
-    <button mat-raised-button color="primary" class="save-button"
-            (click)="saveSettings()" [disabled]="saving">
+    <button mat-raised-button color="primary" class="save-button" (click)="saveSettings()" [disabled]="saving">
       <mat-icon>save</mat-icon>
       {{ saving ? 'Salvando...' : 'Salvar Configuracoes' }}
     </button>
