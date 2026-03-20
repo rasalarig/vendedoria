@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 import json
 from typing import Dict, List, Optional, Tuple
@@ -7,6 +8,7 @@ from app.models.creative import Creative
 from app.models.campaign import Campaign
 from app.models.settings import Settings
 from app.models.lead import Lead
+from app.core.config import settings as app_settings
 from app.services.ai_creative import AICreativeService
 from app.services.meta_ads import MetaAdsService
 from app.services.market_research import MarketResearchService
@@ -109,7 +111,7 @@ Baseado na escolha do usuario, siga o fluxo adequado:
 
 ETAPA 4 - CRIATIVOS:
 Apos o usuario escolher a plataforma (Meta Ads ou TikTok), gere criativos:
-"Vou gerar 3 variacoes de anuncios criativos (textos persuasivos + imagens geradas por IA) otimizados para [PLATAFORMA]. Quer que eu gere?"
+"Vou gerar um anuncio criativo (texto persuasivo + imagem gerada por IA) otimizado para [PLATAFORMA]. Quer que eu gere? Se nao gostar, pode pedir para regerar!"
 Se sim: [ACTION:GENERATE_CREATIVES] {"product_id": ID_DO_PRODUTO}
 
 ETAPA 4.5 - VALIDACAO E APROVACAO DO CRIATIVO (OBRIGATORIA):
@@ -146,9 +148,12 @@ Voce aprova este anuncio? Pode pedir alteracoes em qualquer parte:
 - 'Aprovo, pode criar a campanha!'"
 
 O usuario PODE:
-- Aprovar: "aprovo", "pode criar", "esta bom", "ok", "confirmo"
+- Aprovar: "aprovado", "aprovado! pode criar a campanha", "pode criar", "esta bom", "ok", "confirmo"
 - Pedir alteracoes: "mude o texto", "ajuste a imagem", "troque o botao"
-- Rejeitar: "nao gostei", "gere outros", "tente novamente"
+- Rejeitar: "nao gostei", "gere outro criativo diferente", "tente novamente"
+
+FLUXO CONTINUO APOS APROVACAO:
+Quando o usuario aprovar o criativo (disser "aprovado", "pode criar", "ok", "sim", ou clicar no botao Aprovar que envia uma mensagem como "Aprovado! Pode criar a campanha com o criativo X para o produto Y"), crie a campanha IMEDIATAMENTE usando [ACTION:CREATE_CAMPAIGN] com o product_id e creative_id que voce ja tem. NAO faca mais perguntas - o usuario ja aprovou, entao va direto para a criacao da campanha.
 
 BLOQUEIO TOTAL: NAO execute NENHUMA acao de criar campanha sem aprovacao explicita do criativo.
 Se o usuario pedir para criar campanha sem ter aprovado um criativo, diga:
@@ -251,6 +256,7 @@ LINKS EXTERNOS (sempre use formato markdown para links):
 IMPORTANTE: Sempre use o formato [texto](url) para links externos. O chat renderiza como botao clicavel.
 
 REGRAS IMPORTANTES:
+- SEMPRE use [ACTION:...] para acoes (em ingles). NUNCA use [AÇÃO:...] ou [ACAO:...] em portugues. O sistema so reconhece [ACTION:...].
 - Fale em portugues brasileiro, seja assertivo e amigavel
 - Faca UMA pergunta por vez - nao sobrecarregue
 - NUNCA execute uma acao sem ter TODOS os dados necessarios
@@ -316,6 +322,7 @@ class ChatAIService:
         history: List[Dict],
         db: Session,
         attachment_path: str = None,
+        user_id: int = 0,
     ) -> Tuple[str, Optional[str], Optional[str], bool, Optional[str]]:
         """
         Process user message and return (response_text, action_taken, action_data, ai_fallback, error_detail).
@@ -336,41 +343,44 @@ class ChatAIService:
         # Try AI API
         ai_response, ai_fallback, error_detail = await self._call_ai(messages, db)
 
+        # Normalize Portuguese action tags to English (AI sometimes generates [AÇÃO:...] instead of [ACTION:...])
+        ai_response = ai_response.replace("[AÇÃO:", "[ACTION:").replace("[ACAO:", "[ACTION:")
+
         # Check for actions in response
         action_taken = None
         action_data = None
 
         if "[ACTION:CREATE_PRODUCT]" in ai_response:
             action_taken, action_data, ai_response = await self._execute_action(
-                ai_response, "CREATE_PRODUCT", db, attachment_path=attachment_path
+                ai_response, "CREATE_PRODUCT", db, attachment_path=attachment_path, user_id=user_id
             )
         elif "[ACTION:GENERATE_CREATIVES]" in ai_response:
             action_taken, action_data, ai_response = await self._execute_action(
-                ai_response, "GENERATE_CREATIVES", db, attachment_path=attachment_path
+                ai_response, "GENERATE_CREATIVES", db, attachment_path=attachment_path, user_id=user_id
             )
         elif "[ACTION:CREATE_CAMPAIGN]" in ai_response:
             action_taken, action_data, ai_response = await self._execute_action(
-                ai_response, "CREATE_CAMPAIGN", db, attachment_path=attachment_path
+                ai_response, "CREATE_CAMPAIGN", db, attachment_path=attachment_path, user_id=user_id
             )
         elif "[ACTION:GENERATE_STRATEGY]" in ai_response:
             action_taken, action_data, ai_response = await self._execute_action(
-                ai_response, "GENERATE_STRATEGY", db, attachment_path=attachment_path
+                ai_response, "GENERATE_STRATEGY", db, attachment_path=attachment_path, user_id=user_id
             )
         elif "[ACTION:UPDATE_PRODUCT]" in ai_response:
             action_taken, action_data, ai_response = await self._execute_action(
-                ai_response, "UPDATE_PRODUCT", db, attachment_path=attachment_path
+                ai_response, "UPDATE_PRODUCT", db, attachment_path=attachment_path, user_id=user_id
             )
         elif "[ACTION:DELETE_PRODUCT]" in ai_response:
             action_taken, action_data, ai_response = await self._execute_action(
-                ai_response, "DELETE_PRODUCT", db, attachment_path=attachment_path
+                ai_response, "DELETE_PRODUCT", db, attachment_path=attachment_path, user_id=user_id
             )
         elif "[ACTION:CREATE_WHATSAPP_CAMPAIGN]" in ai_response:
             action_taken, action_data, ai_response = await self._execute_action(
-                ai_response, "CREATE_WHATSAPP_CAMPAIGN", db, attachment_path=attachment_path
+                ai_response, "CREATE_WHATSAPP_CAMPAIGN", db, attachment_path=attachment_path, user_id=user_id
             )
         elif "[ACTION:CREATE_TIKTOK_CAMPAIGN]" in ai_response:
             action_taken, action_data, ai_response = await self._execute_action(
-                ai_response, "CREATE_TIKTOK_CAMPAIGN", db, attachment_path=attachment_path
+                ai_response, "CREATE_TIKTOK_CAMPAIGN", db, attachment_path=attachment_path, user_id=user_id
             )
 
         return ai_response, action_taken, action_data, ai_fallback, error_detail
@@ -434,7 +444,7 @@ class ChatAIService:
                             price_str += "/ano"
                         elif p.pricing_type == "weekly":
                             price_str += "/semana"
-                        prompt += f"\n- ID: {p.id} | Nome: {p.name} | Preco: {price_str} | Publico: {p.target_audience or 'N/A'} | Diferenciais: {p.differentials or 'N/A'}"
+                        prompt += f"\n- ID: {p.id} | Nome: {p.name} | Descricao: {p.description or 'N/A'} | Preco: {price_str} | Publico: {p.target_audience or 'N/A'} | Diferenciais: {p.differentials or 'N/A'} | Site: {p.website_url or 'N/A'}"
 
                 # Load creatives grouped by product
                 creatives = db.query(Creative).order_by(Creative.id.desc()).limit(30).all()
@@ -570,7 +580,7 @@ class ChatAIService:
         )
 
     async def _execute_action(
-        self, response: str, action_type: str, db: Session, attachment_path: str = None
+        self, response: str, action_type: str, db: Session, attachment_path: str = None, user_id: int = 0
     ) -> Tuple[str, str, str]:
         """Extract and execute action from AI response."""
         import re
@@ -612,6 +622,7 @@ class ChatAIService:
                 pricing_type=action_params.get("pricing_type", "one_time"),
                 recurrence_period=action_params.get("recurrence_period"),
                 website_url=action_params.get("website_url", ""),
+                user_id=user_id,
             )
             # Save product image if user uploaded one
             if attachment_path and any(ext in attachment_path.lower() for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']):
@@ -620,7 +631,7 @@ class ChatAIService:
             db.commit()
             db.refresh(product)
             if not clean_response.strip():
-                clean_response = f"Produto **{product.name}** (ID: {product.id}) cadastrado com sucesso! Quer que eu gere 3 variacoes de anuncios criativos para ele?"
+                clean_response = f"Produto **{product.name}** (ID: {product.id}) cadastrado com sucesso!\n\nAgora, onde voce quer divulgar?\n\n1. **Meta Ads** (Facebook + Instagram)\n2. **TikTok Ads** (modo demonstracao)\n3. **WhatsApp Business**\n\nQual plataforma voce prefere?"
             return (
                 "product_created",
                 json.dumps({"product_id": product.id, "name": product.name}),
@@ -631,11 +642,17 @@ class ChatAIService:
             product_id = action_params.get("product_id")
             product = db.query(Product).filter(Product.id == product_id).first()
             if product:
-                settings = db.query(Settings).filter(Settings.id == 1).first()
+                # Delete old creatives for this product to avoid accumulation
+                old_creatives = db.query(Creative).filter(Creative.product_id == product.id).all()
+                for old_c in old_creatives:
+                    db.delete(old_c)
+                db.commit()
+
+                settings = db.query(Settings).filter(Settings.user_id == user_id).first() if user_id else db.query(Settings).first()
                 ai_key = settings.ai_api_key if settings else ""
                 service = AICreativeService(
                     ai_api_key=ai_key,
-                    image_api_key=settings.image_api_key if settings else "",
+                    image_api_key=settings.image_api_key if settings and settings.image_api_key else app_settings.TOGETHER_API_KEY,
                 )
                 variations = await service.generate_copy(
                     product.name,
@@ -646,8 +663,10 @@ class ChatAIService:
                     product.pricing_type or "one_time",
                     product.recurrence_period or "",
                 )
+                platform = action_params.get("platform", "instagram")
+                placement = action_params.get("placement", "feed")
                 created_ids = []
-                for i, v in enumerate(variations[:3]):
+                for i, v in enumerate(variations[:1]):
                     image_url = await service.generate_and_save_image(
                         v.get("image_prompt", product.name), product.name
                     )
@@ -660,18 +679,37 @@ class ChatAIService:
                         image_url=image_url,
                         image_prompt=v.get("image_prompt", ""),
                         status="pending",
+                        platform=platform,
+                        format_type="image",
+                        placement=placement,
+                        user_id=user_id,
                     )
                     db.add(creative)
                     db.commit()
                     db.refresh(creative)
                     created_ids.append(creative.id)
+                # Build creative preview data for inline display in chat
+                creative_previews = []
+                for cid in created_ids:
+                    c = db.query(Creative).filter(Creative.id == cid).first()
+                    if c:
+                        creative_previews.append({
+                            "id": c.id,
+                            "headline": c.headline,
+                            "copy_text": c.copy_text,
+                            "cta": c.cta,
+                            "image_url": c.image_url,
+                        })
+
                 if not clean_response.strip():
-                    clean_response = f"**{len(created_ids)} criativos gerados com sucesso!** (IDs: {', '.join(str(x) for x in created_ids)}, Produto ID: {product_id}) Voce pode ver e aprovar na aba Criativos. Quer que eu crie uma campanha no Meta Ads ou WhatsApp?"
+                    clean_response = "Pronto! Aqui esta o criativo que gerei para o seu anuncio:"
                 return (
                     "creatives_generated",
-                    json.dumps(
-                        {"creative_ids": created_ids, "product_id": product_id}
-                    ),
+                    json.dumps({
+                        "creative_ids": created_ids,
+                        "product_id": product_id,
+                        "previews": creative_previews,
+                    }),
                     clean_response,
                 )
             return None, None, clean_response
@@ -710,7 +748,7 @@ class ChatAIService:
                 return None, None, clean_response
 
             # Check Facebook Page specifically (required for ad creatives)
-            settings_obj = db.query(Settings).filter(Settings.id == 1).first()
+            settings_obj = db.query(Settings).filter(Settings.user_id == user_id).first() if user_id else db.query(Settings).first()
             if not settings_obj or not settings_obj.facebook_page_id:
                 error_msg = (
                     "**Quase la!** Para criar anuncios no Meta Ads, voce precisa de uma **Pagina do Facebook** vinculada.\n\n"
@@ -727,12 +765,20 @@ class ChatAIService:
             daily_budget = action_params.get("daily_budget", 50)
             product = db.query(Product).filter(Product.id == product_id).first()
             if product:
-                settings = db.query(Settings).filter(Settings.id == 1).first()
+                settings = db.query(Settings).filter(Settings.user_id == user_id).first() if user_id else db.query(Settings).first()
                 meta_service = MetaAdsService(
                     access_token=settings.meta_access_token if settings else "",
                     ad_account_id=settings.meta_ad_account_id if settings else "",
                     page_id=settings.facebook_page_id if settings else "",
                 )
+
+                # Pre-campaign info: if mock mode, inform the user
+                if meta_service.is_mock:
+                    clean_response = (
+                        "Configure suas credenciais Meta nas **Configuracoes** para criar campanhas reais."
+                    )
+                    return None, None, clean_response
+
                 targeting = meta_service.suggest_targeting(
                     product.name, product.target_audience or "", product.price
                 )
@@ -777,6 +823,24 @@ class ChatAIService:
                 # Check for errors
                 if full_result.get("errors"):
                     error_list = "\n".join(f"- {e}" for e in full_result["errors"])
+
+                    # Detect development mode error
+                    for err_msg in full_result["errors"]:
+                        err_lower = str(err_msg).lower()
+                        if "modo de desenvolvimento" in err_lower or "development mode" in err_lower or "1487930" in str(err_msg):
+                            # Return a simple development mode error message
+                            clean_response = (
+                                "Seu app Meta precisa de uma configuracao rapida para criar anuncios reais.\n\n"
+                                "Acesse o link abaixo, clique no seu app e ative o modo 'Live' no topo da pagina:\n\n"
+                                "[ACTION_BUTTON:Abrir Meta Developers:https://developers.facebook.com/apps/]\n\n"
+                                "Depois volte aqui e me diga 'criar campanha' novamente."
+                            )
+                            return (
+                                "development_mode_error",
+                                json.dumps({"error_code": 1487930, "product_id": product.id}),
+                                clean_response,
+                            )
+
                     # Save campaign with error status so user can see and repair later
                     campaign = Campaign(
                         product_id=product.id,
@@ -858,7 +922,7 @@ class ChatAIService:
             product_id = action_params.get("product_id")
             product = db.query(Product).filter(Product.id == product_id).first()
             if product:
-                settings = db.query(Settings).filter(Settings.id == 1).first()
+                settings = db.query(Settings).filter(Settings.user_id == user_id).first() if user_id else db.query(Settings).first()
                 ai_key = settings.ai_api_key if settings else ""
                 service = MarketResearchService(ai_api_key=ai_key)
                 strategy = await service.generate_strategy(

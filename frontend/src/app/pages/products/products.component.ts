@@ -40,7 +40,7 @@ import { ProductDialogComponent, ProductDialogData } from './product-dialog.comp
           <mat-card class="product-card">
             <div class="product-image">
               @if (product.image_path) {
-                <img [src]="'http://localhost:8000' + product.image_path" [alt]="product.name">
+                <img [src]="getImageUrl(product.image_path)" [alt]="product.name">
               } @else {
                 <div class="image-placeholder">
                   <mat-icon>image</mat-icon>
@@ -242,6 +242,11 @@ export class ProductsComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  getImageUrl(path: string): string {
+    const base = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    return base + path;
   }
 
   formatPrice(price: number): string {

@@ -15,4 +15,8 @@ class Creative(Base):
     image_url = Column(String(1000), nullable=True)
     image_prompt = Column(Text, nullable=True)
     status = Column(String(20), default="pending")
+    platform = Column(String(50), nullable=True, default="instagram")
+    format_type = Column(String(20), nullable=True, default="image")
+    placement = Column(String(50), nullable=True, default="feed")
+    user_id = Column(Integer, nullable=True, default=None, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

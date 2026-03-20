@@ -1,0 +1,32 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="brand">
+      <span class="brand-logo">VendedorIA</span>
+      <p class="brand-subtitle">Plataforma de Marketing com IA</p>
+    </div>
+
+    <div class="divider"></div>
+
+    @if (loading) {
+      <div class="loading-area">
+        <div class="spinner"></div>
+        <p>Autenticando...</p>
+      </div>
+    } @else {
+      <div class="google-area">
+        <p class="sign-in-text">Entre com sua conta Google</p>
+        <div #googleBtn class="google-btn-container"></div>
+      </div>
+    }
+
+    @if (error) {
+      <div class="error-message">
+        {{ error }}
+      </div>
+    }
+
+    <div class="footer-text">
+      <p>Ao continuar, voce concorda com nossos Termos de Uso e Politica de Privacidade.</p>
+    </div>
+  </div>
+</div>

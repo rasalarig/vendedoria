@@ -155,7 +155,8 @@ export class ProductDialogComponent implements OnInit {
     });
 
     if (p?.image_path) {
-      this.imagePreview = `http://localhost:8000${p.image_path}`;
+      const base = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+      this.imagePreview = `${base}${p.image_path}`;
     }
   }
 

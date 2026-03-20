@@ -18,4 +18,5 @@ class MarketStrategy(Base):
     budget_suggestion = Column(Text, nullable=True)
     competitor_insights = Column(Text, nullable=True)
     web_research_data = Column(Text, nullable=True)
+    user_id = Column(Integer, nullable=True, default=None, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

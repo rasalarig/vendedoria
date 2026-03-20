@@ -12,7 +12,8 @@ class OperationMode(str, enum.Enum):
 class Settings(Base):
     __tablename__ = "settings"
 
-    id = Column(Integer, primary_key=True, default=1)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=True, default=None, index=True)
     # Meta Ads credentials
     meta_app_id = Column(String(200), default="")
     meta_app_secret = Column(String(500), default="")
@@ -40,3 +41,5 @@ class Settings(Base):
     # Budget Limits
     daily_budget_limit = Column(Float, default=0.0)
     monthly_budget_limit = Column(Float, default=0.0)
+    # Meta App Mode (development, live, unknown)
+    meta_app_mode = Column(String(20), default="unknown")

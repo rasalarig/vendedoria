@@ -73,19 +73,64 @@
             </div>
 
             @if (msg.attachment_path && msg.attachment_type === 'image') {
-              <img [src]="'http://localhost:8000' + msg.attachment_path"
+              <img [src]="getAttachmentUrl(msg.attachment_path)"
                    class="message-image"
                    alt="Anexo">
             }
 
             @if (msg.action_taken) {
-              <div class="action-badge"
-                   [class]="'action-badge ' + getActionClass(msg.action_taken)"
-                   (click)="navigateToAction(msg.action_taken)">
-                <mat-icon>{{ getActionIcon(msg.action_taken) }}</mat-icon>
-                {{ getActionLabel(msg.action_taken) }}
-                <mat-icon class="action-arrow">arrow_forward</mat-icon>
-              </div>
+              @if (isDevModeAction(msg.action_taken)) {
+                <div class="dev-mode-actions">
+                  <button class="dev-mode-btn dev-mode-open" (click)="openMetaDevelopers()">
+                    <mat-icon>open_in_new</mat-icon>
+                    Abrir Meta Developers
+                  </button>
+                  <button class="dev-mode-btn dev-mode-retry" (click)="retryLiveMode()">
+                    <mat-icon>refresh</mat-icon>
+                    Ja mudei para Live
+                  </button>
+                </div>
+              } @else if (msg.action_taken === 'creatives_generated' && getCreativePreviews(msg).length > 0) {
+                <div class="creative-preview-card">
+                  @for (preview of getCreativePreviews(msg); track preview.id) {
+                    <div class="creative-preview">
+                      @if (preview.image_url) {
+                        <img [src]="preview.image_url"
+                             class="creative-preview-img"
+                             alt="Criativo"
+                             (error)="onPreviewImageError($event)">
+                      }
+                      <div class="creative-preview-info">
+                        <div class="creative-preview-headline">{{ preview.headline }}</div>
+                        <div class="creative-preview-copy">{{ preview.copy_text }}</div>
+                        <div class="creative-preview-cta">{{ preview.cta }}</div>
+                      </div>
+                    </div>
+                  }
+                  <div class="creative-preview-actions">
+                    <button class="creative-btn approve-btn"
+                            (click)="approveCreative(msg)"
+                            [disabled]="isLoading">
+                      <mat-icon>check_circle</mat-icon>
+                      Aprovar e criar campanha
+                    </button>
+                    <button class="creative-btn regenerate-btn"
+                            (click)="regenerateCreative(msg)"
+                            [disabled]="isLoading">
+                      <mat-icon>refresh</mat-icon>
+                      Gerar outro
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <div class="action-badge"
+                     [class]="'action-badge ' + getActionClass(msg.action_taken)"
+                     (click)="navigateToAction(msg.action_taken)">
+                  <mat-icon>{{ getActionIcon(msg.action_taken) }}</mat-icon>
+                  {{ getActionLabel(msg.action_taken) }}
+                  <mat-icon class="action-arrow">arrow_forward</mat-icon>
+                </div>
+              }
             }
           </div>
         </div>

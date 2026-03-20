@@ -52,6 +52,24 @@ import { SettingsService } from '../../services/settings.service';
             </mat-select>
           </mat-form-field>
 
+          <mat-form-field appearance="outline" class="option-select">
+            <mat-label>Plataforma</mat-label>
+            <mat-select [(value)]="selectedPlatform">
+              <mat-option value="facebook">Facebook</mat-option>
+              <mat-option value="instagram">Instagram</mat-option>
+              <mat-option value="tiktok">TikTok</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="option-select">
+            <mat-label>Posicionamento</mat-label>
+            <mat-select [(value)]="selectedPlacement">
+              <mat-option value="feed">Feed</mat-option>
+              <mat-option value="stories">Stories</mat-option>
+              <mat-option value="reels">Reels</mat-option>
+            </mat-select>
+          </mat-form-field>
+
           <button mat-flat-button color="primary" class="generate-btn"
                   [disabled]="!selectedProductId || generating"
                   (click)="generateCreatives()">
@@ -107,6 +125,12 @@ import { SettingsService } from '../../services/settings.service';
                 @if (creative.status === 'rejected') { Rejeitado }
               </div>
 
+              <!-- Platform and placement badges -->
+              <div class="meta-badges">
+                <span class="platform-badge">{{ (creative.platform || selectedPlatform) | uppercase }}</span>
+                <span class="placement-badge">{{ (creative.placement || selectedPlacement) | uppercase }}</span>
+              </div>
+
               <!-- Image -->
               <div class="creative-image">
                 @if (creative.image_url) {
@@ -136,6 +160,7 @@ import { SettingsService } from '../../services/settings.service';
                 <div class="cta-preview">
                   <span class="cta-button">{{ creative.cta }}</span>
                 </div>
+
               </mat-card-content>
 
               <!-- Actions -->
@@ -196,7 +221,8 @@ import { SettingsService } from '../../services/settings.service';
       .header-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     }
 
-    .product-select { min-width: 280px; }
+    .product-select { min-width: 280px; margin-bottom: -1.25em; }
+    .option-select { min-width: 160px; margin-bottom: -1.25em; }
 
     .generate-btn {
       border-radius: 10px;
@@ -249,12 +275,27 @@ import { SettingsService } from '../../services/settings.service';
     .reject-btn { color: #ef4444 !important; }
     .regenerate-btn { color: #8b5cf6 !important; display: flex; align-items: center; gap: 4px; .btn-spinner { display: inline-block; } }
     .auto-approved-label { color: #22c55e; font-size: 13px; display: flex; align-items: center; gap: 4px; mat-icon { font-size: 18px; width: 18px; height: 18px; } }
+
+    .meta-badges { position: absolute; top: 40px; left: 12px; display: flex; gap: 6px; z-index: 2; }
+    .platform-badge { background: #3b82f6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .placement-badge { background: #8b5cf6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+
+    .video-note {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 8px; padding: 8px 12px; margin-top: 8px;
+      color: #fbbf24; font-size: 12px;
+      mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    }
   `],
 })
 export class CreativesComponent implements OnInit {
   products: Product[] = [];
   creatives: (Creative & { regenerating?: boolean })[] = [];
   selectedProductId: number | null = null;
+  selectedPlatform: string = 'instagram';
+  selectedFormat: string = 'image';
+  selectedPlacement: string = 'feed';
   operationMode: string = 'manual';
   loading = false;
   generating = false;
@@ -315,7 +356,7 @@ export class CreativesComponent implements OnInit {
   generateCreatives(): void {
     if (!this.selectedProductId) return;
     this.generating = true;
-    this.creativeService.generate(this.selectedProductId).subscribe({
+    this.creativeService.generate(this.selectedProductId, this.selectedPlatform, this.selectedFormat, this.selectedPlacement).subscribe({
       next: (creatives) => {
         this.creatives = creatives;
         this.generating = false;
@@ -368,7 +409,8 @@ export class CreativesComponent implements OnInit {
   getImageUrl(url: string | undefined | null): string {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    return `http://localhost:8000${url}`;
+    const base = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    return `${base}${url}`;
   }
 
   onImageError(event: Event): void {

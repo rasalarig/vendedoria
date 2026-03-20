@@ -4,9 +4,11 @@ from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 
 from app.core.database import get_db
+from app.core.auth import get_current_user_id
 from app.models.product import Product
 from app.models.strategy import MarketStrategy
 from app.models.settings import Settings
+
 from app.services.market_research import MarketResearchService
 
 router = APIRouter(prefix="/strategy", tags=["strategy"])
@@ -51,14 +53,24 @@ def strategy_to_response(strategy: MarketStrategy, product_name: str = "") -> di
     }
 
 
+def _get_user_settings(db: Session, user_id: int) -> Settings:
+    settings = db.query(Settings).filter(Settings.user_id == user_id).first()
+    if not settings:
+        settings = Settings(user_id=user_id)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return settings
+
+
 @router.post("/generate/{product_id}", response_model=StrategyResponse)
-async def generate_strategy(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id).first()
+async def generate_strategy(product_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    product = db.query(Product).filter(Product.id == product_id, Product.user_id == user_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Produto nao encontrado")
 
     # Get AI settings
-    settings = db.query(Settings).filter(Settings.id == 1).first()
+    settings = _get_user_settings(db, user_id)
     ai_api_key = settings.ai_api_key if settings else ""
     ai_provider = settings.ai_provider if settings else "claude"
 
@@ -85,6 +97,7 @@ async def generate_strategy(product_id: int, db: Session = Depends(get_db)):
         budget_suggestion=result.get("budget_suggestion"),
         competitor_insights=result.get("competitor_insights"),
         web_research_data=result.get("web_research_data"),
+        user_id=user_id,
     )
     db.add(strategy)
     db.commit()
@@ -94,8 +107,8 @@ async def generate_strategy(product_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("", response_model=List[StrategyResponse])
-async def list_strategies(db: Session = Depends(get_db)):
-    strategies = db.query(MarketStrategy).order_by(MarketStrategy.created_at.desc()).all()
+async def list_strategies(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    strategies = db.query(MarketStrategy).filter(MarketStrategy.user_id == user_id).order_by(MarketStrategy.created_at.desc()).all()
     result = []
     for s in strategies:
         product = db.query(Product).filter(Product.id == s.product_id).first()
@@ -105,8 +118,8 @@ async def list_strategies(db: Session = Depends(get_db)):
 
 
 @router.get("/{strategy_id}", response_model=StrategyResponse)
-async def get_strategy(strategy_id: int, db: Session = Depends(get_db)):
-    strategy = db.query(MarketStrategy).filter(MarketStrategy.id == strategy_id).first()
+async def get_strategy(strategy_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    strategy = db.query(MarketStrategy).filter(MarketStrategy.id == strategy_id, MarketStrategy.user_id == user_id).first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Estrategia nao encontrada")
     product = db.query(Product).filter(Product.id == strategy.product_id).first()
@@ -115,9 +128,10 @@ async def get_strategy(strategy_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/product/{product_id}", response_model=StrategyResponse)
-async def get_strategy_by_product(product_id: int, db: Session = Depends(get_db)):
+async def get_strategy_by_product(product_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     strategy = db.query(MarketStrategy).filter(
-        MarketStrategy.product_id == product_id
+        MarketStrategy.product_id == product_id,
+        MarketStrategy.user_id == user_id,
     ).order_by(MarketStrategy.created_at.desc()).first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Nenhuma estrategia encontrada para este produto")
@@ -127,8 +141,8 @@ async def get_strategy_by_product(product_id: int, db: Session = Depends(get_db)
 
 
 @router.delete("/{strategy_id}")
-async def delete_strategy(strategy_id: int, db: Session = Depends(get_db)):
-    strategy = db.query(MarketStrategy).filter(MarketStrategy.id == strategy_id).first()
+async def delete_strategy(strategy_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    strategy = db.query(MarketStrategy).filter(MarketStrategy.id == strategy_id, MarketStrategy.user_id == user_id).first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Estrategia nao encontrada")
     db.delete(strategy)

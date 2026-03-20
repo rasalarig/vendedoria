@@ -13,4 +13,5 @@ class ChatMessage(Base):
     attachment_type = Column(String(50), nullable=True)  # image, csv, pdf
     action_taken = Column(String(100), nullable=True)  # "product_created", "creatives_generated", "campaign_created"
     action_data = Column(Text, nullable=True)  # JSON with action details
+    user_id = Column(Integer, nullable=True, default=None, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

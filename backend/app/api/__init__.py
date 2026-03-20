@@ -14,8 +14,10 @@ from app.api.chat import router as chat_router
 from app.api.meta_oauth import router as meta_oauth_router
 from app.api.pixel import router as pixel_router
 from app.api.tiktok import router as tiktok_router
+from app.api.auth import router as auth_router
 
 api_router = APIRouter()
+api_router.include_router(auth_router)
 api_router.include_router(health_router, tags=["health"])
 api_router.include_router(dashboard_router)
 api_router.include_router(products_router)

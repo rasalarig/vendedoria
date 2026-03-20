@@ -88,7 +88,46 @@
               <span class="prereq-hint">{{ prerequisites.payment_method ? 'Configurado' : 'Adicione em https://www.facebook.com/ads/manager/account_settings/account_billing/' }}</span>
             </div>
           </div>
+
+          <div class="prereq-item" [class.done]="prerequisites.app_mode_live">
+            <mat-icon [class.check]="prerequisites.app_mode_live" [class.missing]="!prerequisites.app_mode_live && prerequisites.app_mode === 'development'">
+              {{ prerequisites.app_mode_live ? 'check_circle' : (prerequisites.app_mode === 'development' ? 'cancel' : 'help_outline') }}
+            </mat-icon>
+            <div class="prereq-info">
+              <span class="prereq-label">App Meta em modo Live</span>
+              @if (prerequisites.app_mode_live) {
+                <span class="prereq-hint">App em modo Live (producao)</span>
+              } @else if (prerequisites.app_mode === 'development') {
+                <span class="prereq-hint prereq-hint-warn">App em modo Development - mude para Live em developers.facebook.com/apps/</span>
+              } @else {
+                <span class="prereq-hint">Modo desconhecido - conecte o Meta para verificar</span>
+              }
+            </div>
+          </div>
         </div>
+
+        <!-- Development Mode Warning -->
+        @if (prerequisites.app_mode === 'development') {
+          <div class="dev-mode-warning">
+            <div class="dev-mode-warning-header">
+              <mat-icon>warning</mat-icon>
+              <span>Seu App Meta esta em modo Development</span>
+            </div>
+            <p class="dev-mode-warning-text">
+              Para criar campanhas reais, voce precisa ativar o modo Live:
+            </p>
+            <ol class="dev-mode-steps">
+              <li>Acesse developers.facebook.com/apps/</li>
+              <li>Selecione seu aplicativo</li>
+              <li>No topo da pagina, mude o toggle de "Development" para "Live"</li>
+              <li>O Meta pode exigir URL de Politica de Privacidade e verificacao do Business Manager</li>
+            </ol>
+            <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener" class="dev-mode-link-btn">
+              <mat-icon>open_in_new</mat-icon>
+              Abrir Meta Developers
+            </a>
+          </div>
+        }
 
         <!-- Billing Info Section -->
         @if (prerequisites.meta_connected && prerequisites.payment_method) {
@@ -150,6 +189,15 @@
           <h2 class="section-title">
             <mat-icon>ads_click</mat-icon>
             Meta Ads
+            @if (prerequisites) {
+              @if (prerequisites.app_mode === 'live') {
+                <span class="app-mode-badge app-mode-live">Live</span>
+              } @else if (prerequisites.app_mode === 'development') {
+                <span class="app-mode-badge app-mode-dev">Development</span>
+              } @else {
+                <span class="app-mode-badge app-mode-unknown">Desconhecido</span>
+              }
+            }
           </h2>
 
           @if (metaConnected) {

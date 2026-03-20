@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.core.auth import get_current_user_id
 from app.models.campaign import Campaign
 from app.models.whatsapp import WhatsAppCampaign
 from app.models.lead import Lead
@@ -9,11 +10,11 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
 @router.get("")
-async def get_analytics(db: Session = Depends(get_db)):
+async def get_analytics(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Consolidate all metrics from Meta Ads campaigns and WhatsApp campaigns."""
 
     # Meta Ads campaigns aggregation
-    meta_campaigns = db.query(Campaign).all()
+    meta_campaigns = db.query(Campaign).filter(Campaign.user_id == user_id).all()
     total_impressions = sum(c.impressions or 0 for c in meta_campaigns)
     total_clicks = sum(c.clicks or 0 for c in meta_campaigns)
     total_meta_leads = sum(c.leads or 0 for c in meta_campaigns)
@@ -21,7 +22,7 @@ async def get_analytics(db: Session = Depends(get_db)):
     total_spent = sum(c.spent or 0 for c in meta_campaigns)
 
     # WhatsApp campaigns aggregation
-    wa_campaigns = db.query(WhatsAppCampaign).all()
+    wa_campaigns = db.query(WhatsAppCampaign).filter(WhatsAppCampaign.user_id == user_id).all()
     total_wa_sent = sum(c.sent_count or 0 for c in wa_campaigns)
     total_wa_delivered = sum(c.delivered_count or 0 for c in wa_campaigns)
     total_wa_read = sum(c.read_count or 0 for c in wa_campaigns)
@@ -30,9 +31,9 @@ async def get_analytics(db: Session = Depends(get_db)):
     # Lead stats
     lead_stats = {}
     for status in ["novo", "contatado", "interessado", "convertido", "perdido"]:
-        count = db.query(Lead).filter(Lead.funnel_status == status).count()
+        count = db.query(Lead).filter(Lead.funnel_status == status, Lead.user_id == user_id).count()
         lead_stats[status] = count
-    total_leads = db.query(Lead).count()
+    total_leads = db.query(Lead).filter(Lead.user_id == user_id).count()
 
     # KPIs
     total_all_leads = total_meta_leads + total_leads

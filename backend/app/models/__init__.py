@@ -6,5 +6,6 @@ from app.models.whatsapp import Contact, WhatsAppCampaign, WhatsAppMessage
 from app.models.lead import Lead, LeadInteraction
 from app.models.strategy import MarketStrategy
 from app.models.chat import ChatMessage
+from app.models.user import User
 
-__all__ = ["Product", "Settings", "Creative", "Campaign", "Contact", "WhatsAppCampaign", "WhatsAppMessage", "Lead", "LeadInteraction", "MarketStrategy", "ChatMessage"]
+__all__ = ["Product", "Settings", "Creative", "Campaign", "Contact", "WhatsAppCampaign", "WhatsAppMessage", "Lead", "LeadInteraction", "MarketStrategy", "ChatMessage", "User"]

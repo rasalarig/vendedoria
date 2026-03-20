@@ -44,6 +44,24 @@ import { switchMap } from 'rxjs/operators';
       <h1>Campanhas Meta Ads</h1>
       <p class="page-subtitle">Seus anuncios sao veiculados automaticamente no Facebook e Instagram</p>
 
+      <!-- Mode Indicator Banner -->
+      @if (campaignMode === 'production') {
+        <div class="mode-banner mode-production">
+          <mat-icon>radio_button_checked</mat-icon>
+          <span>Modo Producao - Campanhas reais no Meta Ads</span>
+        </div>
+      } @else if (campaignMode === 'demo') {
+        <div class="mode-banner mode-demo">
+          <mat-icon>radio_button_checked</mat-icon>
+          <span>Modo Demonstracao - Configure suas credenciais Meta nas Configuracoes</span>
+        </div>
+      } @else if (campaignMode === 'development') {
+        <div class="mode-banner mode-development">
+          <mat-icon>warning</mat-icon>
+          <span>App Meta em modo Development - Mude para Live em <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener">developers.facebook.com</a></span>
+        </div>
+      }
+
       <!-- Section 1: Create Campaign -->
       <mat-card class="create-section">
         <mat-card-header>
@@ -996,6 +1014,46 @@ import { switchMap } from 'rxjs/operators';
     @media (max-width: 768px) {
       .dashboard-kpis { grid-template-columns: repeat(2, 1fr); }
     }
+
+    .mode-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .mode-banner mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .mode-production {
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      color: #22c55e;
+    }
+
+    .mode-demo {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #f59e0b;
+    }
+
+    .mode-development {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #ef4444;
+    }
+
+    .mode-development a {
+      color: #ef4444;
+      text-decoration: underline;
+    }
   `],
 })
 export class CampaignsComponent implements OnInit, OnDestroy {
@@ -1021,6 +1079,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
 
   adAccountId = '';
   expandedCampaignId: number | null = null;
+  campaignMode: 'production' | 'demo' | 'development' = 'demo';
   private pollingSubscription: Subscription | null = null;
 
   constructor(
@@ -1037,6 +1096,23 @@ export class CampaignsComponent implements OnInit, OnDestroy {
     this.settingsService.get().subscribe({
       next: (settings) => {
         this.adAccountId = (settings.meta_ad_account_id || '').replace('act_', '');
+      },
+    });
+    // Check campaign mode from prerequisites
+    this.settingsService.getPrerequisites().subscribe({
+      next: (prereqs) => {
+        if (prereqs.meta_connected && prereqs.ad_account) {
+          if (prereqs.app_mode === 'development') {
+            this.campaignMode = 'development';
+          } else {
+            this.campaignMode = 'production';
+          }
+        } else {
+          this.campaignMode = 'demo';
+        }
+      },
+      error: () => {
+        this.campaignMode = 'demo';
       },
     });
   }
@@ -1248,6 +1324,15 @@ export class CampaignsComponent implements OnInit, OnDestroy {
           } else {
             this.loadCampaigns();
           }
+        } else if (result.error === 'development_mode') {
+          this.snackBar.open(
+            'Ative o modo Live no Meta Developers para criar anúncios reais.',
+            'Abrir Meta Developers',
+            { duration: 10000 }
+          ).onAction().subscribe(() => {
+            window.open('https://developers.facebook.com/apps/', '_blank');
+          });
+          return;
         } else if (result.error === 'no_page') {
           // Show inline page creation helper instead of just a snackbar
           this.showPageHelper = true;

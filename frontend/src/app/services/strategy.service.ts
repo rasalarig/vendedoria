@@ -31,7 +31,9 @@ export interface MarketStrategy {
 
 @Injectable({ providedIn: 'root' })
 export class StrategyService {
-  private apiUrl = 'http://localhost:8000/api/strategy';
+  private apiUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000/api/strategy'
+    : '/api/strategy';
 
   constructor(private http: HttpClient) {}
 

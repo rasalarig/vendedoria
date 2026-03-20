@@ -189,6 +189,32 @@ async def reconnect(db: Session = Depends(get_db)):
     return {"success": True, "auth_url": url}
 
 
+@router.get("/app-mode")
+async def get_app_mode(db: Session = Depends(get_db)):
+    """Check if the Meta App is in Development or Live mode."""
+    settings = db.query(Settings).filter(Settings.id == 1).first()
+    if not settings or not settings.meta_access_token:
+        return {"mode": "unknown", "app_id": "", "app_name": "", "error": "Meta Ads nao conectado."}
+
+    if not settings.meta_app_id:
+        return {"mode": "unknown", "app_id": "", "app_name": "", "error": "App ID nao configurado."}
+
+    from app.services.meta_ads import MetaAdsService
+    meta = MetaAdsService(
+        access_token=settings.meta_access_token,
+        ad_account_id=settings.meta_ad_account_id or "",
+    )
+    result = await meta.check_app_mode(app_id=settings.meta_app_id)
+
+    # Persist detected mode in settings
+    detected_mode = result.get("mode", "unknown")
+    if detected_mode in ("development", "live"):
+        settings.meta_app_mode = detected_mode
+        db.commit()
+
+    return result
+
+
 @router.post("/disconnect")
 async def disconnect(db: Session = Depends(get_db)):
     """Disconnect Meta account - clear tokens and account info."""

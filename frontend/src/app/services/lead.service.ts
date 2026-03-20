@@ -46,7 +46,9 @@ export interface LeadFilters {
 
 @Injectable({ providedIn: 'root' })
 export class LeadService {
-  private apiUrl = 'http://localhost:8000/api/leads';
+  private apiUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000/api/leads'
+    : '/api/leads';
 
   constructor(private http: HttpClient) {}
 

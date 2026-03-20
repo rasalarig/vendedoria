@@ -8,7 +8,8 @@ from urllib.parse import quote
 from typing import List, Dict
 from pathlib import Path
 
-UPLOADS_DIR = Path(__file__).parent.parent.parent / "uploads" / "creatives"
+_data_dir = Path("/app/data") if Path("/app/data").exists() else Path(__file__).parent.parent.parent
+UPLOADS_DIR = _data_dir / "uploads" / "creatives"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -35,13 +36,13 @@ class AICreativeService:
     async def generate_copy(self, product_name: str, description: str, price: float,
                             target_audience: str, differentials: str,
                             pricing_type: str = "one_time", recurrence_period: str = "") -> List[Dict]:
-        """Generate 3 variations of persuasive ad copy using Claude API or fallback."""
+        """Generate 1 persuasive ad copy variation using Claude API or fallback."""
 
         price_context = self._format_price_context(price, pricing_type, recurrence_period)
 
         prompt = f"""Voce e um especialista em marketing digital com 15 anos de experiencia em copywriting persuasivo e vendas online.
 
-Crie 3 variacoes de anuncio para o seguinte produto:
+Crie 1 anuncio persuasivo para o seguinte produto:
 
 PRODUTO: {product_name}
 DESCRICAO: {description}
@@ -50,13 +51,13 @@ TIPO DE COBRANCA: {"Recorrente (assinatura)" if pricing_type != "one_time" else 
 PUBLICO-ALVO: {target_audience}
 DIFERENCIAIS: {differentials}
 
-Para CADA variacao, retorne em formato JSON:
+Retorne em formato JSON:
 - "headline": titulo chamativo (max 60 caracteres)
 - "copy_text": texto persuasivo do anuncio (max 300 caracteres), use gatilhos mentais (escassez, prova social, autoridade, urgencia)
 - "cta": call-to-action (max 30 caracteres)
 - "image_prompt": prompt em ingles para gerar uma imagem de anuncio profissional para este produto (descreva estilo, cores, elementos visuais)
 
-Retorne APENAS um array JSON com 3 objetos. Sem explicacoes extras. Seja ASSERTIVO e focado em CONVERSAO."""
+Retorne APENAS um array JSON com 1 objeto. Sem explicacoes extras. Seja ASSERTIVO e focado em CONVERSAO."""
 
         # Try to use Claude API if key available
         if self.ai_api_key and self.ai_provider == "claude":
@@ -105,24 +106,6 @@ Retorne APENAS um array JSON com 3 objetos. Sem explicacoes extras. Seja ASSERTI
                 "cta": "Saiba Mais",
                 "image_prompt": f"Professional marketing banner for {product_name}, modern design, vibrant colors",
             },
-            {
-                "headline": f"Oferta Especial: {product_name}"[:60],
-                "copy_text": (f"Voce ja conhece o {product_name}? {description[:80] if description else 'Uma solucao completa'} - "
-                             f"e o melhor: por {price_display}! "
-                             f"Mais de milhares de clientes satisfeitos. {differentials[:60] if differentials else 'Qualidade garantida'}. "
-                             f"Nao perca essa oportunidade!")[:300],
-                "cta": "Aproveitar Agora",
-                "image_prompt": f"Eye-catching promotional banner for {product_name}, sale theme, professional",
-            },
-            {
-                "headline": f"Por Que Escolher {product_name}?"[:60],
-                "copy_text": (f"Se voce e {target_audience[:60] if target_audience else 'alguem que busca qualidade'}, "
-                             f"o {product_name} foi feito para voce! "
-                             f"{differentials[:80] if differentials else 'Diferenciais unicos no mercado'}. "
-                             f"Investimento: {price_display}. Comece sua jornada hoje!")[:300],
-                "cta": "Comecar Agora",
-                "image_prompt": f"Inspiring marketing image for {product_name}, trust and quality theme",
-            },
         ]
         return variations
 
@@ -135,18 +118,22 @@ Retorne APENAS um array JSON com 3 objetos. Sem explicacoes extras. Seja ASSERTI
         if filepath.exists() and filepath.stat().st_size > 1000:
             return f"/uploads/creatives/{filename}"
 
-        # 1. Try Together AI FLUX (reliable, free with API key)
-        image_data = await self._try_together_flux(prompt)
+        # 1. Try Together AI FLUX (reliable, needs API key with credits)
+        image_data = await self._try_together_flux(prompt, width, height)
 
-        # 2. Try Pollinations.ai (free, no key, but unreliable)
+        # 2. Try AI Horde (free, crowdsourced, no key needed)
+        if not image_data:
+            image_data = await self._try_ai_horde(prompt)
+
+        # 3. Try Pollinations.ai (free, no key, but unreliable)
         if not image_data:
             image_data = await self._try_pollinations(prompt, width, height)
 
-        # 3. Try DALL-E (if OpenAI key available)
+        # 4. Try DALL-E (if OpenAI key available)
         if not image_data and self.ai_api_key and self.ai_provider == "openai":
             image_data = await self._try_dalle(prompt)
 
-        # 4. Pillow placeholder (always works)
+        # 5. Pillow placeholder (always works)
         if not image_data:
             image_data = self._generate_placeholder(product_name or prompt, width, height)
 
@@ -157,8 +144,8 @@ Retorne APENAS um array JSON com 3 objetos. Sem explicacoes extras. Seja ASSERTI
         # Ultimate fallback - return Pollinations URL (lazy load in browser)
         return self.generate_image_url(prompt, width, height)
 
-    async def _try_together_flux(self, prompt: str) -> bytes | None:
-        """Generate image using Together AI FLUX model (free tier)."""
+    async def _try_together_flux(self, prompt: str, width: int = 768, height: int = 512) -> bytes | None:
+        """Generate image using Together AI FLUX model."""
         if not self.image_api_key:
             return None
         try:
@@ -170,10 +157,10 @@ Retorne APENAS um array JSON com 3 objetos. Sem explicacoes extras. Seja ASSERTI
                         "Content-Type": "application/json",
                     },
                     json={
-                        "model": "black-forest-labs/FLUX.1-schnell-Free",
+                        "model": "black-forest-labs/FLUX.1-schnell",
                         "prompt": prompt,
-                        "width": 768,
-                        "height": 512,
+                        "width": width,
+                        "height": height,
                         "steps": 4,
                         "n": 1,
                         "response_format": "b64_json",
@@ -188,6 +175,79 @@ Retorne APENAS um array JSON com 3 objetos. Sem explicacoes extras. Seja ASSERTI
                     print(f"Together AI error {response.status_code}: {response.text[:200]}")
         except Exception as e:
             print(f"Together AI FLUX generation failed: {e}")
+        return None
+
+    async def _try_ai_horde(self, prompt: str) -> bytes | None:
+        """Generate image using AI Horde (free, crowdsourced Stable Diffusion)."""
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                # Submit generation job
+                resp = await client.post(
+                    "https://stablehorde.net/api/v2/generate/async",
+                    json={
+                        "prompt": f"{prompt} ### ugly, blurry, text, watermark, low quality",
+                        "params": {
+                            "width": 512,
+                            "height": 512,
+                            "steps": 20,
+                            "n": 1,
+                            "sampler_name": "k_euler",
+                            "cfg_scale": 7,
+                        },
+                        "r2": False,
+                        "nsfw": False,
+                        "shared": False,
+                    },
+                    headers={
+                        "Content-Type": "application/json",
+                        "apikey": "0000000000",
+                        "Client-Agent": "vendedoria:1.0",
+                    },
+                )
+                if resp.status_code != 202:
+                    print(f"AI Horde submit error {resp.status_code}: {resp.text[:200]}")
+                    return None
+
+                job_id = resp.json().get("id")
+                if not job_id:
+                    return None
+
+                # Poll for completion (max ~90 seconds)
+                for _ in range(18):
+                    await asyncio.sleep(5)
+                    check = await client.get(f"https://stablehorde.net/api/v2/generate/check/{job_id}")
+                    if check.status_code == 200 and check.json().get("done"):
+                        break
+                else:
+                    print("AI Horde timeout after 90s")
+                    return None
+
+                # Get result
+                result = await client.get(f"https://stablehorde.net/api/v2/generate/status/{job_id}")
+                if result.status_code != 200:
+                    return None
+
+                generations = result.json().get("generations", [])
+                if not generations:
+                    return None
+
+                img_data = generations[0].get("img", "")
+                if not img_data:
+                    return None
+
+                # Handle URL or base64
+                if img_data.startswith("http"):
+                    img_resp = await client.get(img_data)
+                    if img_resp.status_code == 200 and len(img_resp.content) > 1000:
+                        return img_resp.content
+                else:
+                    import base64
+                    decoded = base64.b64decode(img_data)
+                    if len(decoded) > 1000:
+                        return decoded
+
+        except Exception as e:
+            print(f"AI Horde generation failed: {e}")
         return None
 
     async def _try_pollinations(self, prompt: str, width: int, height: int) -> bytes | None:

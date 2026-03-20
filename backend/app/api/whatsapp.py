@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from app.core.database import get_db
+from app.core.auth import get_current_user_id
 from app.models.whatsapp import Contact, WhatsAppCampaign, WhatsAppMessage
 from app.models.product import Product
 from app.services.whatsapp import WhatsAppService
@@ -73,13 +74,13 @@ class MessageResponse(BaseModel):
 # --- Contact Endpoints ---
 
 @router.post("/contacts", response_model=ContactResponse)
-async def create_contact(data: ContactCreate, db: Session = Depends(get_db)):
-    # Check for duplicate phone
-    existing = db.query(Contact).filter(Contact.phone == data.phone).first()
+async def create_contact(data: ContactCreate, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    # Check for duplicate phone within this user's contacts
+    existing = db.query(Contact).filter(Contact.phone == data.phone, Contact.user_id == user_id).first()
     if existing:
         raise HTTPException(status_code=400, detail="Contato com este telefone ja existe")
 
-    contact = Contact(name=data.name, phone=data.phone, tags=data.tags or "")
+    contact = Contact(name=data.name, phone=data.phone, tags=data.tags or "", user_id=user_id)
     db.add(contact)
     db.commit()
     db.refresh(contact)
@@ -87,7 +88,7 @@ async def create_contact(data: ContactCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/contacts/import")
-async def import_contacts(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def import_contacts(file: UploadFile = File(...), db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     content = await file.read()
     text = content.decode("utf-8-sig")  # handle BOM
     service = WhatsAppService()
@@ -96,11 +97,11 @@ async def import_contacts(file: UploadFile = File(...), db: Session = Depends(ge
     imported = 0
     skipped = 0
     for item in parsed:
-        existing = db.query(Contact).filter(Contact.phone == item["phone"]).first()
+        existing = db.query(Contact).filter(Contact.phone == item["phone"], Contact.user_id == user_id).first()
         if existing:
             skipped += 1
             continue
-        contact = Contact(name=item["name"], phone=item["phone"], tags=item.get("tags", ""))
+        contact = Contact(name=item["name"], phone=item["phone"], tags=item.get("tags", ""), user_id=user_id)
         db.add(contact)
         imported += 1
 
@@ -109,8 +110,8 @@ async def import_contacts(file: UploadFile = File(...), db: Session = Depends(ge
 
 
 @router.get("/contacts")
-async def list_contacts(tag: str | None = None, db: Session = Depends(get_db)):
-    query = db.query(Contact).filter(Contact.status == "active")
+async def list_contacts(tag: str | None = None, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    query = db.query(Contact).filter(Contact.status == "active", Contact.user_id == user_id)
     if tag:
         query = query.filter(Contact.tags.contains(tag))
     contacts = query.order_by(Contact.name).all()
@@ -118,8 +119,8 @@ async def list_contacts(tag: str | None = None, db: Session = Depends(get_db)):
 
 
 @router.delete("/contacts/{contact_id}")
-async def delete_contact(contact_id: int, db: Session = Depends(get_db)):
-    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+async def delete_contact(contact_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    contact = db.query(Contact).filter(Contact.id == contact_id, Contact.user_id == user_id).first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contato nao encontrado")
     db.delete(contact)
@@ -130,12 +131,12 @@ async def delete_contact(contact_id: int, db: Session = Depends(get_db)):
 # --- Campaign Endpoints ---
 
 @router.post("/campaigns", response_model=CampaignResponse)
-async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
+async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     # Get product info for personalization
     product_name = ""
     product_price = ""
     if data.product_id:
-        product = db.query(Product).filter(Product.id == data.product_id).first()
+        product = db.query(Product).filter(Product.id == data.product_id, Product.user_id == user_id).first()
         if product:
             product_name = product.name
             product_price = f"R$ {product.price:.2f}"
@@ -145,18 +146,19 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
         contacts = db.query(Contact).filter(
             Contact.id.in_(data.contact_ids),
             Contact.status == "active",
+            Contact.user_id == user_id,
         ).all()
     elif data.tag_filter:
         tags = [t.strip() for t in data.tag_filter.split(",") if t.strip()]
-        query = db.query(Contact).filter(Contact.status == "active")
+        query = db.query(Contact).filter(Contact.status == "active", Contact.user_id == user_id)
         if tags:
             from sqlalchemy import or_
             filters = [Contact.tags.contains(t) for t in tags]
             query = query.filter(or_(*filters))
         contacts = query.all()
     else:
-        # All active contacts
-        contacts = db.query(Contact).filter(Contact.status == "active").all()
+        # All active contacts for this user
+        contacts = db.query(Contact).filter(Contact.status == "active", Contact.user_id == user_id).all()
 
     if not contacts:
         raise HTTPException(status_code=400, detail="Nenhum contato encontrado para esta campanha")
@@ -168,6 +170,7 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
         template_text=data.template_text,
         total_contacts=len(contacts),
         status="draft",
+        user_id=user_id,
     )
     db.add(campaign)
     db.commit()
@@ -195,8 +198,8 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/campaigns")
-async def list_campaigns(db: Session = Depends(get_db)):
-    campaigns = db.query(WhatsAppCampaign).order_by(WhatsAppCampaign.created_at.desc()).all()
+async def list_campaigns(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    campaigns = db.query(WhatsAppCampaign).filter(WhatsAppCampaign.user_id == user_id).order_by(WhatsAppCampaign.created_at.desc()).all()
     result = []
     for c in campaigns:
         product_name = ""
@@ -209,8 +212,8 @@ async def list_campaigns(db: Session = Depends(get_db)):
 
 
 @router.get("/campaigns/{campaign_id}")
-async def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
-    campaign = db.query(WhatsAppCampaign).filter(WhatsAppCampaign.id == campaign_id).first()
+async def get_campaign(campaign_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    campaign = db.query(WhatsAppCampaign).filter(WhatsAppCampaign.id == campaign_id, WhatsAppCampaign.user_id == user_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada")
 
@@ -244,8 +247,8 @@ async def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/campaigns/{campaign_id}/send")
-async def send_campaign(campaign_id: int, db: Session = Depends(get_db)):
-    campaign = db.query(WhatsAppCampaign).filter(WhatsAppCampaign.id == campaign_id).first()
+async def send_campaign(campaign_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    campaign = db.query(WhatsAppCampaign).filter(WhatsAppCampaign.id == campaign_id, WhatsAppCampaign.user_id == user_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada")
     if campaign.status not in ("draft", "paused"):
@@ -257,8 +260,8 @@ async def send_campaign(campaign_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/campaigns/{campaign_id}/pause")
-async def pause_campaign(campaign_id: int, db: Session = Depends(get_db)):
-    campaign = db.query(WhatsAppCampaign).filter(WhatsAppCampaign.id == campaign_id).first()
+async def pause_campaign(campaign_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    campaign = db.query(WhatsAppCampaign).filter(WhatsAppCampaign.id == campaign_id, WhatsAppCampaign.user_id == user_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada")
     campaign.status = "paused"

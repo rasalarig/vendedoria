@@ -35,5 +35,6 @@ class Campaign(Base):
     cpl = Column(Float, default=0.0)  # Cost per lead
     # AI Strategy
     ai_strategy = Column(Text, nullable=True)  # AI reasoning for targeting decisions
+    user_id = Column(Integer, nullable=True, default=None, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

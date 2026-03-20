@@ -40,7 +40,9 @@ export interface AnalyticsData {
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
-  private apiUrl = 'http://localhost:8000/api/analytics';
+  private apiUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000/api/analytics'
+    : '/api/analytics';
 
   constructor(private http: HttpClient) {}
 

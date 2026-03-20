@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: vendedoria
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./vendedor.db
+      - key: TOGETHER_API_KEY
+        sync: false
+      - key: RENDER_EXTERNAL_HOSTNAME
+        fromService:
+          type: web
+          name: vendedoria
+          property: host
+    disk:
+      name: vendedoria-data
+      mountPath: /app/data
+      sizeGB: 1

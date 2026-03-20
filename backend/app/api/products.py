@@ -7,11 +7,14 @@ import shutil
 import uuid
 
 from app.core.database import get_db
+from app.core.auth import get_current_user_id
 from app.models.product import Product
 
 router = APIRouter(prefix="/products", tags=["products"])
 
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "uploads")
+_backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_data_dir = "/app/data" if os.path.exists("/app/data") else _backend_dir
+UPLOAD_DIR = os.path.join(_data_dir, "uploads")
 
 
 class ProductResponse(BaseModel):
@@ -61,6 +64,7 @@ async def create_product(
     website_url: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
     image_path = None
     if image and image.filename:
@@ -82,6 +86,7 @@ async def create_product(
         pricing_type=pricing_type or "one_time",
         recurrence_period=recurrence_period,
         website_url=website_url,
+        user_id=user_id,
     )
     db.add(product)
     db.commit()
@@ -90,14 +95,14 @@ async def create_product(
 
 
 @router.get("", response_model=list[ProductResponse])
-async def list_products(db: Session = Depends(get_db)):
-    products = db.query(Product).order_by(Product.created_at.desc()).all()
+async def list_products(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    products = db.query(Product).filter(Product.user_id == user_id).order_by(Product.created_at.desc()).all()
     return [product_to_response(p) for p in products]
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
-async def get_product(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id).first()
+async def get_product(product_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    product = db.query(Product).filter(Product.id == product_id, Product.user_id == user_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Produto nao encontrado")
     return product_to_response(product)
@@ -116,8 +121,9 @@ async def update_product(
     website_url: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = db.query(Product).filter(Product.id == product_id, Product.user_id == user_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Produto nao encontrado")
 
@@ -151,8 +157,8 @@ async def update_product(
 
 
 @router.delete("/{product_id}")
-async def delete_product(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id).first()
+async def delete_product(product_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    product = db.query(Product).filter(Product.id == product_id, Product.user_id == user_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Produto nao encontrado")
 

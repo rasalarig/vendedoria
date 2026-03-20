@@ -7,6 +7,7 @@ import csv
 import io
 
 from app.core.database import get_db
+from app.core.auth import get_current_user_id
 from app.models.lead import Lead, LeadInteraction
 
 router = APIRouter(prefix="/leads", tags=["leads"])
@@ -108,12 +109,12 @@ def interaction_to_response(interaction: LeadInteraction) -> dict:
 # --- Stats endpoint (must be before /{lead_id} to avoid route conflict) ---
 
 @router.get("/stats")
-async def get_lead_stats(db: Session = Depends(get_db)):
+async def get_lead_stats(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     statuses = ["novo", "contatado", "interessado", "convertido", "perdido"]
     result = {}
     total = 0
     for status in statuses:
-        count = db.query(sa_func.count(Lead.id)).filter(Lead.funnel_status == status).scalar() or 0
+        count = db.query(sa_func.count(Lead.id)).filter(Lead.funnel_status == status, Lead.user_id == user_id).scalar() or 0
         result[status] = count
         total += count
     result["total"] = total
@@ -123,8 +124,8 @@ async def get_lead_stats(db: Session = Depends(get_db)):
 # --- Lead CRUD ---
 
 @router.post("", response_model=LeadResponse)
-async def create_lead(lead_data: LeadCreate, db: Session = Depends(get_db)):
-    lead = Lead(**lead_data.model_dump())
+async def create_lead(lead_data: LeadCreate, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    lead = Lead(**lead_data.model_dump(), user_id=user_id)
     db.add(lead)
     db.commit()
     db.refresh(lead)
@@ -149,8 +150,9 @@ async def list_leads(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    query = db.query(Lead)
+    query = db.query(Lead).filter(Lead.user_id == user_id)
 
     if status:
         query = query.filter(Lead.funnel_status == status)
@@ -171,16 +173,16 @@ async def list_leads(
 
 
 @router.get("/{lead_id}", response_model=LeadResponse)
-async def get_lead(lead_id: int, db: Session = Depends(get_db)):
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+async def get_lead(lead_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == user_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead nao encontrado")
     return lead_to_response(lead)
 
 
 @router.put("/{lead_id}", response_model=LeadResponse)
-async def update_lead(lead_id: int, lead_data: LeadUpdate, db: Session = Depends(get_db)):
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+async def update_lead(lead_id: int, lead_data: LeadUpdate, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == user_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead nao encontrado")
 
@@ -209,8 +211,8 @@ async def update_lead(lead_id: int, lead_data: LeadUpdate, db: Session = Depends
 
 
 @router.delete("/{lead_id}")
-async def delete_lead(lead_id: int, db: Session = Depends(get_db)):
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+async def delete_lead(lead_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == user_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead nao encontrado")
 
@@ -224,7 +226,7 @@ async def delete_lead(lead_id: int, db: Session = Depends(get_db)):
 # --- CSV Import ---
 
 @router.post("/import")
-async def import_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def import_csv(file: UploadFile = File(...), db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     if not file.filename or not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Arquivo deve ser CSV")
 
@@ -247,6 +249,7 @@ async def import_csv(file: UploadFile = File(...), db: Session = Depends(get_db)
             tags=row.get("tags", "").strip() or None,
             source="csv_import",
             funnel_status="novo",
+            user_id=user_id,
         )
         db.add(lead)
         db.flush()
@@ -266,8 +269,8 @@ async def import_csv(file: UploadFile = File(...), db: Session = Depends(get_db)
 # --- Interactions ---
 
 @router.get("/{lead_id}/interactions", response_model=list[InteractionResponse])
-async def get_interactions(lead_id: int, db: Session = Depends(get_db)):
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+async def get_interactions(lead_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == user_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead nao encontrado")
 
@@ -281,8 +284,8 @@ async def get_interactions(lead_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{lead_id}/interactions", response_model=InteractionResponse)
-async def add_interaction(lead_id: int, data: InteractionCreate, db: Session = Depends(get_db)):
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+async def add_interaction(lead_id: int, data: InteractionCreate, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == user_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead nao encontrado")
 

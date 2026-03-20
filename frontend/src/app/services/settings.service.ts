@@ -25,7 +25,8 @@ export interface AppSettings {
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
-  private apiUrl = 'http://localhost:8000/api/settings';
+  private backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+  private apiUrl = this.backendUrl + '/api/settings';
 
   constructor(private http: HttpClient) {}
 
@@ -42,30 +43,34 @@ export class SettingsService {
   }
 
   getMetaAuthUrl(): Observable<{auth_url?: string, error?: string}> {
-    return this.http.get<{auth_url?: string, error?: string}>('http://localhost:8000/api/meta/auth-url');
+    return this.http.get<{auth_url?: string, error?: string}>(`${this.backendUrl}/api/meta/auth-url`);
   }
 
   metaCallback(code: string): Observable<{success?: boolean, user_name?: string, error?: string}> {
-    return this.http.get<{success?: boolean, user_name?: string, error?: string}>(`http://localhost:8000/api/meta/callback?code=${code}`);
+    return this.http.get<{success?: boolean, user_name?: string, error?: string}>(`${this.backendUrl}/api/meta/callback?code=${code}`);
   }
 
   getMetaAccounts(): Observable<{accounts?: any[], selected?: string, error?: string}> {
-    return this.http.get<{accounts?: any[], selected?: string, error?: string}>('http://localhost:8000/api/meta/accounts');
+    return this.http.get<{accounts?: any[], selected?: string, error?: string}>(`${this.backendUrl}/api/meta/accounts`);
   }
 
   selectMetaAccount(accountId: string, accountName: string): Observable<any> {
-    return this.http.post('http://localhost:8000/api/meta/select-account', {account_id: accountId, account_name: accountName});
+    return this.http.post(`${this.backendUrl}/api/meta/select-account`, {account_id: accountId, account_name: accountName});
   }
 
   disconnectMeta(): Observable<any> {
-    return this.http.post('http://localhost:8000/api/meta/disconnect', {});
+    return this.http.post(`${this.backendUrl}/api/meta/disconnect`, {});
   }
 
   reconnectMeta(): Observable<{success?: boolean, auth_url?: string, error?: string}> {
-    return this.http.post<{success?: boolean, auth_url?: string, error?: string}>('http://localhost:8000/api/meta/reconnect', {});
+    return this.http.post<{success?: boolean, auth_url?: string, error?: string}>(`${this.backendUrl}/api/meta/reconnect`, {});
   }
 
   getPrerequisites(): Observable<any> {
     return this.http.get(`${this.apiUrl}/prerequisites`);
+  }
+
+  getAppMode(): Observable<{mode: string, app_id: string, app_name: string, error?: string}> {
+    return this.http.get<{mode: string, app_id: string, app_name: string, error?: string}>(`${this.backendUrl}/api/meta/app-mode`);
   }
 }

@@ -190,6 +190,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       whatsapp_campaign_created: '/whatsapp',
       tiktok_campaign_created: '/campaigns',
       strategy_generated: '/strategy',
+      development_mode_error: '/settings',
+      development_mode_warning: '/settings',
     };
     const route = routes[action];
     if (route) {
@@ -207,6 +209,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       whatsapp_campaign_created: 'Campanha WhatsApp criada',
       tiktok_campaign_created: 'Campanha TikTok criada',
       strategy_generated: 'Estrategia gerada',
+      development_mode_error: 'App em modo Development',
+      development_mode_warning: 'App em modo Development',
     };
     return labels[action] || action;
   }
@@ -221,6 +225,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       whatsapp_campaign_created: 'whatsapp',
       tiktok_campaign_created: 'tiktok',
       strategy_generated: 'strategy',
+      development_mode_error: 'dev-mode',
+      development_mode_warning: 'dev-mode',
     };
     return classes[action] || '';
   }
@@ -235,8 +241,60 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       whatsapp_campaign_created: 'chat',
       tiktok_campaign_created: 'music_note',
       strategy_generated: 'psychology',
+      development_mode_error: 'warning',
+      development_mode_warning: 'warning',
     };
     return icons[action] || 'info';
+  }
+
+  openMetaDevelopers(): void {
+    window.open('https://developers.facebook.com/apps/', '_blank');
+  }
+
+  retryLiveMode(): void {
+    this.sendMessage('Ja mudei para Live, pode tentar criar a campanha novamente');
+  }
+
+  isDevModeAction(action: string): boolean {
+    return action === 'development_mode_error' || action === 'development_mode_warning';
+  }
+
+  getCreativePreviews(msg: ChatMessage): any[] {
+    if (!msg.action_data) return [];
+    try {
+      const data = typeof msg.action_data === 'string' ? JSON.parse(msg.action_data) : msg.action_data;
+      return data.previews || [];
+    } catch {
+      return [];
+    }
+  }
+
+  approveCreative(msg: ChatMessage): void {
+    try {
+      const data = typeof msg.action_data === 'string' ? JSON.parse(msg.action_data) : msg.action_data;
+      const creativeId = data.creative_ids?.[0];
+      const productId = data.product_id;
+      this.sendMessage(`Aprovado! Pode criar a campanha com o criativo ${creativeId} para o produto ${productId}`);
+    } catch {
+      this.sendMessage('Aprovado! Pode criar a campanha com esse criativo');
+    }
+  }
+
+  regenerateCreative(msg: ChatMessage): void {
+    this.sendMessage('Nao gostei, gere outro criativo diferente');
+  }
+
+  onPreviewImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+  }
+
+  getAttachmentUrl(path: string | undefined): string {
+    if (!path) return '';
+    if (window.location.hostname === 'localhost') {
+      return 'http://localhost:8000' + path;
+    }
+    return path;
   }
 
   formatContent(content: string): string {

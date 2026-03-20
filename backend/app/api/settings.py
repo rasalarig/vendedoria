@@ -4,12 +4,24 @@ from pydantic import BaseModel
 from typing import Optional
 
 from app.core.database import get_db
+from app.core.auth import get_current_user_id
 from app.models.settings import Settings
 from app.models.product import Product
 from app.models.creative import Creative
 from app.services.meta_ads import MetaAdsService
 
 router = APIRouter(prefix="/settings", tags=["settings"])
+
+
+def get_user_settings(db: Session, user_id: int) -> Settings:
+    """Get settings for a user, creating default if none exist."""
+    settings = db.query(Settings).filter(Settings.user_id == user_id).first()
+    if not settings:
+        settings = Settings(user_id=user_id)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return settings
 
 
 class SettingsSchema(BaseModel):
@@ -41,14 +53,8 @@ class SettingsResponse(SettingsSchema):
 
 
 @router.get("/status")
-async def get_settings_status(db: Session = Depends(get_db)):
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    if not settings:
-        return {
-            "ai_configured": False,
-            "meta_configured": False,
-            "whatsapp_configured": False
-        }
+async def get_settings_status(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    settings = get_user_settings(db, user_id)
     return {
         "ai_configured": bool(settings.ai_api_key and len(settings.ai_api_key) > 0),
         "meta_configured": bool(
@@ -64,10 +70,10 @@ async def get_settings_status(db: Session = Depends(get_db)):
 
 
 @router.get("/token-status")
-async def check_token_status(db: Session = Depends(get_db)):
+async def check_token_status(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Check if the Meta access token is still valid."""
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    if not settings or not settings.meta_access_token:
+    settings = get_user_settings(db, user_id)
+    if not settings.meta_access_token:
         return {"valid": False, "configured": False, "message": "Token Meta nao configurado."}
 
     meta_service = MetaAdsService(
@@ -80,22 +86,14 @@ async def check_token_status(db: Session = Depends(get_db)):
 
 
 @router.get("", response_model=SettingsResponse)
-async def get_settings(db: Session = Depends(get_db)):
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    if not settings:
-        settings = Settings(id=1)
-        db.add(settings)
-        db.commit()
-        db.refresh(settings)
+async def get_settings(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    settings = get_user_settings(db, user_id)
     return settings
 
 
 @router.put("", response_model=SettingsResponse)
-async def update_settings(data: SettingsSchema, db: Session = Depends(get_db)):
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    if not settings:
-        settings = Settings(id=1)
-        db.add(settings)
+async def update_settings(data: SettingsSchema, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    settings = get_user_settings(db, user_id)
     for key, value in data.dict(exclude_unset=True).items():
         setattr(settings, key, value)
     db.commit()
@@ -104,24 +102,26 @@ async def update_settings(data: SettingsSchema, db: Session = Depends(get_db)):
 
 
 @router.get("/prerequisites")
-async def check_prerequisites(db: Session = Depends(get_db)):
+async def check_prerequisites(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Check all prerequisites needed before creating a campaign."""
-    settings = db.query(Settings).filter(Settings.id == 1).first()
+    settings = get_user_settings(db, user_id)
     checks = {
-        "meta_connected": bool(settings and settings.meta_access_token),
-        "ad_account": bool(settings and settings.meta_ad_account_id),
-        "facebook_page": bool(settings and settings.facebook_page_id),
-        "pixel_configured": bool(settings and settings.meta_pixel_id),
+        "meta_connected": bool(settings.meta_access_token),
+        "ad_account": bool(settings.meta_ad_account_id),
+        "facebook_page": bool(settings.facebook_page_id),
+        "pixel_configured": bool(settings.meta_pixel_id),
         "payment_method": False,
         "has_product": False,
         "has_creative": False,
+        "app_mode": getattr(settings, "meta_app_mode", "unknown"),
+        "app_mode_live": False,
     }
 
-    # Check if products exist
-    checks["has_product"] = db.query(Product).count() > 0
+    # Check if products exist for this user
+    checks["has_product"] = db.query(Product).filter(Product.user_id == user_id).count() > 0
 
-    # Check if creatives exist
-    checks["has_creative"] = db.query(Creative).count() > 0
+    # Check if creatives exist for this user
+    checks["has_creative"] = db.query(Creative).filter(Creative.user_id == user_id).count() > 0
 
     # Check payment if connected
     if checks["meta_connected"] and checks["ad_account"]:
@@ -138,6 +138,27 @@ async def check_prerequisites(db: Session = Depends(get_db)):
             checks["currency"] = payment.get("currency", "")
         except Exception:
             checks["payment_method"] = False
+
+    # Check app mode
+    if checks["meta_connected"] and settings.meta_app_id:
+        try:
+            meta_mode = MetaAdsService(
+                access_token=settings.meta_access_token,
+                ad_account_id=settings.meta_ad_account_id or "",
+            )
+            mode_result = await meta_mode.check_app_mode(app_id=settings.meta_app_id)
+            detected_mode = mode_result.get("mode", "unknown")
+            checks["app_mode"] = detected_mode
+            checks["app_mode_live"] = detected_mode == "live"
+            # Persist detected mode
+            if detected_mode in ("development", "live"):
+                settings.meta_app_mode = detected_mode
+                db.commit()
+        except Exception:
+            checks["app_mode"] = getattr(settings, "meta_app_mode", "unknown")
+            checks["app_mode_live"] = checks["app_mode"] == "live"
+    else:
+        checks["app_mode_live"] = checks["app_mode"] == "live"
 
     # Overall readiness
     checks["ready_for_campaign"] = all([

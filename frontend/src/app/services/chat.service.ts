@@ -16,7 +16,9 @@ export interface ChatMessage {
 
 @Injectable({ providedIn: 'root' })
 export class ChatService {
-  private apiUrl = 'http://localhost:8000/api/chat';
+  private apiUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000/api/chat'
+    : '/api/chat';
 
   constructor(private http: HttpClient) {}
 

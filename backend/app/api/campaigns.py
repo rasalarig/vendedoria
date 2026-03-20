@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 from app.core.database import get_db
+from app.core.auth import get_current_user_id
 from app.models.campaign import Campaign
 from app.models.product import Product
 from app.models.creative import Creative
@@ -14,6 +15,16 @@ from app.services.meta_ads import MetaAdsService
 from app.services.meta_oauth import MetaOAuthService
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
+
+
+def _get_user_settings(db: Session, user_id: int) -> Settings:
+    settings = db.query(Settings).filter(Settings.user_id == user_id).first()
+    if not settings:
+        settings = Settings(user_id=user_id)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return settings
 
 
 class CampaignCreate(BaseModel):
@@ -97,33 +108,28 @@ def campaign_to_response(c: Campaign, product_name: str = "", creative_headline:
 
 
 @router.post("", response_model=CampaignResponse)
-async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
+async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     # Get product
-    product = db.query(Product).filter(Product.id == data.product_id).first()
+    product = db.query(Product).filter(Product.id == data.product_id, Product.user_id == user_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Produto nao encontrado")
 
     # Get creative (optional)
     creative = None
     if data.creative_id:
-        creative = db.query(Creative).filter(Creative.id == data.creative_id).first()
+        creative = db.query(Creative).filter(Creative.id == data.creative_id, Creative.user_id == user_id).first()
         if not creative:
             raise HTTPException(status_code=404, detail="Criativo nao encontrado")
 
     # Get settings
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    access_token = ""
-    ad_account_id = ""
-    daily_budget_limit = 0.0
-    monthly_budget_limit = 0.0
-    if settings:
-        access_token = settings.meta_access_token or ""
-        ad_account_id = settings.meta_ad_account_id or ""
-        daily_budget_limit = settings.daily_budget_limit or 0.0
-        monthly_budget_limit = settings.monthly_budget_limit or 0.0
+    settings = _get_user_settings(db, user_id)
+    access_token = settings.meta_access_token or ""
+    ad_account_id = settings.meta_ad_account_id or ""
+    daily_budget_limit = settings.daily_budget_limit or 0.0
+    monthly_budget_limit = settings.monthly_budget_limit or 0.0
 
     # Validate Facebook Page
-    page_id = settings.facebook_page_id if settings else ""
+    page_id = settings.facebook_page_id or ""
     if not page_id:
         raise HTTPException(
             status_code=400,
@@ -140,7 +146,6 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
         total_budget = monthly_budget_limit
 
     # Use MetaAdsService
-    page_id = settings.facebook_page_id if settings else ""
     meta_service = MetaAdsService(access_token=access_token, ad_account_id=ad_account_id, page_id=page_id)
 
     # Check account status before proceeding
@@ -180,7 +185,7 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
         ad_cta = creative.cta or "LEARN_MORE"
 
     # Get pixel_id from settings for conversion tracking
-    pixel_id = settings.meta_pixel_id or "" if settings else ""
+    pixel_id = settings.meta_pixel_id or ""
 
     # Get product website URL for the ad link
     ad_link = product.website_url if hasattr(product, 'website_url') and product.website_url else "https://example.com"
@@ -221,6 +226,7 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
         daily_budget=daily_budget,
         total_budget=total_budget,
         ai_strategy=targeting_data.get("strategy", ""),
+        user_id=user_id,
     )
     db.add(campaign)
     db.commit()
@@ -237,8 +243,8 @@ async def create_campaign(data: CampaignCreate, db: Session = Depends(get_db)):
 
 
 @router.get("", response_model=List[CampaignResponse])
-async def list_campaigns(db: Session = Depends(get_db)):
-    campaigns = db.query(Campaign).order_by(Campaign.created_at.desc()).all()
+async def list_campaigns(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    campaigns = db.query(Campaign).filter(Campaign.user_id == user_id).order_by(Campaign.created_at.desc()).all()
     result = []
     for c in campaigns:
         product = db.query(Product).filter(Product.id == c.product_id).first()
@@ -259,18 +265,15 @@ async def list_campaigns(db: Session = Depends(get_db)):
 
 
 @router.get("/{campaign_id}", response_model=CampaignResponse)
-async def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
-    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+async def get_campaign(campaign_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == user_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada")
 
     # Get fresh metrics
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    access_token = ""
-    ad_account_id = ""
-    if settings:
-        access_token = settings.meta_access_token or ""
-        ad_account_id = settings.meta_ad_account_id or ""
+    settings = _get_user_settings(db, user_id)
+    access_token = settings.meta_access_token or ""
+    ad_account_id = settings.meta_ad_account_id or ""
 
     meta_service = MetaAdsService(access_token=access_token, ad_account_id=ad_account_id)
 
@@ -306,8 +309,8 @@ async def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{campaign_id}/pause", response_model=CampaignResponse)
-async def pause_campaign(campaign_id: int, db: Session = Depends(get_db)):
-    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+async def pause_campaign(campaign_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == user_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada")
     campaign.status = "paused"
@@ -320,8 +323,8 @@ async def pause_campaign(campaign_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{campaign_id}/resume", response_model=CampaignResponse)
-async def resume_campaign(campaign_id: int, db: Session = Depends(get_db)):
-    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+async def resume_campaign(campaign_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == user_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada")
     campaign.status = "active"
@@ -334,9 +337,9 @@ async def resume_campaign(campaign_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{campaign_id}/activate")
-async def activate_campaign_on_meta(campaign_id: int, db: Session = Depends(get_db)):
+async def activate_campaign_on_meta(campaign_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Smart auto-resolve + activate: fixes all prerequisites then activates the campaign."""
-    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == user_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada")
 
@@ -344,8 +347,8 @@ async def activate_campaign_on_meta(campaign_id: int, db: Session = Depends(get_
         raise HTTPException(status_code=400, detail="Esta campanha nao tem ID do Meta Ads. Foi criada em modo simulado.")
 
     # Get settings
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    if not settings or not settings.meta_access_token:
+    settings = _get_user_settings(db, user_id)
+    if not settings.meta_access_token:
         raise HTTPException(status_code=400, detail="Meta Ads nao configurado. Va em Configuracoes para conectar sua conta.")
 
     # Auto-resolve ad account if missing
@@ -478,6 +481,17 @@ async def activate_campaign_on_meta(campaign_id: int, db: Session = Depends(get_
             db.refresh(campaign)
             product_obj = db.query(Product).filter(Product.id == campaign.product_id).first()
             product_name = product_obj.name if product_obj else ""
+
+            # Detect development mode errors and return a simplified message
+            if any("desenvolvimento" in e.lower() or "development" in e.lower() for e in repair_errors):
+                return {
+                    "success": False,
+                    "error": "development_mode",
+                    "message": "Seu app Meta precisa ser ativado para modo Live. Acesse https://developers.facebook.com/apps/, selecione seu app e ative o modo Live no topo da pagina. Depois clique em Ativar novamente.",
+                    "steps": steps,
+                    "campaign": campaign_to_response(campaign, product_name=product_name),
+                }
+
             return {
                 "success": False,
                 "error": "repair_failed",
@@ -556,9 +570,9 @@ async def activate_campaign_on_meta(campaign_id: int, db: Session = Depends(get_
 
 
 @router.post("/{campaign_id}/repair")
-async def repair_campaign(campaign_id: int, db: Session = Depends(get_db)):
+async def repair_campaign(campaign_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Repair an incomplete campaign - create missing Meta components."""
-    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == user_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada")
 
@@ -566,8 +580,8 @@ async def repair_campaign(campaign_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Esta campanha nao tem ID real do Meta Ads.")
 
     # Get settings
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    if not settings or not settings.meta_access_token or not settings.meta_ad_account_id:
+    settings = _get_user_settings(db, user_id)
+    if not settings.meta_access_token or not settings.meta_ad_account_id:
         raise HTTPException(status_code=400, detail="Meta Ads nao configurado.")
 
     page_id = settings.facebook_page_id or ""
@@ -683,14 +697,14 @@ async def repair_campaign(campaign_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{campaign_id}/review-status")
-async def get_campaign_review_status(campaign_id: int, db: Session = Depends(get_db)):
+async def get_campaign_review_status(campaign_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Get ad review status from Meta for a campaign."""
-    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == user_id).first()
     if not campaign or not campaign.meta_ad_id:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada ou sem anuncio Meta vinculado")
 
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    if not settings or not settings.meta_access_token:
+    settings = _get_user_settings(db, user_id)
+    if not settings.meta_access_token:
         raise HTTPException(status_code=400, detail="Meta Ads nao configurado.")
 
     meta_service = MetaAdsService(
@@ -705,14 +719,15 @@ async def upload_campaign_image(
     campaign_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
     """Upload an image to Meta Ads for a specific campaign."""
-    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == user_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada")
 
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    if not settings or not settings.meta_access_token or not settings.meta_ad_account_id:
+    settings = _get_user_settings(db, user_id)
+    if not settings.meta_access_token or not settings.meta_ad_account_id:
         raise HTTPException(status_code=400, detail="Meta Ads nao configurado.")
 
     meta_service = MetaAdsService(
@@ -729,8 +744,8 @@ async def upload_campaign_image(
 
 
 @router.delete("/{campaign_id}")
-async def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
-    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+async def delete_campaign(campaign_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == user_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campanha nao encontrada")
     db.delete(campaign)

@@ -5,6 +5,7 @@ import os
 import uuid
 import json
 from app.core.database import get_db
+from app.core.auth import get_current_user_id
 from app.models.chat import ChatMessage
 from app.models.settings import Settings
 from app.services.chat_ai import ChatAIService
@@ -12,11 +13,22 @@ from app.services.chat_ai import ChatAIService
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
+def _get_user_settings(db: Session, user_id: int) -> Settings:
+    settings = db.query(Settings).filter(Settings.user_id == user_id).first()
+    if not settings:
+        settings = Settings(user_id=user_id)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return settings
+
+
 @router.post("")
 async def send_message(
     message: str = Form(...),
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
     """Send a message and get AI response."""
 
@@ -24,9 +36,9 @@ async def send_message(
     attachment_path = None
     attachment_type = None
     if file:
-        upload_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads"
-        )
+        _backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        _data_dir = "/app/data" if os.path.exists("/app/data") else _backend_dir
+        upload_dir = os.path.join(_data_dir, "uploads")
         os.makedirs(upload_dir, exist_ok=True)
         ext = os.path.splitext(file.filename)[1]
         filename = f"chat_{uuid.uuid4().hex}{ext}"
@@ -48,12 +60,13 @@ async def send_message(
         content=message,
         attachment_path=attachment_path,
         attachment_type=attachment_type,
+        user_id=user_id,
     )
     db.add(user_msg)
     db.commit()
 
-    # Get chat history
-    history = db.query(ChatMessage).order_by(ChatMessage.created_at.asc()).all()
+    # Get chat history for this user
+    history = db.query(ChatMessage).filter(ChatMessage.user_id == user_id).order_by(ChatMessage.created_at.asc()).all()
     history_dicts = []
     for h in history:
         content = h.content
@@ -62,22 +75,22 @@ async def send_message(
         history_dicts.append({"role": h.role, "content": content})
 
     # Get AI settings
-    settings = db.query(Settings).filter(Settings.id == 1).first()
-    ai_key = settings.ai_api_key if settings else ""
-    ai_provider = settings.ai_provider if settings else "claude"
+    settings = _get_user_settings(db, user_id)
+    ai_key = settings.ai_api_key or ""
+    ai_provider = settings.ai_provider or "claude"
 
     # Check config status for meta and whatsapp
-    meta_configured = bool(settings and settings.meta_app_id and settings.meta_access_token and settings.meta_ad_account_id)
-    whatsapp_configured = bool(settings and settings.whatsapp_phone_id and settings.whatsapp_token)
+    meta_configured = bool(settings.meta_app_id and settings.meta_access_token and settings.meta_ad_account_id)
+    whatsapp_configured = bool(settings.whatsapp_phone_id and settings.whatsapp_token)
 
     # Load Meta readiness context for the AI
     meta_readiness = {
-        "has_app_credentials": bool(settings and settings.meta_app_id and settings.meta_app_secret),
-        "is_connected": bool(settings and settings.meta_access_token),
-        "user_name": (settings.meta_user_name if settings else "") or "",
-        "has_ad_account": bool(settings and settings.meta_ad_account_id),
-        "ad_account_id": (settings.meta_ad_account_id if settings else "") or "",
-        "has_page": bool(settings and settings.facebook_page_id),
+        "has_app_credentials": bool(settings.meta_app_id and settings.meta_app_secret),
+        "is_connected": bool(settings.meta_access_token),
+        "user_name": settings.meta_user_name or "",
+        "has_ad_account": bool(settings.meta_ad_account_id),
+        "ad_account_id": settings.meta_ad_account_id or "",
+        "has_page": bool(settings.facebook_page_id),
         "has_payment": False,
         "is_prepaid": False,
         "balance": 0,
@@ -100,7 +113,7 @@ async def send_message(
     # Process with AI
     service = ChatAIService(ai_api_key=ai_key, ai_provider=ai_provider, meta_configured=meta_configured, whatsapp_configured=whatsapp_configured, meta_readiness=meta_readiness)
     response_text, action_taken, action_data, ai_fallback, ai_error = await service.process_message(
-        message, history_dicts, db, attachment_path
+        message, history_dicts, db, attachment_path, user_id=user_id
     )
 
     # Save assistant response
@@ -109,6 +122,7 @@ async def send_message(
         content=response_text,
         action_taken=action_taken,
         action_data=action_data,
+        user_id=user_id,
     )
     db.add(assistant_msg)
     db.commit()
@@ -127,9 +141,9 @@ async def send_message(
 
 
 @router.get("/history")
-async def get_history(db: Session = Depends(get_db)):
+async def get_history(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Get chat history."""
-    messages = db.query(ChatMessage).order_by(ChatMessage.created_at.asc()).all()
+    messages = db.query(ChatMessage).filter(ChatMessage.user_id == user_id).order_by(ChatMessage.created_at.asc()).all()
     return [
         {
             "id": m.id,
@@ -146,8 +160,8 @@ async def get_history(db: Session = Depends(get_db)):
 
 
 @router.delete("/clear")
-async def clear_history(db: Session = Depends(get_db)):
-    """Clear all chat history."""
-    db.query(ChatMessage).delete()
+async def clear_history(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    """Clear all chat history for current user."""
+    db.query(ChatMessage).filter(ChatMessage.user_id == user_id).delete()
     db.commit()
     return {"message": "Chat limpo com sucesso"}

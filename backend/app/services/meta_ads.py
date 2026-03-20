@@ -19,6 +19,11 @@ META_ERROR_MAP = {
     1885272: {"message": "Orcamento diario abaixo do minimo permitido. Aumente para pelo menos R$20/dia.", "action": "increase_budget", "retryable": False},
     1885621: {"message": "Orcamento definido no nivel errado. Verifique as configuracoes da campanha.", "action": "check_budget", "retryable": False},
     2606: {"message": "Nao foi possivel visualizar o anuncio. Verifique o criativo.", "action": "check_creative", "retryable": False},
+    1487930: {
+        "message": "Seu app Meta precisa ser ativado para criar anuncios. Acesse developers.facebook.com/apps, selecione seu app e ative o modo Live no topo da pagina.",
+        "action": "app_mode",
+        "retryable": False,
+    },
 }
 
 # Ad account status codes
@@ -50,6 +55,14 @@ def parse_meta_error(response_data: dict, status_code: int = 0) -> dict:
     # Prefer Meta's user-friendly message if available
     user_msg = error_obj.get("error_user_msg") or error_info["message"]
     technical_msg = error_obj.get("message", "")
+
+    # Detect development mode error by message text (Meta doesn't always use consistent error codes)
+    combined_text = (technical_msg + " " + (error_obj.get("error_user_msg", "") or "")).lower()
+    if "modo de desenvolvimento" in combined_text or "development mode" in combined_text:
+        dev_mode_info = META_ERROR_MAP.get(1487930, {})
+        if dev_mode_info:
+            user_msg = dev_mode_info["message"]
+            error_info = dev_mode_info
 
     # Token expiry subcodes
     is_token_expired = error_code == 190 or error_code == 102
@@ -116,6 +129,67 @@ class MetaAdsService:
                 raise
 
         return last_response
+
+    async def check_app_mode(self, app_id: str = "") -> Dict:
+        """Check if the Meta App is in Development or Live mode.
+
+        Uses a lightweight API call to detect development mode.
+        If error 1487930 is returned or the response indicates dev mode,
+        returns mode='development'. Otherwise returns mode='live'.
+        """
+        if self.is_mock:
+            return {"mode": "unknown", "app_id": "", "app_name": "", "is_mock": True}
+
+        if not app_id:
+            return {"mode": "unknown", "app_id": "", "app_name": "", "error": "App ID nao configurado."}
+
+        try:
+            # First, get basic app info
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.get(
+                    f"{self.base_url}/{app_id}",
+                    params={
+                        "access_token": self.access_token,
+                        "fields": "id,name,category",
+                    },
+                )
+
+                app_name = ""
+                if response.status_code == 200:
+                    data = response.json()
+                    app_name = data.get("name", "")
+                elif response.status_code != 200:
+                    error_data = response.json() if response.text else {}
+                    parsed = parse_meta_error(error_data, response.status_code)
+                    # Error 1487930 directly means development mode
+                    if parsed["error_code"] == 1487930 or parsed["action"] == "app_mode":
+                        return {"mode": "development", "app_id": app_id, "app_name": app_name}
+                    return {"mode": "unknown", "app_id": app_id, "app_name": app_name, "error": parsed["user_message"]}
+
+            # Try a lightweight ad-related call to detect dev mode restrictions
+            # Fetching the ad account info is a good test
+            if self.ad_account_id:
+                test_response = await self._request_with_retry(
+                    "GET",
+                    f"{self.base_url}/{self.ad_account_id}",
+                    max_retries=0,
+                    params={
+                        "access_token": self.access_token,
+                        "fields": "account_status,name",
+                    },
+                )
+                if test_response.status_code != 200:
+                    error_data = test_response.json() if test_response.text else {}
+                    parsed = parse_meta_error(error_data, test_response.status_code)
+                    combined_text = (parsed.get("technical_message", "") + " " + parsed.get("user_message", "")).lower()
+                    if parsed["error_code"] == 1487930 or parsed["action"] == "app_mode" or "development mode" in combined_text or "modo de desenvolvimento" in combined_text:
+                        return {"mode": "development", "app_id": app_id, "app_name": app_name}
+
+            # If we got here without errors, the app can make API calls successfully
+            return {"mode": "live", "app_id": app_id, "app_name": app_name}
+
+        except Exception as e:
+            return {"mode": "unknown", "app_id": app_id, "app_name": "", "error": f"Erro ao verificar modo do app: {str(e)}"}
 
     async def check_account_status(self) -> Dict:
         """Check if ad account is active and operational."""
@@ -316,8 +390,9 @@ class MetaAdsService:
             return {"id": None, "status": "ERROR", "is_mock": False, "error": f"Erro ao criar Ad Set: {str(e)}"}
 
     async def create_ad_creative(
-        self, name: str, message: str, headline: str, image_url: str,
-        link: str = "https://example.com", cta_type: str = "LEARN_MORE"
+        self, name: str, message: str, headline: str, image_url: str = "",
+        link: str = "https://example.com", cta_type: str = "LEARN_MORE",
+        image_hash: str = ""
     ) -> Dict:
         """Create Ad Creative with image, text, and CTA."""
         if self.is_mock:
@@ -326,7 +401,7 @@ class MetaAdsService:
         if not self.page_id:
             return {"id": None, "error": "Facebook Page ID nao configurado. Reconecte sua conta Meta nas Configuracoes."}
 
-        if not image_url:
+        if not image_url and not image_hash:
             return {"id": None, "error": "Imagem do anuncio nao disponivel. Gere um criativo com imagem antes de criar a campanha."}
 
         try:
@@ -348,18 +423,27 @@ class MetaAdsService:
             if cta_type and cta_type.upper() in valid_ctas:
                 resolved_cta = cta_type.upper()
 
+            link_data = {
+                "message": message,
+                "link": link,
+                "name": headline,
+                "call_to_action": {
+                    "type": resolved_cta,
+                    "value": {"link": link},
+                },
+            }
+            # Meta API v22+ requires image_hash; image_url is no longer accepted in link_data
+            if image_hash:
+                link_data["image_hash"] = image_hash
+            elif image_url and image_url.startswith("http"):
+                # Only use image_url for external URLs, upload local images first
+                link_data["image_hash"] = await self._upload_url_to_hash(image_url)
+                if not link_data["image_hash"]:
+                    return {"id": None, "error": "Falha ao processar imagem. Tente regenerar o criativo."}
+
             object_story_spec = {
                 "page_id": self.page_id,
-                "link_data": {
-                    "message": message,
-                    "link": link,
-                    "name": headline,
-                    "image_url": image_url,
-                    "call_to_action": {
-                        "type": resolved_cta,
-                        "value": {"link": link},
-                    },
-                },
+                "link_data": link_data,
             }
 
             response = await self._request_with_retry(
@@ -478,21 +562,39 @@ class MetaAdsService:
             return result
         result["adset_id"] = adset.get("id")
 
-        # Step 3: Create Ad Creative
+        # Step 3: Handle image - upload local images to Meta first
+        image_hash = ""
+        if ad_image_url and ad_image_url.startswith("/uploads/"):
+            # Local image - need to upload to Meta
+            from pathlib import Path
+            _data_dir = Path("/app/data") if Path("/app/data").exists() else Path(__file__).parent.parent.parent
+            local_path = _data_dir / ad_image_url.lstrip("/")
+            if local_path.exists():
+                image_bytes = local_path.read_bytes()
+                upload_result = await self.upload_image(image_bytes, local_path.name)
+                if upload_result.get("image_hash"):
+                    image_hash = upload_result["image_hash"]
+                else:
+                    result["errors"].append(upload_result.get("error", "Falha no upload da imagem para o Meta"))
+            else:
+                result["errors"].append(f"Arquivo de imagem nao encontrado: {ad_image_url}")
+
+        # Step 4: Create Ad Creative
         creative = await self.create_ad_creative(
             name=f"Creative - {campaign_name}",
             message=ad_message,
             headline=ad_headline,
-            image_url=ad_image_url,
+            image_url=ad_image_url if not image_hash else "",
             link=ad_link,
             cta_type=ad_cta,
+            image_hash=image_hash,
         )
         if creative.get("error"):
             result["errors"].append(creative["error"])
             return result
         result["creative_id"] = creative.get("id")
 
-        # Step 4: Create Ad (with tracking_specs and url_tags)
+        # Step 5: Create Ad (with tracking_specs and url_tags)
         ad = await self.create_ad(
             adset_id=result["adset_id"],
             creative_id=result["creative_id"],
@@ -523,6 +625,18 @@ class MetaAdsService:
         """Build UTM parameters for ad URLs."""
         safe_name = campaign_name.replace(" ", "-").lower()[:50]
         return f"utm_source=facebook&utm_medium=paid_social&utm_campaign={safe_name}&utm_content={{{{ad.name}}}}"
+
+    async def _upload_url_to_hash(self, image_url: str) -> str:
+        """Download image from URL and upload to Meta, returning image_hash."""
+        try:
+            async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+                resp = await client.get(image_url)
+                if resp.status_code == 200 and len(resp.content) > 1000:
+                    result = await self.upload_image(resp.content, "ad_image.jpg")
+                    return result.get("image_hash", "")
+        except Exception as e:
+            print(f"Failed to download/upload image from URL: {e}")
+        return ""
 
     async def upload_image(self, image_bytes: bytes, filename: str = "ad_image.jpg") -> Dict:
         """Upload image to Meta Ads and return image_hash."""
