@@ -71,6 +71,8 @@ export class SettingsComponent implements OnInit {
   prerequisites: any = null;
   prerequisitesLoading = false;
 
+  expandedHelp: string | null = null;
+
   constructor(
     private settingsService: SettingsService,
     private snackBar: MatSnackBar,
@@ -253,6 +255,10 @@ export class SettingsComponent implements OnInit {
         this.snackBar.open('Conta de anuncios selecionada!', 'OK', { duration: 3000 });
       },
     });
+  }
+
+  toggleHelp(item: string): void {
+    this.expandedHelp = this.expandedHelp === item ? null : item;
   }
 
   disconnectMeta(): void {

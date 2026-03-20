@@ -19,90 +19,237 @@
       </mat-card-header>
       <mat-card-content>
         <div class="prereq-grid">
-          <div class="prereq-item" [class.done]="prerequisites.meta_connected">
-            <mat-icon [class.check]="prerequisites.meta_connected" [class.missing]="!prerequisites.meta_connected">
-              {{ prerequisites.meta_connected ? 'check_circle' : 'cancel' }}
-            </mat-icon>
-            <div class="prereq-info">
-              <span class="prereq-label">Conta Meta conectada</span>
-              <span class="prereq-hint">{{ prerequisites.meta_connected ? 'Conectado' : 'Conecte na aba Credenciais > Meta Ads' }}</span>
+          <!-- Meta Conectado -->
+          <div class="prereq-item-wrapper">
+            <div class="prereq-item" [class.done]="prerequisites.meta_connected">
+              <mat-icon [class.check]="prerequisites.meta_connected" [class.missing]="!prerequisites.meta_connected">
+                {{ prerequisites.meta_connected ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <div class="prereq-info">
+                <span class="prereq-label">Conta Meta conectada</span>
+                <span class="prereq-hint">{{ prerequisites.meta_connected ? 'Conectado' : 'Conecte na aba Credenciais > Meta Ads' }}</span>
+              </div>
+              <button mat-icon-button class="help-btn" (click)="toggleHelp('meta_connected'); $event.stopPropagation()">
+                <mat-icon>help_outline</mat-icon>
+              </button>
             </div>
+            @if (expandedHelp === 'meta_connected') {
+              <div class="help-panel">
+                <div class="help-title">Como conectar sua conta Meta</div>
+                <ol class="help-steps">
+                  <li>Na secao "Credenciais" abaixo, preencha o App ID e App Secret do seu app Meta</li>
+                  <li>Clique em "Conectar com Meta" e autorize o acesso</li>
+                  <li>Selecione o portfolio empresarial (Business Manager) que contem sua conta de anuncios</li>
+                </ol>
+                <a class="help-link" href="https://developers.facebook.com/apps/" target="_blank" rel="noopener">
+                  <mat-icon>open_in_new</mat-icon> Criar app no Meta for Developers
+                </a>
+              </div>
+            }
           </div>
 
-          <div class="prereq-item" [class.done]="prerequisites.ad_account">
-            <mat-icon [class.check]="prerequisites.ad_account" [class.missing]="!prerequisites.ad_account">
-              {{ prerequisites.ad_account ? 'check_circle' : 'cancel' }}
-            </mat-icon>
-            <div class="prereq-info">
-              <span class="prereq-label">Conta de Anuncios</span>
-              <span class="prereq-hint">{{ prerequisites.ad_account ? 'Selecionada' : 'Selecione apos conectar o Meta' }}</span>
+          <!-- Conta de Anuncios -->
+          <div class="prereq-item-wrapper">
+            <div class="prereq-item" [class.done]="prerequisites.ad_account">
+              <mat-icon [class.check]="prerequisites.ad_account" [class.missing]="!prerequisites.ad_account">
+                {{ prerequisites.ad_account ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <div class="prereq-info">
+                <span class="prereq-label">Conta de Anuncios</span>
+                <span class="prereq-hint">{{ prerequisites.ad_account ? 'Selecionada' : 'Selecione apos conectar o Meta' }}</span>
+              </div>
+              <button mat-icon-button class="help-btn" (click)="toggleHelp('ad_account'); $event.stopPropagation()">
+                <mat-icon>help_outline</mat-icon>
+              </button>
             </div>
+            @if (expandedHelp === 'ad_account') {
+              <div class="help-panel">
+                <div class="help-title">Como selecionar a conta de anuncios</div>
+                <ol class="help-steps">
+                  <li>Apos conectar o Meta, as contas de anuncios disponiveis aparecerao automaticamente</li>
+                  <li>Selecione a conta que deseja usar para veicular campanhas</li>
+                  <li>A conta deve estar ATIVA e com pagamento configurado</li>
+                </ol>
+                <a class="help-link" href="https://business.facebook.com/settings/ad-accounts" target="_blank" rel="noopener">
+                  <mat-icon>open_in_new</mat-icon> Gerenciar contas de anuncios
+                </a>
+              </div>
+            }
           </div>
 
-          <div class="prereq-item" [class.done]="prerequisites.facebook_page">
-            <mat-icon [class.check]="prerequisites.facebook_page" [class.missing]="!prerequisites.facebook_page">
-              {{ prerequisites.facebook_page ? 'check_circle' : 'cancel' }}
-            </mat-icon>
-            <div class="prereq-info">
-              <span class="prereq-label">Pagina do Facebook</span>
-              <span class="prereq-hint">{{ prerequisites.facebook_page ? 'Vinculada' : 'Crie em https://www.facebook.com/pages/creation/' }}</span>
+          <!-- Pagina do Facebook -->
+          <div class="prereq-item-wrapper">
+            <div class="prereq-item" [class.done]="prerequisites.facebook_page">
+              <mat-icon [class.check]="prerequisites.facebook_page" [class.missing]="!prerequisites.facebook_page">
+                {{ prerequisites.facebook_page ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <div class="prereq-info">
+                <span class="prereq-label">Pagina do Facebook</span>
+                <span class="prereq-hint">{{ prerequisites.facebook_page ? 'Vinculada' : 'Crie em https://www.facebook.com/pages/creation/' }}</span>
+              </div>
+              <button mat-icon-button class="help-btn" (click)="toggleHelp('facebook_page'); $event.stopPropagation()">
+                <mat-icon>help_outline</mat-icon>
+              </button>
             </div>
+            @if (expandedHelp === 'facebook_page') {
+              <div class="help-panel">
+                <div class="help-title">Como vincular uma pagina do Facebook</div>
+                <ol class="help-steps">
+                  <li>Voce precisa ter uma Pagina do Facebook vinculada ao seu Business Manager</li>
+                  <li>Os anuncios aparecem em nome dessa pagina no Facebook e Instagram</li>
+                  <li>Apos conectar o Meta, as paginas disponiveis sao listadas automaticamente</li>
+                </ol>
+                <a class="help-link" href="https://www.facebook.com/pages/creation/" target="_blank" rel="noopener">
+                  <mat-icon>open_in_new</mat-icon> Criar pagina no Facebook
+                </a>
+              </div>
+            }
           </div>
 
-          <div class="prereq-item" [class.done]="prerequisites.pixel_configured">
-            <mat-icon [class.check]="prerequisites.pixel_configured" [class.missing]="!prerequisites.pixel_configured">
-              {{ prerequisites.pixel_configured ? 'check_circle' : 'cancel' }}
-            </mat-icon>
-            <div class="prereq-info">
-              <span class="prereq-label">Meta Pixel</span>
-              <span class="prereq-hint">{{ prerequisites.pixel_configured ? 'Configurado' : 'Opcional - configure para rastrear conversoes' }}</span>
+          <!-- Pixel -->
+          <div class="prereq-item-wrapper">
+            <div class="prereq-item" [class.done]="prerequisites.pixel_configured">
+              <mat-icon [class.check]="prerequisites.pixel_configured" [class.missing]="!prerequisites.pixel_configured">
+                {{ prerequisites.pixel_configured ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <div class="prereq-info">
+                <span class="prereq-label">Meta Pixel</span>
+                <span class="prereq-hint">{{ prerequisites.pixel_configured ? 'Configurado' : 'Opcional - configure para rastrear conversoes' }}</span>
+              </div>
+              <button mat-icon-button class="help-btn" (click)="toggleHelp('pixel_configured'); $event.stopPropagation()">
+                <mat-icon>help_outline</mat-icon>
+              </button>
             </div>
+            @if (expandedHelp === 'pixel_configured') {
+              <div class="help-panel">
+                <div class="help-title">Como configurar o Meta Pixel</div>
+                <ol class="help-steps">
+                  <li>O Pixel rastreia conversoes no seu site (opcional mas recomendado)</li>
+                  <li>Va na aba "Pixel" nas configuracoes para criar ou vincular um pixel</li>
+                  <li>Instale o codigo do pixel no seu site para rastrear visitantes</li>
+                </ol>
+                <a class="help-link" href="https://business.facebook.com/events_manager" target="_blank" rel="noopener">
+                  <mat-icon>open_in_new</mat-icon> Gerenciar pixels no Events Manager
+                </a>
+              </div>
+            }
           </div>
 
-          <div class="prereq-item" [class.done]="prerequisites.has_product">
-            <mat-icon [class.check]="prerequisites.has_product" [class.missing]="!prerequisites.has_product">
-              {{ prerequisites.has_product ? 'check_circle' : 'cancel' }}
-            </mat-icon>
-            <div class="prereq-info">
-              <span class="prereq-label">Produto cadastrado</span>
-              <span class="prereq-hint">{{ prerequisites.has_product ? 'Pelo menos 1 produto' : 'Cadastre pelo chat ou aba Produtos' }}</span>
+          <!-- Produto cadastrado -->
+          <div class="prereq-item-wrapper">
+            <div class="prereq-item" [class.done]="prerequisites.has_product">
+              <mat-icon [class.check]="prerequisites.has_product" [class.missing]="!prerequisites.has_product">
+                {{ prerequisites.has_product ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <div class="prereq-info">
+                <span class="prereq-label">Produto cadastrado</span>
+                <span class="prereq-hint">{{ prerequisites.has_product ? 'Pelo menos 1 produto' : 'Cadastre pelo chat ou aba Produtos' }}</span>
+              </div>
+              <button mat-icon-button class="help-btn" (click)="toggleHelp('has_product'); $event.stopPropagation()">
+                <mat-icon>help_outline</mat-icon>
+              </button>
             </div>
+            @if (expandedHelp === 'has_product') {
+              <div class="help-panel">
+                <div class="help-title">Como cadastrar um produto</div>
+                <ol class="help-steps">
+                  <li>Use o chat para cadastrar: diga "quero cadastrar um produto"</li>
+                  <li>Ou acesse a aba "Produtos" e clique em "Novo Produto"</li>
+                  <li>Preencha: nome, descricao, preco e URL do site/landing page</li>
+                </ol>
+              </div>
+            }
           </div>
 
-          <div class="prereq-item" [class.done]="prerequisites.has_creative">
-            <mat-icon [class.check]="prerequisites.has_creative" [class.missing]="!prerequisites.has_creative">
-              {{ prerequisites.has_creative ? 'check_circle' : 'cancel' }}
-            </mat-icon>
-            <div class="prereq-info">
-              <span class="prereq-label">Criativo gerado</span>
-              <span class="prereq-hint">{{ prerequisites.has_creative ? 'Pelo menos 1 criativo' : 'Gere pelo chat apos cadastrar produto' }}</span>
+          <!-- Criativo gerado -->
+          <div class="prereq-item-wrapper">
+            <div class="prereq-item" [class.done]="prerequisites.has_creative">
+              <mat-icon [class.check]="prerequisites.has_creative" [class.missing]="!prerequisites.has_creative">
+                {{ prerequisites.has_creative ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <div class="prereq-info">
+                <span class="prereq-label">Criativo gerado</span>
+                <span class="prereq-hint">{{ prerequisites.has_creative ? 'Pelo menos 1 criativo' : 'Gere pelo chat apos cadastrar produto' }}</span>
+              </div>
+              <button mat-icon-button class="help-btn" (click)="toggleHelp('has_creative'); $event.stopPropagation()">
+                <mat-icon>help_outline</mat-icon>
+              </button>
             </div>
+            @if (expandedHelp === 'has_creative') {
+              <div class="help-panel">
+                <div class="help-title">Como gerar criativos</div>
+                <ol class="help-steps">
+                  <li>Apos cadastrar um produto, peca no chat: "gere criativos para [produto]"</li>
+                  <li>A IA gerara imagens e textos para seu anuncio</li>
+                  <li>Aprove pelo menos 1 criativo antes de criar a campanha</li>
+                </ol>
+              </div>
+            }
           </div>
 
-          <div class="prereq-item" [class.done]="prerequisites.payment_method">
-            <mat-icon [class.check]="prerequisites.payment_method" [class.missing]="!prerequisites.payment_method">
-              {{ prerequisites.payment_method ? 'check_circle' : 'cancel' }}
-            </mat-icon>
-            <div class="prereq-info">
-              <span class="prereq-label">Metodo de pagamento</span>
-              <span class="prereq-hint">{{ prerequisites.payment_method ? 'Configurado' : 'Adicione em https://www.facebook.com/ads/manager/account_settings/account_billing/' }}</span>
+          <!-- Metodo de pagamento -->
+          <div class="prereq-item-wrapper">
+            <div class="prereq-item" [class.done]="prerequisites.payment_method">
+              <mat-icon [class.check]="prerequisites.payment_method" [class.missing]="!prerequisites.payment_method">
+                {{ prerequisites.payment_method ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <div class="prereq-info">
+                <span class="prereq-label">Metodo de pagamento</span>
+                <span class="prereq-hint">{{ prerequisites.payment_method ? 'Configurado' : 'Adicione em https://www.facebook.com/ads/manager/account_settings/account_billing/' }}</span>
+              </div>
+              <button mat-icon-button class="help-btn" (click)="toggleHelp('payment_method'); $event.stopPropagation()">
+                <mat-icon>help_outline</mat-icon>
+              </button>
             </div>
+            @if (expandedHelp === 'payment_method') {
+              <div class="help-panel">
+                <div class="help-title">Como configurar pagamento</div>
+                <ol class="help-steps">
+                  <li>Acesse o Gerenciador de Anuncios do Meta e configure um metodo de pagamento</li>
+                  <li>Pode ser cartao de credito, boleto ou Pix (depende do pais)</li>
+                  <li>Sem pagamento configurado, as campanhas nao serao veiculadas</li>
+                </ol>
+                <a class="help-link" href="https://www.facebook.com/ads/manager/account_settings/account_billing/" target="_blank" rel="noopener">
+                  <mat-icon>open_in_new</mat-icon> Configurar pagamento no Meta
+                </a>
+              </div>
+            }
           </div>
 
-          <div class="prereq-item" [class.done]="prerequisites.app_mode_live">
-            <mat-icon [class.check]="prerequisites.app_mode_live" [class.missing]="!prerequisites.app_mode_live && prerequisites.app_mode === 'development'">
-              {{ prerequisites.app_mode_live ? 'check_circle' : (prerequisites.app_mode === 'development' ? 'cancel' : 'help_outline') }}
-            </mat-icon>
-            <div class="prereq-info">
-              <span class="prereq-label">App Meta em modo Live</span>
-              @if (prerequisites.app_mode_live) {
-                <span class="prereq-hint">App em modo Live (producao)</span>
-              } @else if (prerequisites.app_mode === 'development') {
-                <span class="prereq-hint prereq-hint-warn">App em modo Development - mude para Live em developers.facebook.com/apps/</span>
-              } @else {
-                <span class="prereq-hint">Modo desconhecido - conecte o Meta para verificar</span>
-              }
+          <!-- App Mode Live -->
+          <div class="prereq-item-wrapper">
+            <div class="prereq-item" [class.done]="prerequisites.app_mode_live">
+              <mat-icon [class.check]="prerequisites.app_mode_live" [class.missing]="!prerequisites.app_mode_live && prerequisites.app_mode === 'development'">
+                {{ prerequisites.app_mode_live ? 'check_circle' : (prerequisites.app_mode === 'development' ? 'cancel' : 'help_outline') }}
+              </mat-icon>
+              <div class="prereq-info">
+                <span class="prereq-label">App Meta em modo Live</span>
+                @if (prerequisites.app_mode_live) {
+                  <span class="prereq-hint">App em modo Live (producao)</span>
+                } @else if (prerequisites.app_mode === 'development') {
+                  <span class="prereq-hint prereq-hint-warn">App em modo Development - mude para Live em developers.facebook.com/apps/</span>
+                } @else {
+                  <span class="prereq-hint">Modo desconhecido - conecte o Meta para verificar</span>
+                }
+              </div>
+              <button mat-icon-button class="help-btn" (click)="toggleHelp('app_mode_live'); $event.stopPropagation()">
+                <mat-icon>help_outline</mat-icon>
+              </button>
             </div>
+            @if (expandedHelp === 'app_mode_live') {
+              <div class="help-panel">
+                <div class="help-title">Como ativar o modo Live</div>
+                <ol class="help-steps">
+                  <li>Acesse o Meta for Developers (developers.facebook.com)</li>
+                  <li>Selecione seu app "Vendedor IA"</li>
+                  <li>No menu lateral, clique em "Publicar" para mudar de Desenvolvimento para Live</li>
+                  <li>O Meta pode pedir revisao do app antes de publicar</li>
+                </ol>
+                <a class="help-link" href="https://developers.facebook.com/apps/" target="_blank" rel="noopener">
+                  <mat-icon>open_in_new</mat-icon> Abrir Meta for Developers
+                </a>
+              </div>
+            }
           </div>
         </div>
 
