@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = ["http://localhost:4200", "http://localhost:4201"]
     TOGETHER_API_KEY: str = "tgp_v1_ucjI9KBkxkfldB69gno2P8GpkFMc9_JLYANhY0P_9VQ"
     GOOGLE_CLIENT_ID: str = ""
+    META_FB_LOGIN_CONFIG_ID: str = "1675802386923357"
 
     class Config:
         env_file = ".env"

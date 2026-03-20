@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.core.auth import get_current_user_id
+from app.core.config import settings as app_settings
 from app.models.settings import Settings
 from app.services.meta_oauth import MetaOAuthService
 
@@ -40,7 +41,7 @@ async def get_auth_url(request: Request, db: Session = Depends(get_db), user_id:
         return {"error": "App ID e App Secret precisam estar preenchidos primeiro"}
 
     redirect_uri = _get_redirect_uri(request)
-    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret)
+    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret, config_id=app_settings.META_FB_LOGIN_CONFIG_ID)
     url = service.get_auth_url(redirect_uri)
     return {"auth_url": url}
 
@@ -53,7 +54,7 @@ async def oauth_callback(request: Request, code: str = Query(...), db: Session =
         return {"error": "Configuracoes incompletas"}
 
     redirect_uri = _get_redirect_uri(request)
-    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret)
+    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret, config_id=app_settings.META_FB_LOGIN_CONFIG_ID)
 
     # Exchange code for token
     result = await service.exchange_code(code, redirect_uri)
@@ -201,7 +202,7 @@ async def reconnect(request: Request, db: Session = Depends(get_db), user_id: in
     if not settings.meta_app_id or not settings.meta_app_secret:
         return {"error": "App ID e App Secret nao configurados"}
 
-    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret)
+    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret, config_id=app_settings.META_FB_LOGIN_CONFIG_ID)
     redirect_uri = _get_redirect_uri(request)
     url = service.get_auth_url(redirect_uri)
     return {"success": True, "auth_url": url}

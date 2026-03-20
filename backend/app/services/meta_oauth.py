@@ -8,12 +8,26 @@ class MetaOAuthService:
     GRAPH_URL = "https://graph.facebook.com/v22.0"
     OAUTH_URL = "https://www.facebook.com/v22.0/dialog/oauth"
 
-    def __init__(self, app_id: str, app_secret: str):
+    def __init__(self, app_id: str, app_secret: str, config_id: str = ""):
         self.app_id = app_id
         self.app_secret = app_secret
+        self.config_id = config_id
 
     def get_auth_url(self, redirect_uri: str) -> str:
-        """Generate Facebook OAuth authorization URL."""
+        """Generate Facebook OAuth authorization URL.
+
+        If config_id is set (Facebook Login for Business), uses config_id
+        instead of scope parameters. Falls back to scope-based URL otherwise.
+        """
+        if self.config_id:
+            return (
+                f"{self.OAUTH_URL}"
+                f"?client_id={self.app_id}"
+                f"&redirect_uri={redirect_uri}"
+                f"&config_id={self.config_id}"
+                f"&response_type=code"
+            )
+        # Fallback: scope-based URL (backwards compatibility)
         scopes = "ads_management,ads_read,business_management,pages_read_engagement"
         return (
             f"{self.OAUTH_URL}"
