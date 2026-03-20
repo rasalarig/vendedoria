@@ -29,23 +29,10 @@
                 <span class="prereq-label">Conta Meta conectada</span>
                 <span class="prereq-hint">{{ prerequisites.meta_connected ? 'Conectado' : 'Conecte na aba Credenciais > Meta Ads' }}</span>
               </div>
-              <button mat-icon-button class="help-btn" (click)="toggleHelp('meta_connected'); $event.stopPropagation()">
+              <button mat-icon-button class="help-btn" (click)="openHelpModal('meta_connected'); $event.stopPropagation()">
                 <mat-icon>help_outline</mat-icon>
               </button>
             </div>
-            @if (expandedHelp === 'meta_connected') {
-              <div class="help-panel">
-                <div class="help-title">Como conectar sua conta Meta</div>
-                <ol class="help-steps">
-                  <li>Na secao "Credenciais" abaixo, preencha o App ID e App Secret do seu app Meta</li>
-                  <li>Clique em "Conectar com Meta" e autorize o acesso</li>
-                  <li>Selecione o portfolio empresarial (Business Manager) que contem sua conta de anuncios</li>
-                </ol>
-                <a class="help-link" href="https://developers.facebook.com/apps/" target="_blank" rel="noopener">
-                  <mat-icon>open_in_new</mat-icon> Criar app no Meta for Developers
-                </a>
-              </div>
-            }
           </div>
 
           <!-- Conta de Anuncios -->
@@ -58,23 +45,10 @@
                 <span class="prereq-label">Conta de Anuncios</span>
                 <span class="prereq-hint">{{ prerequisites.ad_account ? 'Selecionada' : 'Selecione apos conectar o Meta' }}</span>
               </div>
-              <button mat-icon-button class="help-btn" (click)="toggleHelp('ad_account'); $event.stopPropagation()">
+              <button mat-icon-button class="help-btn" (click)="openHelpModal('ad_account'); $event.stopPropagation()">
                 <mat-icon>help_outline</mat-icon>
               </button>
             </div>
-            @if (expandedHelp === 'ad_account') {
-              <div class="help-panel">
-                <div class="help-title">Como selecionar a conta de anuncios</div>
-                <ol class="help-steps">
-                  <li>Apos conectar o Meta, as contas de anuncios disponiveis aparecerao automaticamente</li>
-                  <li>Selecione a conta que deseja usar para veicular campanhas</li>
-                  <li>A conta deve estar ATIVA e com pagamento configurado</li>
-                </ol>
-                <a class="help-link" href="https://business.facebook.com/settings/ad-accounts" target="_blank" rel="noopener">
-                  <mat-icon>open_in_new</mat-icon> Gerenciar contas de anuncios
-                </a>
-              </div>
-            }
           </div>
 
           <!-- Pagina do Facebook -->
@@ -87,23 +61,10 @@
                 <span class="prereq-label">Pagina do Facebook</span>
                 <span class="prereq-hint">{{ prerequisites.facebook_page ? 'Vinculada' : 'Crie em https://www.facebook.com/pages/creation/' }}</span>
               </div>
-              <button mat-icon-button class="help-btn" (click)="toggleHelp('facebook_page'); $event.stopPropagation()">
+              <button mat-icon-button class="help-btn" (click)="openHelpModal('facebook_page'); $event.stopPropagation()">
                 <mat-icon>help_outline</mat-icon>
               </button>
             </div>
-            @if (expandedHelp === 'facebook_page') {
-              <div class="help-panel">
-                <div class="help-title">Como vincular uma pagina do Facebook</div>
-                <ol class="help-steps">
-                  <li>Voce precisa ter uma Pagina do Facebook vinculada ao seu Business Manager</li>
-                  <li>Os anuncios aparecem em nome dessa pagina no Facebook e Instagram</li>
-                  <li>Apos conectar o Meta, as paginas disponiveis sao listadas automaticamente</li>
-                </ol>
-                <a class="help-link" href="https://www.facebook.com/pages/creation/" target="_blank" rel="noopener">
-                  <mat-icon>open_in_new</mat-icon> Criar pagina no Facebook
-                </a>
-              </div>
-            }
           </div>
 
           <!-- Pixel -->
@@ -116,23 +77,10 @@
                 <span class="prereq-label">Meta Pixel</span>
                 <span class="prereq-hint">{{ prerequisites.pixel_configured ? 'Configurado' : 'Opcional - configure para rastrear conversoes' }}</span>
               </div>
-              <button mat-icon-button class="help-btn" (click)="toggleHelp('pixel_configured'); $event.stopPropagation()">
+              <button mat-icon-button class="help-btn" (click)="openHelpModal('pixel_configured'); $event.stopPropagation()">
                 <mat-icon>help_outline</mat-icon>
               </button>
             </div>
-            @if (expandedHelp === 'pixel_configured') {
-              <div class="help-panel">
-                <div class="help-title">Como configurar o Meta Pixel</div>
-                <ol class="help-steps">
-                  <li>O Pixel rastreia conversoes no seu site (opcional mas recomendado)</li>
-                  <li>Va na aba "Pixel" nas configuracoes para criar ou vincular um pixel</li>
-                  <li>Instale o codigo do pixel no seu site para rastrear visitantes</li>
-                </ol>
-                <a class="help-link" href="https://business.facebook.com/events_manager" target="_blank" rel="noopener">
-                  <mat-icon>open_in_new</mat-icon> Gerenciar pixels no Events Manager
-                </a>
-              </div>
-            }
           </div>
 
           <!-- Produto cadastrado -->
@@ -145,20 +93,10 @@
                 <span class="prereq-label">Produto cadastrado</span>
                 <span class="prereq-hint">{{ prerequisites.has_product ? 'Pelo menos 1 produto' : 'Cadastre pelo chat ou aba Produtos' }}</span>
               </div>
-              <button mat-icon-button class="help-btn" (click)="toggleHelp('has_product'); $event.stopPropagation()">
+              <button mat-icon-button class="help-btn" (click)="openHelpModal('has_product'); $event.stopPropagation()">
                 <mat-icon>help_outline</mat-icon>
               </button>
             </div>
-            @if (expandedHelp === 'has_product') {
-              <div class="help-panel">
-                <div class="help-title">Como cadastrar um produto</div>
-                <ol class="help-steps">
-                  <li>Use o chat para cadastrar: diga "quero cadastrar um produto"</li>
-                  <li>Ou acesse a aba "Produtos" e clique em "Novo Produto"</li>
-                  <li>Preencha: nome, descricao, preco e URL do site/landing page</li>
-                </ol>
-              </div>
-            }
           </div>
 
           <!-- Criativo gerado -->
@@ -171,20 +109,10 @@
                 <span class="prereq-label">Criativo gerado</span>
                 <span class="prereq-hint">{{ prerequisites.has_creative ? 'Pelo menos 1 criativo' : 'Gere pelo chat apos cadastrar produto' }}</span>
               </div>
-              <button mat-icon-button class="help-btn" (click)="toggleHelp('has_creative'); $event.stopPropagation()">
+              <button mat-icon-button class="help-btn" (click)="openHelpModal('has_creative'); $event.stopPropagation()">
                 <mat-icon>help_outline</mat-icon>
               </button>
             </div>
-            @if (expandedHelp === 'has_creative') {
-              <div class="help-panel">
-                <div class="help-title">Como gerar criativos</div>
-                <ol class="help-steps">
-                  <li>Apos cadastrar um produto, peca no chat: "gere criativos para [produto]"</li>
-                  <li>A IA gerara imagens e textos para seu anuncio</li>
-                  <li>Aprove pelo menos 1 criativo antes de criar a campanha</li>
-                </ol>
-              </div>
-            }
           </div>
 
           <!-- Metodo de pagamento -->
@@ -197,23 +125,10 @@
                 <span class="prereq-label">Metodo de pagamento</span>
                 <span class="prereq-hint">{{ prerequisites.payment_method ? 'Configurado' : 'Adicione em https://www.facebook.com/ads/manager/account_settings/account_billing/' }}</span>
               </div>
-              <button mat-icon-button class="help-btn" (click)="toggleHelp('payment_method'); $event.stopPropagation()">
+              <button mat-icon-button class="help-btn" (click)="openHelpModal('payment_method'); $event.stopPropagation()">
                 <mat-icon>help_outline</mat-icon>
               </button>
             </div>
-            @if (expandedHelp === 'payment_method') {
-              <div class="help-panel">
-                <div class="help-title">Como configurar pagamento</div>
-                <ol class="help-steps">
-                  <li>Acesse o Gerenciador de Anuncios do Meta e configure um metodo de pagamento</li>
-                  <li>Pode ser cartao de credito, boleto ou Pix (depende do pais)</li>
-                  <li>Sem pagamento configurado, as campanhas nao serao veiculadas</li>
-                </ol>
-                <a class="help-link" href="https://www.facebook.com/ads/manager/account_settings/account_billing/" target="_blank" rel="noopener">
-                  <mat-icon>open_in_new</mat-icon> Configurar pagamento no Meta
-                </a>
-              </div>
-            }
           </div>
 
           <!-- App Mode Live -->
@@ -232,24 +147,10 @@
                   <span class="prereq-hint">Modo desconhecido - conecte o Meta para verificar</span>
                 }
               </div>
-              <button mat-icon-button class="help-btn" (click)="toggleHelp('app_mode_live'); $event.stopPropagation()">
+              <button mat-icon-button class="help-btn" (click)="openHelpModal('app_mode_live'); $event.stopPropagation()">
                 <mat-icon>help_outline</mat-icon>
               </button>
             </div>
-            @if (expandedHelp === 'app_mode_live') {
-              <div class="help-panel">
-                <div class="help-title">Como ativar o modo Live</div>
-                <ol class="help-steps">
-                  <li>Acesse o Meta for Developers (developers.facebook.com)</li>
-                  <li>Selecione seu app "Vendedor IA"</li>
-                  <li>No menu lateral, clique em "Publicar" para mudar de Desenvolvimento para Live</li>
-                  <li>O Meta pode pedir revisao do app antes de publicar</li>
-                </ol>
-                <a class="help-link" href="https://developers.facebook.com/apps/" target="_blank" rel="noopener">
-                  <mat-icon>open_in_new</mat-icon> Abrir Meta for Developers
-                </a>
-              </div>
-            }
           </div>
         </div>
 
@@ -688,4 +589,31 @@
       {{ saving ? 'Salvando...' : 'Salvar Configuracoes' }}
     </button>
   </div>
+
+  <!-- Help Modal -->
+  @if (helpModalOpen) {
+    <div class="help-modal-overlay" (click)="closeHelpModal()">
+      <div class="help-modal" (click)="$event.stopPropagation()">
+        <div class="help-modal-header">
+          <mat-icon class="help-modal-icon">help</mat-icon>
+          <h3>{{ helpModalTitle }}</h3>
+          <button mat-icon-button class="help-modal-close" (click)="closeHelpModal()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="help-modal-body">
+          <ol class="help-modal-steps">
+            @for (step of helpModalSteps; track step) {
+              <li>{{ step }}</li>
+            }
+          </ol>
+          @if (helpModalLink) {
+            <a class="help-modal-link" [href]="helpModalLink" target="_blank" rel="noopener">
+              <mat-icon>open_in_new</mat-icon> {{ helpModalLinkText }}
+            </a>
+          }
+        </div>
+      </div>
+    </div>
+  }
 </div>

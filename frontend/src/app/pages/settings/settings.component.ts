@@ -71,7 +71,110 @@ export class SettingsComponent implements OnInit {
   prerequisites: any = null;
   prerequisitesLoading = false;
 
-  expandedHelp: string | null = null;
+  helpModalOpen = false;
+  helpModalTitle = '';
+  helpModalSteps: string[] = [];
+  helpModalLink = '';
+  helpModalLinkText = '';
+
+  private helpContent: Record<string, { title: string; steps: string[]; link?: string; linkText?: string }> = {
+    meta_connected: {
+      title: 'Como conectar sua conta Meta',
+      steps: [
+        'Acesse developers.facebook.com e crie um app do tipo "Empresa" (se ainda nao tiver)',
+        'Copie o App ID e o App Secret do seu app',
+        'Na secao "Credenciais" abaixo, cole o App ID e App Secret nos campos correspondentes',
+        'Clique em "Conectar com Meta" — voce sera redirecionado ao Facebook',
+        'Faca login com sua conta do Facebook e autorize o acesso',
+        'Selecione o portfolio empresarial (Business Manager) que contem sua conta de anuncios',
+        'Pronto! O Vendedoria tera acesso para gerenciar suas campanhas'
+      ],
+      link: 'https://developers.facebook.com/apps/',
+      linkText: 'Abrir Meta for Developers'
+    },
+    ad_account: {
+      title: 'Como selecionar a conta de anuncios',
+      steps: [
+        'Primeiro, conecte sua conta Meta (passo anterior)',
+        'Apos conectar, as contas de anuncios do seu Business Manager aparecerao automaticamente',
+        'Selecione a conta que deseja usar para veicular campanhas',
+        'A conta deve estar ATIVA (sem restricoes ou bloqueios)',
+        'Se nao aparecer nenhuma conta, crie uma em business.facebook.com > Configuracoes > Contas de anuncios'
+      ],
+      link: 'https://business.facebook.com/settings/ad-accounts',
+      linkText: 'Gerenciar contas no Business Manager'
+    },
+    facebook_page: {
+      title: 'Como vincular uma pagina do Facebook',
+      steps: [
+        'Voce precisa ter uma Pagina do Facebook para seus anuncios aparecerem',
+        'Os anuncios no Facebook e Instagram sao publicados em nome dessa pagina',
+        'Se ainda nao tem uma pagina, crie uma em facebook.com/pages/creation/',
+        'Vincule a pagina ao seu Business Manager em business.facebook.com > Configuracoes > Paginas',
+        'Apos conectar o Meta no Vendedoria, as paginas disponiveis serao listadas automaticamente',
+        'Selecione a pagina desejada na secao de configuracoes'
+      ],
+      link: 'https://www.facebook.com/pages/creation/',
+      linkText: 'Criar pagina no Facebook'
+    },
+    pixel_configured: {
+      title: 'Como configurar o Meta Pixel',
+      steps: [
+        'O Pixel e um codigo que rastreia visitantes e conversoes no seu site (opcional, mas recomendado)',
+        'Va na aba "Pixel" nas configuracoes do Vendedoria para criar ou vincular um pixel',
+        'Apos criar, copie o codigo do pixel e instale no seu site (no <head> de todas as paginas)',
+        'Com o pixel instalado, o Meta consegue otimizar suas campanhas para conversoes reais',
+        'Voce tambem pode gerenciar pixels diretamente no Events Manager do Meta'
+      ],
+      link: 'https://business.facebook.com/events_manager',
+      linkText: 'Abrir Events Manager'
+    },
+    has_product: {
+      title: 'Como cadastrar um produto',
+      steps: [
+        'Use o chat: diga "quero cadastrar um produto" e a IA vai guiar voce',
+        'Ou acesse a aba "Produtos" e clique em "Novo Produto"',
+        'Preencha: nome do produto, descricao, preco e URL do site/landing page',
+        'A URL e importante — e para la que os anuncios vao direcionar os clientes',
+        'Voce pode cadastrar quantos produtos quiser e criar campanhas para cada um'
+      ]
+    },
+    has_creative: {
+      title: 'Como gerar criativos para anuncios',
+      steps: [
+        'Apos cadastrar um produto, peca no chat: "gere criativos para [nome do produto]"',
+        'A IA vai gerar automaticamente imagens e textos para seus anuncios',
+        'Voce vera um preview de cada criativo gerado',
+        'Aprove pelo menos 1 criativo — so apos a aprovacao a campanha pode ser criada',
+        'Voce pode pedir para gerar mais opcoes se nao gostar dos resultados'
+      ]
+    },
+    payment_method: {
+      title: 'Como configurar metodo de pagamento',
+      steps: [
+        'Acesse o Gerenciador de Anuncios do Meta (Ads Manager)',
+        'Va em Configuracoes > Informacoes de pagamento',
+        'Adicione um metodo de pagamento: cartao de credito, boleto bancario ou Pix',
+        'Sem metodo de pagamento, suas campanhas nao serao veiculadas pelo Meta',
+        'O Meta cobra diretamente na forma de pagamento configurada — o Vendedoria nao intermedia pagamentos'
+      ],
+      link: 'https://www.facebook.com/ads/manager/account_settings/account_billing/',
+      linkText: 'Configurar pagamento no Ads Manager'
+    },
+    app_mode_live: {
+      title: 'Como publicar o app Meta (modo Live)',
+      steps: [
+        'Acesse developers.facebook.com e selecione seu app',
+        'No menu lateral, clique em "Publicar"',
+        'O Meta pode pedir que voce complete a "Verificacao do app" antes de publicar',
+        'Isso inclui: politica de privacidade, descricao do uso dos dados, e revisao de permissoes',
+        'Apos aprovado, o app muda de "Desenvolvimento" para "Live" e pode ser usado por qualquer pessoa',
+        'Enquanto estiver em Desenvolvimento, apenas usuarios de teste podem usar o app'
+      ],
+      link: 'https://developers.facebook.com/apps/',
+      linkText: 'Abrir Meta for Developers'
+    }
+  };
 
   constructor(
     private settingsService: SettingsService,
@@ -257,8 +360,19 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  toggleHelp(item: string): void {
-    this.expandedHelp = this.expandedHelp === item ? null : item;
+  openHelpModal(key: string): void {
+    const content = this.helpContent[key];
+    if (content) {
+      this.helpModalTitle = content.title;
+      this.helpModalSteps = content.steps;
+      this.helpModalLink = content.link || '';
+      this.helpModalLinkText = content.linkText || '';
+      this.helpModalOpen = true;
+    }
+  }
+
+  closeHelpModal(): void {
+    this.helpModalOpen = false;
   }
 
   disconnectMeta(): void {
