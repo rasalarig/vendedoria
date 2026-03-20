@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, NgZone, ElementRef, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -12,17 +12,20 @@ declare const google: any;
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
-export class LoginComponent implements OnInit {
-  @ViewChild('googleBtn', { static: true }) googleBtn!: ElementRef;
+export class LoginComponent implements OnInit, AfterViewInit {
+  @ViewChild('googleBtn', { static: false }) googleBtn!: ElementRef;
 
   loading = false;
   error = '';
   clientId = '';
+  private googleScriptReady = false;
+  private viewInitialized = false;
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private ngZone: NgZone,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -46,9 +49,19 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  ngAfterViewInit(): void {
+    this.viewInitialized = true;
+    if (this.googleScriptReady) {
+      this.initializeGoogle();
+    }
+  }
+
   private loadGoogleScript(): void {
     if (typeof google !== 'undefined' && google.accounts) {
-      this.initializeGoogle();
+      this.googleScriptReady = true;
+      if (this.viewInitialized) {
+        this.initializeGoogle();
+      }
       return;
     }
 
@@ -56,7 +69,12 @@ export class LoginComponent implements OnInit {
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
-    script.onload = () => this.initializeGoogle();
+    script.onload = () => {
+      this.googleScriptReady = true;
+      if (this.viewInitialized) {
+        this.initializeGoogle();
+      }
+    };
     script.onerror = () => {
       this.error = 'Erro ao carregar Google Sign-In.';
     };
@@ -64,6 +82,12 @@ export class LoginComponent implements OnInit {
   }
 
   private initializeGoogle(): void {
+    if (!this.googleBtn?.nativeElement) {
+      // ViewChild not yet available, wait for next tick
+      setTimeout(() => this.initializeGoogle(), 50);
+      return;
+    }
+
     google.accounts.id.initialize({
       client_id: this.clientId,
       callback: (response: any) => this.handleCredentialResponse(response),

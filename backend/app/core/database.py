@@ -1,21 +1,21 @@
-import os
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from typing import Generator
 
 from app.core.config import settings
 
-# Use persistent disk on Render if available
 _db_url = settings.DATABASE_URL
-if os.path.exists("/app/data") and _db_url == "sqlite:///./vendedor.db":
-    _db_url = "sqlite:////app/data/vendedor.db"
 
-engine = create_engine(
-    _db_url,
-    connect_args={"check_same_thread": False},
-)
+# Build engine args based on database type
+engine_kwargs = {}
+if _db_url.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    engine_kwargs["pool_pre_ping"] = True
+    engine_kwargs["pool_size"] = 5
+    engine_kwargs["max_overflow"] = 10
 
+engine = create_engine(_db_url, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

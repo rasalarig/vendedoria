@@ -6,10 +6,9 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.core.database import Base, engine
+from app.core.database import engine
 from app.api import api_router
 
-# Import models so they are registered with Base before create_all
 import app.models  # noqa: F401
 
 # Use persistent disk on Render if available, otherwise use local directory
@@ -185,163 +184,15 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 @app.on_event("startup")
 async def startup_event():
-    Base.metadata.create_all(bind=engine)
-    # Migrate: add meta_user_name column if it doesn't exist
+    # Migrations are handled by Alembic (python -m alembic upgrade head)
+    # Only runtime initialization here
+    from sqlalchemy import text
     try:
         with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE settings ADD COLUMN meta_user_name VARCHAR(200) DEFAULT ''"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass  # Column already exists
-    # Migrate: add facebook_page_id column
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE settings ADD COLUMN facebook_page_id VARCHAR(100) DEFAULT ''"
-                )
-            )
+            conn.execute(text("UPDATE settings SET meta_app_mode = 'unknown' WHERE meta_app_mode = 'development'"))
             conn.commit()
     except Exception:
         pass
-    # Migrate: add meta_creative_id column
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE campaigns ADD COLUMN meta_creative_id VARCHAR(100)"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass
-    # Migrate: add meta_errors column
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE campaigns ADD COLUMN meta_errors TEXT"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass
-    # Migrate: add meta_pixel_id column
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE settings ADD COLUMN meta_pixel_id VARCHAR(100) DEFAULT ''"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass
-    # Migrate: add website_url to products
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE products ADD COLUMN website_url VARCHAR(500)"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass
-    # Migrate: add tiktok_access_token to settings
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE settings ADD COLUMN tiktok_access_token VARCHAR(500) DEFAULT ''"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass
-    # Migrate: add tiktok_advertiser_id to settings
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE settings ADD COLUMN tiktok_advertiser_id VARCHAR(100) DEFAULT ''"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass
-    # Migrate: add image_api_key to settings
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE settings ADD COLUMN image_api_key VARCHAR(500) DEFAULT ''"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass
-    # Migrate: add image_api_provider to settings
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE settings ADD COLUMN image_api_provider VARCHAR(50) DEFAULT 'together'"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass
-
-    # Migrate: add meta_app_mode to settings
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE settings ADD COLUMN meta_app_mode VARCHAR(20) DEFAULT 'unknown'"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass
-
-    # Reset cached app mode so it doesn't block users
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "UPDATE settings SET meta_app_mode = 'unknown' WHERE meta_app_mode = 'development'"
-                )
-            )
-            conn.commit()
-    except Exception:
-        pass
-
-    # Migrate: add user_id column to all tenant tables
-    for table in ["products", "settings", "creatives", "campaigns", "chat_messages", "leads", "lead_interactions", "market_strategies", "whatsapp_campaigns", "contacts"]:
-        try:
-            with engine.connect() as conn:
-                conn.execute(__import__("sqlalchemy").text(f"ALTER TABLE {table} ADD COLUMN user_id INTEGER"))
-                conn.commit()
-        except Exception:
-            pass
-
-    # Migrate: add platform, format_type, placement to creatives
-    for col_name, col_type in [("platform", "VARCHAR(50)"), ("format_type", "VARCHAR(20)"), ("placement", "VARCHAR(50)")]:
-        try:
-            with engine.connect() as conn:
-                conn.execute(
-                    __import__("sqlalchemy").text(
-                        f"ALTER TABLE creatives ADD COLUMN {col_name} {col_type} DEFAULT ''"
-                    )
-                )
-                conn.commit()
-        except Exception:
-            pass
 
 
 # Serve compiled Angular frontend (must be AFTER all API routes and mounts)

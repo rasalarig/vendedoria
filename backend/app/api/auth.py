@@ -9,6 +9,7 @@ import os
 
 from app.core.database import get_db
 from app.core.auth import get_current_user_id
+from app.core.config import settings as app_settings
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -39,7 +40,7 @@ def create_token(user_id: int, email: str) -> str:
 
 @router.get("/google-client-id")
 async def get_google_client_id():
-    client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
+    client_id = app_settings.GOOGLE_CLIENT_ID
     return {"client_id": client_id}
 
 
