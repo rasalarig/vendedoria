@@ -1,15 +1,30 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.core.database import get_db
+from app.core.auth import get_current_user_id
 from app.models.settings import Settings
 from app.services.meta_oauth import MetaOAuthService
 
 router = APIRouter(prefix="/meta", tags=["meta-oauth"])
 
-# Default redirect URI - frontend handles the callback
-REDIRECT_URI = "http://localhost:4201/settings"
+
+def _get_redirect_uri(request: Request) -> str:
+    """Build redirect URI dynamically from the incoming request origin."""
+    origin = request.headers.get("origin") or request.headers.get("referer") or ""
+    if origin:
+        # Strip path from referer if present
+        from urllib.parse import urlparse
+        parsed = urlparse(origin)
+        base = f"{parsed.scheme}://{parsed.netloc}"
+        return f"{base}/settings"
+    # Fallback for production (Render)
+    import os
+    render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+    if render_host:
+        return f"https://{render_host}/settings"
+    return "http://localhost:4200/settings"
 
 
 class SelectAccountRequest(BaseModel):
@@ -18,28 +33,30 @@ class SelectAccountRequest(BaseModel):
 
 
 @router.get("/auth-url")
-async def get_auth_url(db: Session = Depends(get_db)):
+async def get_auth_url(request: Request, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Get Facebook OAuth authorization URL."""
-    settings = db.query(Settings).filter(Settings.id == 1).first()
+    settings = db.query(Settings).filter(Settings.user_id == user_id).first()
     if not settings or not settings.meta_app_id or not settings.meta_app_secret:
         return {"error": "App ID e App Secret precisam estar preenchidos primeiro"}
 
+    redirect_uri = _get_redirect_uri(request)
     service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret)
-    url = service.get_auth_url(REDIRECT_URI)
+    url = service.get_auth_url(redirect_uri)
     return {"auth_url": url}
 
 
 @router.get("/callback")
-async def oauth_callback(code: str = Query(...), db: Session = Depends(get_db)):
+async def oauth_callback(request: Request, code: str = Query(...), db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Handle OAuth callback - exchange code for token."""
-    settings = db.query(Settings).filter(Settings.id == 1).first()
+    settings = db.query(Settings).filter(Settings.user_id == user_id).first()
     if not settings or not settings.meta_app_id or not settings.meta_app_secret:
         return {"error": "Configuracoes incompletas"}
 
+    redirect_uri = _get_redirect_uri(request)
     service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret)
 
     # Exchange code for token
-    result = await service.exchange_code(code, REDIRECT_URI)
+    result = await service.exchange_code(code, redirect_uri)
     if "error" in result:
         return {"error": result["error"]}
 
@@ -167,7 +184,7 @@ async def get_payment_status(db: Session = Depends(get_db)):
 
 
 @router.post("/reconnect")
-async def reconnect(db: Session = Depends(get_db)):
+async def reconnect(request: Request, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Disconnect and return new OAuth URL for reconnection."""
     settings = db.query(Settings).filter(Settings.id == 1).first()
     if not settings:
@@ -185,7 +202,8 @@ async def reconnect(db: Session = Depends(get_db)):
         return {"error": "App ID e App Secret nao configurados"}
 
     service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret)
-    url = service.get_auth_url(REDIRECT_URI)
+    redirect_uri = _get_redirect_uri(request)
+    url = service.get_auth_url(redirect_uri)
     return {"success": True, "auth_url": url}
 
 
