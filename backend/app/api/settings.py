@@ -5,6 +5,7 @@ from typing import Optional
 
 from app.core.database import get_db
 from app.core.auth import get_current_user_id
+from app.core.config import settings as app_config
 from app.models.settings import Settings
 from app.models.product import Product
 from app.models.creative import Creative
@@ -168,3 +169,44 @@ async def check_prerequisites(db: Session = Depends(get_db), user_id: int = Depe
     ])
 
     return checks
+
+
+@router.get("/connections")
+async def get_connections(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    """Return connection status for all platforms (Instagram/Meta, TikTok)."""
+    settings = get_user_settings(db, user_id)
+    has_platform_creds = bool(app_config.META_APP_ID and app_config.META_APP_SECRET)
+
+    meta = {
+        "platform": "meta",
+        "connected": bool(settings.meta_access_token),
+        "user_name": settings.meta_user_name or "",
+        "has_ad_account": bool(settings.meta_ad_account_id),
+        "ad_account_id": settings.meta_ad_account_id or "",
+        "has_page": bool(settings.facebook_page_id),
+        "page_id": settings.facebook_page_id or "",
+        "has_payment": False,
+        "has_platform_credentials": has_platform_creds,
+    }
+
+    # Quick payment check
+    if meta["connected"] and meta["has_ad_account"]:
+        try:
+            svc = MetaAdsService(settings.meta_access_token, settings.meta_ad_account_id)
+            pay = await svc.check_payment()
+            meta["has_payment"] = pay.get("has_payment", False)
+        except Exception:
+            pass
+
+    tiktok = {
+        "platform": "tiktok",
+        "connected": bool(settings.tiktok_access_token),
+        "advertiser_id": settings.tiktok_advertiser_id or "",
+        "status": "coming_soon",
+    }
+
+    return {
+        "meta": meta,
+        "tiktok": tiktok,
+        "has_platform_credentials": has_platform_creds,
+    }

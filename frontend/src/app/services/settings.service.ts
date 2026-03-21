@@ -73,4 +73,12 @@ export class SettingsService {
   getAppMode(): Observable<{mode: string, app_id: string, app_name: string, error?: string}> {
     return this.http.get<{mode: string, app_id: string, app_name: string, error?: string}>(`${this.backendUrl}/api/meta/app-mode`);
   }
+
+  getConnections(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/connections`);
+  }
+
+  getPlatformCredentials(): Observable<{has_platform_credentials: boolean}> {
+    return this.http.get<{has_platform_credentials: boolean}>(`${this.backendUrl}/api/meta/platform-credentials`);
+  }
 }

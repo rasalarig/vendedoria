@@ -2,39 +2,41 @@
   <!-- Hero greeting -->
   <div class="hero-section">
     <h1 class="hero-title">
-      <span class="gradient-text">Ola, bem-vindo ao VendedorIA</span>
+      <span class="gradient-text">Dashboard de Vendas</span>
     </h1>
-    <p class="hero-subtitle">Aqui esta o resumo da sua operacao</p>
+    <p class="hero-subtitle">Acompanhe suas metricas e campanhas em tempo real</p>
   </div>
 
   <!-- KPI Cards -->
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-accent accent-violet"></div>
+      <div class="kpi-accent accent-amber"></div>
       <div class="kpi-body">
         <div class="kpi-header">
-          <mat-icon class="kpi-icon violet">campaign</mat-icon>
-          <span class="kpi-label">Campanhas Ativas</span>
+          <mat-icon class="kpi-icon amber">account_balance_wallet</mat-icon>
+          <span class="kpi-label">Total Gasto</span>
         </div>
-        <div class="kpi-number">{{ metrics.active_campaigns }}</div>
-        <div class="kpi-change positive">
-          <mat-icon>trending_up</mat-icon>
-          <span>+2 esta semana</span>
+        <div class="kpi-number">
+          <span class="kpi-currency">R$</span>{{ formatCurrency(metrics.total_spent) }}
+        </div>
+        <div class="kpi-change" [class.positive]="metrics.total_spent > 0">
+          <mat-icon>{{ metrics.total_spent > 0 ? 'trending_up' : 'remove' }}</mat-icon>
+          <span>{{ metrics.active_campaigns }} campanhas ativas</span>
         </div>
       </div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-accent accent-green"></div>
+      <div class="kpi-accent accent-violet"></div>
       <div class="kpi-body">
         <div class="kpi-header">
-          <mat-icon class="kpi-icon green">people</mat-icon>
-          <span class="kpi-label">Leads Captados</span>
+          <mat-icon class="kpi-icon violet">visibility</mat-icon>
+          <span class="kpi-label">Impressoes</span>
         </div>
-        <div class="kpi-number">{{ metrics.leads_today }}</div>
+        <div class="kpi-number">{{ formatNumber(metrics.total_impressions) }}</div>
         <div class="kpi-change positive">
           <mat-icon>trending_up</mat-icon>
-          <span>+12% vs ontem</span>
+          <span>CTR {{ metrics.ctr }}%</span>
         </div>
       </div>
     </div>
@@ -43,79 +45,225 @@
       <div class="kpi-accent accent-blue"></div>
       <div class="kpi-body">
         <div class="kpi-header">
-          <mat-icon class="kpi-icon blue">trending_up</mat-icon>
-          <span class="kpi-label">Taxa de Conversao</span>
+          <mat-icon class="kpi-icon blue">ads_click</mat-icon>
+          <span class="kpi-label">Cliques</span>
         </div>
-        <div class="kpi-number">{{ metrics.conversion_rate }}<span class="kpi-unit">%</span></div>
+        <div class="kpi-number">{{ formatNumber(metrics.total_clicks) }}</div>
         <div class="kpi-change positive">
           <mat-icon>trending_up</mat-icon>
-          <span>+3.2% vs semana passada</span>
+          <span>{{ metrics.total_leads }} leads</span>
         </div>
       </div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-accent accent-amber"></div>
+      <div class="kpi-accent accent-green"></div>
       <div class="kpi-body">
         <div class="kpi-header">
-          <mat-icon class="kpi-icon amber">account_balance_wallet</mat-icon>
-          <span class="kpi-label">Investimento</span>
+          <mat-icon class="kpi-icon green">show_chart</mat-icon>
+          <span class="kpi-label">ROI</span>
         </div>
-        <div class="kpi-number">
-          <span class="kpi-currency">R$</span>{{ metrics.budget_spent | number:'1.0-0' }}
-        </div>
-        <div class="kpi-budget-bar">
-          <div class="budget-track">
-            <div class="budget-fill" [style.width.%]="(metrics.budget_spent / metrics.budget_total) * 100"></div>
-          </div>
-          <span class="budget-label">de R$ {{ metrics.budget_total | number:'1.0-0' }}</span>
+        <div class="kpi-number">{{ metrics.roi }}<span class="kpi-unit">%</span></div>
+        <div class="kpi-change" [class.positive]="metrics.roi >= 0" [class.negative]="metrics.roi < 0">
+          <mat-icon>{{ metrics.roi >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+          <span>{{ metrics.roi >= 0 ? 'Positivo' : 'Negativo' }}</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Quick actions -->
+  <!-- Chart Section -->
+  <div class="chart-section glass-card">
+    <div class="chart-header">
+      <h3>Metricas ao longo do tempo</h3>
+      <div class="chart-controls">
+        <div class="chart-tabs">
+          <button class="chart-tab" [class.active]="activeChartTab === 'impressions'"
+                  (click)="setChartTab('impressions')">Impressoes</button>
+          <button class="chart-tab" [class.active]="activeChartTab === 'clicks'"
+                  (click)="setChartTab('clicks')">Cliques</button>
+          <button class="chart-tab" [class.active]="activeChartTab === 'spent'"
+                  (click)="setChartTab('spent')">Gasto</button>
+          <button class="chart-tab" [class.active]="activeChartTab === 'ctr'"
+                  (click)="setChartTab('ctr')">CTR</button>
+        </div>
+        <div class="period-selector">
+          <button class="period-btn" [class.active]="selectedPeriod === '7'"
+                  (click)="setPeriod('7')">7 dias</button>
+          <button class="period-btn" [class.active]="selectedPeriod === '14'"
+                  (click)="setPeriod('14')">14 dias</button>
+          <button class="period-btn" [class.active]="selectedPeriod === '30'"
+                  (click)="setPeriod('30')">30 dias</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-area">
+      <div class="chart-gradient-bg"></div>
+      @if (chartData) {
+        <div class="bar-chart">
+          @for (label of chartData.labels; track label; let i = $index) {
+            <div class="bar-column">
+              <div class="bar-value">{{ getChartValues()[i] || 0 }}</div>
+              <div class="bar-track">
+                <div class="bar-fill" [style.height.%]="getBarHeight(getChartValues()[i] || 0)"></div>
+              </div>
+              <div class="bar-label">{{ label }}</div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="chart-placeholder">
+          <mat-icon>bar_chart</mat-icon>
+          <span>Dados do grafico serao exibidos aqui</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Active Campaigns Table -->
+  <div class="campaigns-section glass-card">
+    <div class="section-header-row">
+      <h3>Campanhas</h3>
+      <button class="view-all-btn" (click)="navigateTo('/campaigns')">
+        Ver Todas
+        <mat-icon>arrow_forward</mat-icon>
+      </button>
+    </div>
+
+    @if (campaigns.length > 0) {
+      <div class="campaigns-table-wrap">
+        <table class="campaigns-table">
+          <thead>
+            <tr>
+              <th>Campanha</th>
+              <th>Status</th>
+              <th>Budget/dia</th>
+              <th>Impressoes</th>
+              <th>Cliques</th>
+              <th>CTR</th>
+              <th>Gasto</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of campaigns; track c.id) {
+              <tr>
+                <td class="campaign-name-cell">
+                  <mat-icon class="platform-icon">{{ getPlatformIcon(c.platform) }}</mat-icon>
+                  <div>
+                    <span class="campaign-name">{{ c.name }}</span>
+                    @if (c.product_name) {
+                      <span class="campaign-product">{{ c.product_name }}</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="getStatusClass(c.status)">
+                    {{ getStatusLabel(c.status) }}
+                  </span>
+                </td>
+                <td>R$ {{ formatCurrency(c.daily_budget) }}</td>
+                <td>{{ formatNumber(c.impressions) }}</td>
+                <td>{{ formatNumber(c.clicks) }}</td>
+                <td>{{ c.ctr }}%</td>
+                <td>R$ {{ formatCurrency(c.spent) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="empty-state">
+        <mat-icon>campaign</mat-icon>
+        <p>Nenhuma campanha encontrada</p>
+        <button class="action-btn-primary" (click)="navigateTo('/campaigns')">
+          <mat-icon>add</mat-icon>
+          Criar Campanha
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Rankings Section -->
+  <div class="rankings-grid">
+    <!-- Best Creatives -->
+    <div class="ranking-card glass-card">
+      <h3>Melhores Criativos</h3>
+      @if (topCreatives.length > 0) {
+        <div class="ranking-list">
+          @for (cr of topCreatives; track cr.id; let i = $index) {
+            <div class="ranking-item">
+              <span class="ranking-position">#{{ i + 1 }}</span>
+              <div class="ranking-thumb">
+                @if (cr.image_url) {
+                  <img [src]="cr.image_url" alt="creative">
+                } @else {
+                  <mat-icon>image</mat-icon>
+                }
+              </div>
+              <div class="ranking-info">
+                <span class="ranking-name">{{ cr.headline || 'Criativo #' + cr.id }}</span>
+                <span class="ranking-meta">{{ cr.product_name }}</span>
+              </div>
+              <span class="ranking-stat">{{ cr.ctr }}% CTR</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="ranking-empty">
+          <mat-icon>palette</mat-icon>
+          <span>Gere criativos para ver rankings</span>
+        </div>
+      }
+    </div>
+
+    <!-- Best Products -->
+    <div class="ranking-card glass-card">
+      <h3>Melhores Produtos</h3>
+      @if (topProducts.length > 0) {
+        <div class="ranking-list">
+          @for (p of topProducts; track p.id; let i = $index) {
+            <div class="ranking-item">
+              <span class="ranking-position">#{{ i + 1 }}</span>
+              <div class="ranking-thumb">
+                @if (p.image_url) {
+                  <img [src]="p.image_url" alt="product">
+                } @else {
+                  <mat-icon>shopping_bag</mat-icon>
+                }
+              </div>
+              <div class="ranking-info">
+                <span class="ranking-name">{{ p.name }}</span>
+              </div>
+              <span class="ranking-stat">{{ formatNumber(p.clicks) }} cliques</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="ranking-empty">
+          <mat-icon>shopping_bag</mat-icon>
+          <span>Cadastre produtos para ver rankings</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Quick Actions Bar -->
   <div class="quick-actions">
-    <button class="action-btn" (click)="navigateTo('/products')">
-      <mat-icon>add</mat-icon>
-      <span>Novo Produto</span>
-    </button>
     <button class="action-btn" (click)="navigateTo('/campaigns')">
       <mat-icon>campaign</mat-icon>
       <span>Nova Campanha</span>
+    </button>
+    <button class="action-btn" (click)="navigateTo('/creatives')">
+      <mat-icon>palette</mat-icon>
+      <span>Novo Criativo</span>
+    </button>
+    <button class="action-btn" (click)="navigateTo('/products')">
+      <mat-icon>add</mat-icon>
+      <span>Novo Produto</span>
     </button>
     <button class="action-btn" (click)="navigateTo('/chat')">
       <mat-icon>smart_toy</mat-icon>
       <span>Falar com IA</span>
     </button>
-  </div>
-
-  <!-- Content grid -->
-  <div class="content-grid">
-    <div class="chart-card glass-card">
-      <h3>Leads e Conversoes - Ultimos 7 dias</h3>
-      <div class="chart-wrapper">
-        <canvas baseChart
-          [type]="'line'"
-          [data]="lineChartData"
-          [options]="lineChartOptions">
-        </canvas>
-      </div>
-    </div>
-
-    <div class="activity-card glass-card">
-      <h3>Atividades Recentes</h3>
-      <div class="activity-list">
-        @for (activity of recentActivities; track activity.message) {
-          <div class="activity-item">
-            <div class="activity-dot" [class]="'dot-' + activity.type"></div>
-            <div class="activity-info">
-              <span class="activity-message">{{ activity.message }}</span>
-              <span class="activity-time">{{ activity.time }}</span>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
   </div>
 </div>

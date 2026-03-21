@@ -1,7 +1,103 @@
 <div class="settings-container">
   <h1 class="page-title">Configuracoes</h1>
 
-  <!-- Progress bar at top -->
+  <!-- ========== CONNECTIONS SECTION ========== -->
+  <div class="connections-section">
+    <h2 class="connections-title">Conexoes</h2>
+    <p class="connections-subtitle">Conecte suas plataformas de anuncios</p>
+
+    <div class="connections-grid">
+      <!-- Instagram/Facebook Card -->
+      <div class="connection-card instagram-card" [class.connected]="metaConnected">
+        <div class="connection-card-bg instagram-bg"></div>
+        <div class="connection-card-content">
+          <div class="connection-header">
+            <div class="connection-icon-wrap instagram-icon-wrap">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="white">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+              </svg>
+            </div>
+            <div class="connection-title-group">
+              <h3>Instagram / Facebook</h3>
+              <span class="connection-platform">Meta Ads</span>
+            </div>
+          </div>
+
+          @if (metaConnected) {
+            <div class="connection-status connected-status">
+              <mat-icon class="check-icon">check_circle</mat-icon>
+              <span>Conectado como <strong>{{ metaUserName }}</strong></span>
+            </div>
+            <div class="connection-indicators">
+              <div class="indicator" [class.ok]="connections?.meta?.has_ad_account">
+                <mat-icon>{{ connections?.meta?.has_ad_account ? 'check_circle' : 'error' }}</mat-icon>
+                <span>Conta de anuncios</span>
+              </div>
+              <div class="indicator" [class.ok]="connections?.meta?.has_page">
+                <mat-icon>{{ connections?.meta?.has_page ? 'check_circle' : 'error' }}</mat-icon>
+                <span>Pagina</span>
+              </div>
+              <div class="indicator" [class.ok]="connections?.meta?.has_payment">
+                <mat-icon>{{ connections?.meta?.has_payment ? 'check_circle' : 'error' }}</mat-icon>
+                <span>Pagamento</span>
+              </div>
+            </div>
+            <button class="connection-disconnect-btn" (click)="disconnectMeta()">
+              <mat-icon>link_off</mat-icon>
+              Desconectar
+            </button>
+          } @else {
+            <p class="connection-desc">Conecte sua conta para criar campanhas no Instagram e Facebook automaticamente.</p>
+            <button class="connection-connect-btn instagram-connect-btn"
+                    (click)="connectMeta()" [disabled]="metaLoading">
+              @if (metaLoading) {
+                <mat-icon class="spinning">sync</mat-icon>
+                Conectando...
+              } @else {
+                <mat-icon>login</mat-icon>
+                Conectar Instagram
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- TikTok Card -->
+      <div class="connection-card tiktok-card">
+        <div class="connection-card-bg tiktok-bg"></div>
+        <div class="connection-card-content">
+          <div class="connection-header">
+            <div class="connection-icon-wrap tiktok-icon-wrap">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="white">
+                <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.99a8.19 8.19 0 004.77 1.52V7.06a4.84 4.84 0 01-1-.37z"/>
+              </svg>
+            </div>
+            <div class="connection-title-group">
+              <h3>TikTok</h3>
+              <span class="connection-platform">TikTok Ads</span>
+            </div>
+            <span class="beta-badge">Beta</span>
+          </div>
+
+          <p class="connection-desc">Crie campanhas de video no TikTok para alcançar um publico jovem e engajado.</p>
+
+          <div class="tiktok-tooltip-wrap">
+            <button class="connection-connect-btn tiktok-connect-btn" (click)="showTiktokTooltip()">
+              <mat-icon>login</mat-icon>
+              Conectar TikTok
+            </button>
+            @if (tiktokTooltipVisible) {
+              <div class="coming-soon-tooltip">
+                Em breve! Requer aprovacao da API TikTok Business.
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
   @if (prerequisites) {
     <div class="progress-overview" [class.all-done]="prerequisites.ready_for_campaign">
       <div class="progress-header">
@@ -91,23 +187,30 @@
             </div>
           </div>
 
-          <div class="fields-grid" style="margin-bottom: 16px;">
-            <mat-form-field appearance="outline">
-              <mat-label>App ID</mat-label>
-              <input matInput [(ngModel)]="settings.meta_app_id" placeholder="Seu Meta App ID">
-              <mat-icon matPrefix>fingerprint</mat-icon>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>App Secret</mat-label>
-              <input matInput [(ngModel)]="settings.meta_app_secret"
-                     [type]="showFields['meta_app_secret'] ? 'text' : 'password'"
-                     placeholder="Seu App Secret">
-              <mat-icon matPrefix>lock</mat-icon>
-              <button mat-icon-button matSuffix (click)="toggleVisibility('meta_app_secret')">
-                <mat-icon>{{ showFields['meta_app_secret'] ? 'visibility_off' : 'visibility' }}</mat-icon>
-              </button>
-            </mat-form-field>
-          </div>
+          @if (!hasPlatformCredentials) {
+            <div class="fields-grid" style="margin-bottom: 16px;">
+              <mat-form-field appearance="outline">
+                <mat-label>App ID</mat-label>
+                <input matInput [(ngModel)]="settings.meta_app_id" placeholder="Seu Meta App ID">
+                <mat-icon matPrefix>fingerprint</mat-icon>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>App Secret</mat-label>
+                <input matInput [(ngModel)]="settings.meta_app_secret"
+                       [type]="showFields['meta_app_secret'] ? 'text' : 'password'"
+                       placeholder="Seu App Secret">
+                <mat-icon matPrefix>lock</mat-icon>
+                <button mat-icon-button matSuffix (click)="toggleVisibility('meta_app_secret')">
+                  <mat-icon>{{ showFields['meta_app_secret'] ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+              </mat-form-field>
+            </div>
+          } @else {
+            <div class="platform-creds-info">
+              <mat-icon>verified</mat-icon>
+              <span>Credenciais da plataforma configuradas. Basta clicar para conectar.</span>
+            </div>
+          }
 
           <button mat-raised-button class="meta-connect-btn"
                   (click)="connectMeta()" [disabled]="metaLoading">

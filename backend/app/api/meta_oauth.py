@@ -33,28 +33,45 @@ class SelectAccountRequest(BaseModel):
     account_name: str = ""
 
 
+def _resolve_app_credentials(settings) -> tuple[str, str]:
+    """Resolve Meta App credentials: prefer platform-level env vars, fallback to user settings."""
+    app_id = app_settings.META_APP_ID or (settings.meta_app_id if settings else "")
+    app_secret = app_settings.META_APP_SECRET or (settings.meta_app_secret if settings else "")
+    return app_id or "", app_secret or ""
+
+
 @router.get("/auth-url")
 async def get_auth_url(request: Request, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Get Facebook OAuth authorization URL."""
     settings = db.query(Settings).filter(Settings.user_id == user_id).first()
-    if not settings or not settings.meta_app_id or not settings.meta_app_secret:
+    app_id, app_secret = _resolve_app_credentials(settings)
+    if not app_id or not app_secret:
         return {"error": "App ID e App Secret precisam estar preenchidos primeiro"}
 
     redirect_uri = _get_redirect_uri(request)
-    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret, config_id=app_settings.META_FB_LOGIN_CONFIG_ID)
+    service = MetaOAuthService(app_id, app_secret, config_id=app_settings.META_FB_LOGIN_CONFIG_ID)
     url = service.get_auth_url(redirect_uri)
     return {"auth_url": url}
+
+
+@router.get("/platform-credentials")
+async def get_platform_credentials():
+    """Check if platform-level Meta credentials are configured (no user auth needed)."""
+    return {
+        "has_platform_credentials": bool(app_settings.META_APP_ID and app_settings.META_APP_SECRET),
+    }
 
 
 @router.get("/callback")
 async def oauth_callback(request: Request, code: str = Query(...), db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """Handle OAuth callback - exchange code for token."""
     settings = db.query(Settings).filter(Settings.user_id == user_id).first()
-    if not settings or not settings.meta_app_id or not settings.meta_app_secret:
+    app_id, app_secret = _resolve_app_credentials(settings)
+    if not app_id or not app_secret:
         return {"error": "Configuracoes incompletas"}
 
     redirect_uri = _get_redirect_uri(request)
-    service = MetaOAuthService(settings.meta_app_id, settings.meta_app_secret, config_id=app_settings.META_FB_LOGIN_CONFIG_ID)
+    service = MetaOAuthService(app_id, app_secret, config_id=app_settings.META_FB_LOGIN_CONFIG_ID)
 
     # Exchange code for token
     result = await service.exchange_code(code, redirect_uri)

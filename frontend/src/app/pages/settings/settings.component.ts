@@ -65,6 +65,11 @@ export class SettingsComponent implements OnInit {
   metaSelectedAccount = '';
   metaLoading = false;
 
+  // Connections state
+  connections: any = null;
+  hasPlatformCredentials = false;
+  tiktokTooltipVisible = false;
+
   prerequisites: any = null;
   prerequisitesLoading = false;
 
@@ -212,6 +217,8 @@ export class SettingsComponent implements OnInit {
   ngOnInit(): void {
     this.loadSettings();
     this.loadPrerequisites();
+    this.loadConnections();
+    this.loadPlatformCredentials();
     // Check for OAuth callback code in URL
     this.route.queryParams.subscribe(params => {
       if (params['code']) {
@@ -231,6 +238,34 @@ export class SettingsComponent implements OnInit {
         this.prerequisitesLoading = false;
       },
     });
+  }
+
+  loadConnections(): void {
+    this.settingsService.getConnections().subscribe({
+      next: (data: any) => {
+        this.connections = data;
+      },
+      error: () => {},
+    });
+  }
+
+  loadPlatformCredentials(): void {
+    this.settingsService.getPlatformCredentials().subscribe({
+      next: (data) => {
+        this.hasPlatformCredentials = data.has_platform_credentials;
+      },
+      error: () => {},
+    });
+  }
+
+  connectMetaSimplified(): void {
+    // When platform has credentials pre-configured, skip App ID/Secret fields
+    this.openMetaAuth();
+  }
+
+  showTiktokTooltip(): void {
+    this.tiktokTooltipVisible = true;
+    setTimeout(() => { this.tiktokTooltipVisible = false; }, 2500);
   }
 
   loadSettings(): void {
@@ -280,6 +315,11 @@ export class SettingsComponent implements OnInit {
   }
 
   connectMeta(): void {
+    // If platform has credentials, skip user-provided App ID/Secret
+    if (this.hasPlatformCredentials) {
+      this.openMetaAuth();
+      return;
+    }
     // First save App ID and Secret if they've been filled
     if (this.settings.meta_app_id && this.settings.meta_app_secret) {
       const { id, ...payload } = this.settings as AppSettings & { id?: number };
