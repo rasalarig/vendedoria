@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     TOGETHER_API_KEY: str = "tgp_v1_ucjI9KBkxkfldB69gno2P8GpkFMc9_JLYANhY0P_9VQ"
     GOOGLE_CLIENT_ID: str = ""
     META_FB_LOGIN_CONFIG_ID: str = "1675802386923357"
+    HAILUO_API_KEY: str = ""
+    RUNWAY_API_KEY: str = ""
+    HEYGEN_API_KEY: str = ""
 
     class Config:
         env_file = ".env"

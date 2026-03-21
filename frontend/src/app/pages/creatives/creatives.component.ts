@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -10,9 +10,31 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { CreativeService, Creative } from '../../services/creative.service';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatInputModule } from '@angular/material/input';
+import { MatBadgeModule } from '@angular/material/badge';
+import { VideoCreativeService, GeneratedVideo, CostEstimate } from '../../services/video-creative.service';
+import { SellerService, Seller } from '../../services/seller.service';
 import { ProductService, Product } from '../../services/product.service';
+import { VideoService, ReferenceVideo } from '../../services/video.service';
 import { SettingsService } from '../../services/settings.service';
+import { Subscription, interval } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+
+interface VideoProvider {
+  id: string;
+  name: string;
+  icon: string;
+  costPerSec: number;
+  description: string;
+}
+
+interface ProductVideoGroup {
+  productId: number;
+  productName: string;
+  videos: GeneratedVideo[];
+}
 
 @Component({
   selector: 'app-creatives',
@@ -29,171 +51,310 @@ import { SettingsService } from '../../services/settings.service';
     MatSnackBarModule,
     MatChipsModule,
     MatTooltipModule,
+    MatSliderModule,
+    MatDialogModule,
+    MatInputModule,
+    MatBadgeModule,
   ],
   template: `
     <div class="creatives-page">
-      <!-- Auto mode banner -->
-      @if (operationMode === 'auto') {
-        <div class="auto-banner">
-          <mat-icon>smart_toy</mat-icon>
-          <span>Modo Piloto Automatico — criativos sao aprovados automaticamente</span>
-        </div>
-      }
+      <!-- ===================== SECTION 1: Generate New Creative ===================== -->
+      <section class="generate-section">
+        <h1 class="section-title">
+          <mat-icon>videocam</mat-icon>
+          Gerar Novo Criativo em Video
+        </h1>
 
-      <div class="page-header">
-        <h1>Gerador de Criativos</h1>
-        <div class="header-actions">
-          <mat-form-field appearance="outline" class="product-select">
-            <mat-label>Selecione um produto</mat-label>
-            <mat-select [(value)]="selectedProductId" (selectionChange)="onProductChange()">
+        <!-- Row of 3 selectors -->
+        <div class="selectors-row">
+          <mat-form-field appearance="outline" class="selector-field">
+            <mat-label>Vendedor</mat-label>
+            <mat-select [(value)]="selectedSellerId">
+              @for (seller of sellers; track seller.id) {
+                <mat-option [value]="seller.id">
+                  <span class="seller-option">
+                    <span class="seller-avatar-small">{{ seller.name.charAt(0) }}</span>
+                    {{ seller.name }}
+                  </span>
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="selector-field">
+            <mat-label>Produto</mat-label>
+            <mat-select [(value)]="selectedProductId">
               @for (product of products; track product.id) {
                 <mat-option [value]="product.id">{{ product.name }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="option-select">
-            <mat-label>Plataforma</mat-label>
-            <mat-select [(value)]="selectedPlatform">
-              <mat-option value="facebook">Facebook</mat-option>
-              <mat-option value="instagram">Instagram</mat-option>
-              <mat-option value="tiktok">TikTok</mat-option>
+          <mat-form-field appearance="outline" class="selector-field">
+            <mat-label>Video Referencia (opcional)</mat-label>
+            <mat-select [(value)]="selectedRefVideoId">
+              <mat-option [value]="null">Nenhum</mat-option>
+              @for (video of referenceVideos; track video.id) {
+                <mat-option [value]="video.id">{{ video.original_filename }}</mat-option>
+              }
             </mat-select>
           </mat-form-field>
+        </div>
 
-          <mat-form-field appearance="outline" class="option-select">
-            <mat-label>Posicionamento</mat-label>
-            <mat-select [(value)]="selectedPlacement">
-              <mat-option value="feed">Feed</mat-option>
-              <mat-option value="stories">Stories</mat-option>
-              <mat-option value="reels">Reels</mat-option>
-            </mat-select>
-          </mat-form-field>
+        <!-- Provider selector (cards) -->
+        <div class="provider-section">
+          <label class="field-label">Provedor de Video</label>
+          <div class="provider-cards">
+            @for (provider of providers; track provider.id) {
+              <div class="provider-card"
+                   [class.selected]="selectedProvider === provider.id"
+                   (click)="selectProvider(provider.id)">
+                <div class="provider-icon-wrap">
+                  <mat-icon>{{ provider.icon }}</mat-icon>
+                </div>
+                <div class="provider-info">
+                  <span class="provider-name">{{ provider.name }}</span>
+                  <span class="provider-cost">R$ {{ provider.costPerSec.toFixed(2) }}/seg</span>
+                </div>
+                <span class="provider-desc">{{ provider.description }}</span>
+                @if (selectedProvider === provider.id) {
+                  <div class="provider-check"><mat-icon>check_circle</mat-icon></div>
+                }
+              </div>
+            }
+          </div>
+        </div>
 
-          <button mat-flat-button color="primary" class="generate-btn"
-                  [disabled]="!selectedProductId || generating"
-                  (click)="generateCreatives()">
+        <!-- Duration slider + cost -->
+        <div class="duration-cost-row">
+          <div class="duration-section">
+            <label class="field-label">Duracao: {{ selectedDuration }}s</label>
+            <div class="slider-container">
+              <span class="slider-label">5s</span>
+              <mat-slider min="5" max="30" step="1" discrete class="duration-slider">
+                <input matSliderThumb [(ngModel)]="selectedDuration" (ngModelChange)="onDurationChange()">
+              </mat-slider>
+              <span class="slider-label">30s</span>
+            </div>
+          </div>
+
+          <div class="cost-display">
+            <div class="cost-label">Custo estimado</div>
+            <div class="cost-value">R$ {{ estimatedCost.toFixed(2) }}</div>
+          </div>
+
+          <button mat-flat-button class="generate-video-btn"
+                  [disabled]="!canGenerate() || generating"
+                  (click)="generateVideo()">
             @if (generating) {
               <mat-spinner diameter="20" class="btn-spinner"></mat-spinner>
               <span>Gerando...</span>
             } @else {
               <mat-icon>auto_fix_high</mat-icon>
-              <span>Gerar Criativos com IA</span>
+              <span>Gerar Video (R$ {{ estimatedCost.toFixed(2) }})</span>
             }
           </button>
         </div>
-      </div>
+      </section>
 
-      <!-- Loading state -->
+      <!-- ===================== SECTION 2: Generation Status ===================== -->
+      @if (generatingVideos.length > 0) {
+        <section class="generating-section">
+          @for (gv of generatingVideos; track gv.id) {
+            <div class="generating-card">
+              <div class="generating-spinner">
+                <mat-spinner diameter="48" color="accent"></mat-spinner>
+              </div>
+              <div class="generating-info">
+                <h3>Gerando seu video...</h3>
+                <p>Provedor: <strong>{{ getProviderName(gv.provider) }}</strong></p>
+                <p class="generating-hint">Tempo estimado: ~{{ gv.duration * 3 }}s</p>
+              </div>
+            </div>
+          }
+        </section>
+      }
+
+      <!-- ===================== SECTION 3: Loading ===================== -->
       @if (loading) {
         <div class="loading-state">
           <mat-spinner diameter="48"></mat-spinner>
-          <p>Carregando criativos...</p>
+          <p>Carregando videos gerados...</p>
         </div>
       }
 
-      <!-- Empty state -->
-      @if (!loading && creatives.length === 0) {
+      <!-- ===================== SECTION 4: Empty State ===================== -->
+      @if (!loading && generatedVideos.length === 0 && generatingVideos.length === 0) {
         <div class="empty-state">
-          <mat-icon class="empty-icon">brush</mat-icon>
-          <p>Selecione um produto e clique em "Gerar Criativos" para comecar</p>
-          <p class="empty-hint">A IA vai criar 3 variacoes de anuncio com textos persuasivos e imagens</p>
+          <mat-icon class="empty-icon">movie_creation</mat-icon>
+          <p>Nenhum video criativo gerado ainda</p>
+          <p class="empty-hint">Selecione vendedor, produto e clique em "Gerar Video" para comecar</p>
         </div>
       }
 
-      <!-- Generating overlay -->
-      @if (generating) {
-        <div class="generating-overlay">
-          <mat-spinner diameter="64"></mat-spinner>
-          <p>A IA esta criando seus criativos...</p>
-          <p class="generating-hint">Isso pode levar alguns segundos</p>
-        </div>
-      }
-
-      <!-- Creatives Grid -->
-      @if (!loading && creatives.length > 0 && !generating) {
-        <div class="creatives-grid">
-          @for (creative of creatives; track creative.id) {
-            <mat-card class="creative-card">
-              <!-- Variation badge -->
-              <div class="variation-badge">#{{ creative.variation }}</div>
-
-              <!-- Status badge -->
-              <div class="status-badge" [ngClass]="'status-' + creative.status">
-                @if (creative.status === 'pending') { Pendente }
-                @if (creative.status === 'approved') { Aprovado }
-                @if (creative.status === 'rejected') { Rejeitado }
-              </div>
-
-              <!-- Platform and placement badges -->
-              <div class="meta-badges">
-                <span class="platform-badge">{{ (creative.platform || selectedPlatform) | uppercase }}</span>
-                <span class="placement-badge">{{ (creative.placement || selectedPlacement) | uppercase }}</span>
-              </div>
-
-              <!-- Image -->
-              <div class="creative-image">
-                @if (creative.image_url) {
-                  <img [src]="getImageUrl(creative.image_url)" [alt]="creative.headline"
-                       (error)="onImageError($event)"
-                       (load)="onImageLoad($event)"
-                       loading="lazy"
-                       [style.display]="'block'">
-                  <div class="image-loading-placeholder" [attr.data-creative-id]="creative.id">
-                    <mat-spinner diameter="32"></mat-spinner>
+      <!-- ===================== SECTION 5: Version History / Grouped Grid ===================== -->
+      @if (!loading && productGroups.length > 0) {
+        @for (group of productGroups; track group.productId) {
+          <section class="product-group">
+            <h2 class="group-title">
+              <mat-icon>inventory_2</mat-icon>
+              {{ group.productName }}
+              <span class="group-count">{{ group.videos.length }} video(s)</span>
+            </h2>
+            <div class="videos-grid">
+              @for (video of group.videos; track video.id) {
+                <mat-card class="video-card" [class.video-approved]="video.status === 'approved'"
+                          (click)="openPreview(video)">
+                  <!-- Thumbnail -->
+                  <div class="video-thumbnail">
+                    @if (video.thumbnail_url) {
+                      <img [src]="video.thumbnail_url" alt="Video thumbnail" loading="lazy">
+                    } @else {
+                      <div class="thumbnail-placeholder">
+                        <mat-icon>play_circle</mat-icon>
+                      </div>
+                    }
+                    <!-- Status badge -->
+                    <div class="video-status-badge" [ngClass]="'vstatus-' + video.status">
+                      @if (video.status === 'generating') {
+                        <mat-spinner diameter="12" class="status-spinner"></mat-spinner>
+                        Gerando
+                      }
+                      @if (video.status === 'ready') {
+                        <mat-icon class="status-icon">check</mat-icon>
+                        Pronto
+                      }
+                      @if (video.status === 'approved') {
+                        <mat-icon class="status-icon">verified</mat-icon>
+                        Aprovado
+                      }
+                      @if (video.status === 'failed') {
+                        <mat-icon class="status-icon">error</mat-icon>
+                        Falhou
+                      }
+                    </div>
+                    <!-- Version badge -->
+                    <div class="version-badge">v{{ video.version }}</div>
                   </div>
+
+                  <mat-card-content class="video-card-content">
+                    <div class="video-meta-row">
+                      <span class="meta-seller">{{ video.seller_name || 'Vendedor' }}</span>
+                      <span class="meta-divider">|</span>
+                      <span class="meta-product">{{ video.product_name || 'Produto' }}</span>
+                    </div>
+                    <div class="video-badges">
+                      <span class="badge badge-provider">{{ getProviderName(video.provider) }}</span>
+                      <span class="badge badge-cost">R$ {{ video.cost.toFixed(2) }}</span>
+                      <span class="badge badge-duration">{{ video.duration }}s</span>
+                    </div>
+                    <div class="video-date">{{ formatDate(video.created_at) }}</div>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          </section>
+        }
+      }
+
+      <!-- ===================== SECTION 6: Video Preview Modal ===================== -->
+      @if (previewVideo) {
+        <div class="modal-overlay" (click)="closePreview()">
+          <div class="modal-content" (click)="$event.stopPropagation()">
+            <button class="modal-close" (click)="closePreview()">
+              <mat-icon>close</mat-icon>
+            </button>
+
+            <div class="modal-body">
+              <!-- Video Player -->
+              <div class="modal-video-player">
+                @if (previewVideo.video_url) {
+                  <video controls [src]="previewVideo.video_url" class="video-element">
+                    Seu navegador nao suporta video.
+                  </video>
                 } @else {
-                  <div class="image-placeholder">
-                    <mat-icon>image</mat-icon>
+                  <div class="video-placeholder-large">
+                    <mat-icon>movie</mat-icon>
+                    <span>Preview do video</span>
+                    <span class="placeholder-status">Status: {{ getStatusLabel(previewVideo.status) }}</span>
                   </div>
                 }
               </div>
 
-              <mat-card-content>
-                <!-- Headline -->
-                <h3 class="creative-headline">{{ creative.headline }}</h3>
-
-                <!-- Copy text -->
-                <p class="creative-copy">{{ creative.copy_text }}</p>
-
-                <!-- CTA preview -->
-                <div class="cta-preview">
-                  <span class="cta-button">{{ creative.cta }}</span>
+              <!-- Video Info -->
+              <div class="modal-info">
+                <div class="modal-info-header">
+                  <h2>{{ previewVideo.product_name || 'Video Criativo' }}</h2>
+                  <div class="modal-status-badge" [ngClass]="'vstatus-' + previewVideo.status">
+                    {{ getStatusLabel(previewVideo.status) }}
+                  </div>
                 </div>
 
-              </mat-card-content>
+                <div class="modal-meta">
+                  <span><mat-icon>person</mat-icon> {{ previewVideo.seller_name || 'Vendedor' }}</span>
+                  <span><mat-icon>timer</mat-icon> {{ previewVideo.duration }}s</span>
+                  <span><mat-icon>paid</mat-icon> R$ {{ previewVideo.cost.toFixed(2) }}</span>
+                  <span><mat-icon>smart_toy</mat-icon> {{ getProviderName(previewVideo.provider) }}</span>
+                </div>
 
-              <!-- Actions -->
-              <mat-card-actions>
-                @if (operationMode === 'auto') {
-                  <span class="auto-approved-label">
-                    <mat-icon>check_circle</mat-icon> Auto-aprovado
-                  </span>
-                } @else {
-                  @if (creative.status === 'pending') {
-                    <button mat-button class="approve-btn" (click)="approveCreative(creative)"
-                            matTooltip="Aprovar criativo">
-                      <mat-icon>check_circle</mat-icon> Aprovar
-                    </button>
-                    <button mat-button class="reject-btn" (click)="rejectCreative(creative)"
-                            matTooltip="Rejeitar criativo">
-                      <mat-icon>cancel</mat-icon> Rejeitar
-                    </button>
-                  }
-                }
-                <button mat-button class="regenerate-btn" (click)="regenerateCreative(creative)"
-                        [disabled]="creative.regenerating"
-                        matTooltip="Regenerar este criativo">
-                  @if (creative.regenerating) {
-                    <mat-spinner diameter="16" class="btn-spinner"></mat-spinner>
+                <!-- Script -->
+                <div class="modal-script-section">
+                  <label class="field-label">
+                    Roteiro
+                    @if (!editingScript) {
+                      <button mat-icon-button class="edit-script-btn" (click)="startEditScript()"
+                              matTooltip="Editar roteiro">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                    }
+                  </label>
+                  @if (editingScript) {
+                    <textarea class="script-editor" [(ngModel)]="editedScript" rows="6"></textarea>
+                    <div class="script-edit-actions">
+                      <button mat-button class="cancel-edit-btn" (click)="cancelEditScript()">Cancelar</button>
+                      <button mat-flat-button class="save-script-btn" (click)="saveScript()">Salvar Roteiro</button>
+                    </div>
                   } @else {
-                    <mat-icon>refresh</mat-icon>
+                    <div class="script-text">{{ previewVideo.script || 'Roteiro nao disponivel' }}</div>
                   }
-                  Regenerar
-                </button>
-              </mat-card-actions>
-            </mat-card>
-          }
+                </div>
+
+                <div class="modal-cost-info">
+                  Este video custou <strong>R$ {{ previewVideo.cost.toFixed(2) }}</strong>
+                </div>
+
+                <!-- Actions -->
+                <div class="modal-actions">
+                  @if (previewVideo.status === 'ready') {
+                    <button mat-flat-button class="approve-action-btn" (click)="approveVideo()">
+                      <mat-icon>check_circle</mat-icon>
+                      Aprovar Video
+                    </button>
+                  }
+                  @if (previewVideo.status === 'ready' || previewVideo.status === 'approved') {
+                    <button mat-flat-button class="regenerate-action-btn" (click)="showRegenerateConfirm = true">
+                      <mat-icon>refresh</mat-icon>
+                      Regenerar
+                    </button>
+                  }
+                </div>
+
+                <!-- Regenerate confirmation -->
+                @if (showRegenerateConfirm) {
+                  <div class="regenerate-confirm">
+                    <p>Regenerar este video ira gerar um novo custo estimado de
+                      <strong>R$ {{ estimatedCost.toFixed(2) }}</strong>. Deseja continuar?</p>
+                    <div class="confirm-actions">
+                      <button mat-button (click)="showRegenerateConfirm = false">Cancelar</button>
+                      <button mat-flat-button class="confirm-regenerate-btn" (click)="regenerateVideo()">
+                        Confirmar Regeneracao
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
         </div>
       }
     </div>
@@ -201,243 +362,614 @@ import { SettingsService } from '../../services/settings.service';
   styles: [`
     :host { display: block; padding: 32px; }
 
-    .auto-banner {
-      background: rgba(139, 92, 246, 0.06);
-      border: 1px solid rgba(139, 92, 246, 0.2);
-      border-radius: 14px;
-      padding: 14px 20px;
-      margin-bottom: 20px;
+    /* ====== Generate Section ====== */
+    .generate-section {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fafafa;
+      margin: 0 0 24px;
+      letter-spacing: -0.5px;
       display: flex;
       align-items: center;
       gap: 12px;
-      color: #a78bfa;
-      font-size: 14px;
+      mat-icon { color: #8b5cf6; font-size: 32px; width: 32px; height: 32px; }
+    }
+
+    .selectors-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .selector-field { width: 100%; margin-bottom: -1.25em; }
+
+    .seller-option { display: flex; align-items: center; gap: 8px; }
+    .seller-avatar-small {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      color: white; font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .field-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: #a1a1aa;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    /* Provider cards */
+    .provider-section { margin-bottom: 24px; }
+    .provider-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .provider-card {
+      background: #09090b;
+      border: 2px solid #27272a;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      &:hover { border-color: #3f3f46; }
+      &.selected { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.05); }
+    }
+    .provider-icon-wrap {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: rgba(139, 92, 246, 0.1);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
       mat-icon { color: #8b5cf6; }
     }
-
-    .page-header {
-      margin-bottom: 28px;
-      h1 { font-size: 32px; font-weight: 800; color: #fafafa; margin: 0 0 16px; letter-spacing: -1px; }
-      .header-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .provider-info { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+    .provider-name { color: #fafafa; font-weight: 600; font-size: 15px; }
+    .provider-cost { color: #22c55e; font-size: 13px; font-weight: 500; }
+    .provider-desc { color: #71717a; font-size: 12px; }
+    .provider-check {
+      position: absolute; top: 12px; right: 12px;
+      mat-icon { color: #8b5cf6; font-size: 20px; width: 20px; height: 20px; }
     }
 
-    .product-select { min-width: 280px; margin-bottom: -1.25em; }
-    .option-select { min-width: 160px; margin-bottom: -1.25em; }
+    /* Duration + cost row */
+    .duration-cost-row {
+      display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+    }
+    .duration-section { flex: 1; min-width: 240px; }
+    .slider-container {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .slider-label { color: #71717a; font-size: 13px; font-weight: 500; }
+    .duration-slider { flex: 1; }
 
-    .generate-btn {
-      border-radius: 10px;
-      padding: 8px 24px;
+    .cost-display {
+      background: #09090b; border: 1px solid #27272a; border-radius: 12px;
+      padding: 16px 24px; text-align: center;
+    }
+    .cost-label { color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .cost-value { color: #22c55e; font-size: 24px; font-weight: 800; }
+
+    .generate-video-btn {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+      color: white !important;
+      border-radius: 12px !important;
+      padding: 12px 28px !important;
       height: 56px;
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 15px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+      white-space: nowrap;
+      &:disabled { opacity: 0.5; }
       .btn-spinner { display: inline-block; }
     }
 
-    .loading-state, .generating-overlay { text-align: center; padding: 60px 20px; color: #71717a; p { margin-top: 16px; font-size: 16px; } mat-spinner { margin: 0 auto; } }
-    .generating-overlay { color: #a78bfa; .generating-hint { font-size: 13px; opacity: 0.7; } }
-    .empty-state { text-align: center; padding: 80px 20px; color: #71717a; .empty-icon { font-size: 64px; width: 64px; height: 64px; opacity: 0.2; margin-bottom: 16px; } p { font-size: 18px; margin: 8px 0; } .empty-hint { font-size: 14px; opacity: 0.7; } }
-
-    .creatives-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
-
-    .creative-card {
-      background: #18181b !important;
-      border: 1px solid #27272a !important;
-      border-radius: 16px !important;
-      overflow: hidden;
-      color: white;
-      position: relative;
-      transition: transform 0.2s, box-shadow 0.2s;
-      &:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    /* ====== Generating Section ====== */
+    .generating-section { margin-bottom: 32px; }
+    .generating-card {
+      background: #18181b; border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 16px; padding: 24px;
+      display: flex; align-items: center; gap: 24px;
+      animation: pulse-border 2s infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { border-color: rgba(139, 92, 246, 0.3); }
+      50% { border-color: rgba(139, 92, 246, 0.6); }
+    }
+    .generating-spinner { flex-shrink: 0; }
+    .generating-info {
+      h3 { color: #a78bfa; font-size: 18px; margin: 0 0 4px; }
+      p { color: #71717a; font-size: 14px; margin: 2px 0; }
+      strong { color: #fafafa; }
+      .generating-hint { font-size: 12px; opacity: 0.7; }
     }
 
-    .variation-badge { position: absolute; top: 12px; left: 12px; background: rgba(9, 9, 11, 0.8); backdrop-filter: blur(8px); color: #8b5cf6; font-weight: 700; font-size: 14px; padding: 4px 12px; border-radius: 8px; z-index: 2; border: 1px solid rgba(139, 92, 246, 0.2); }
-
-    .status-badge { position: absolute; top: 12px; right: 12px; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 8px; z-index: 2; text-transform: uppercase; letter-spacing: 0.5px; }
-    .status-pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
-    .status-approved { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
-    .status-rejected { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-
-    .creative-image {
-      width: 100%; height: 220px; overflow: hidden; background: #09090b; position: relative;
-      img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
-      .image-loading-placeholder { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 0; }
-      .image-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; mat-icon { font-size: 64px; width: 64px; height: 64px; opacity: 0.15; color: #71717a; } }
+    /* ====== Loading / Empty ====== */
+    .loading-state { text-align: center; padding: 60px 20px; color: #71717a; p { margin-top: 16px; } mat-spinner { margin: 0 auto; } }
+    .empty-state {
+      text-align: center; padding: 80px 20px; color: #71717a;
+      .empty-icon { font-size: 64px; width: 64px; height: 64px; opacity: 0.15; margin-bottom: 16px; }
+      p { font-size: 18px; margin: 8px 0; }
+      .empty-hint { font-size: 14px; opacity: 0.7; }
     }
 
-    .creative-headline { font-size: 18px; font-weight: 600; color: #fafafa; margin: 16px 0 8px; line-height: 1.3; letter-spacing: -0.3px; }
-    .creative-copy { font-size: 14px; color: #a1a1aa; line-height: 1.6; margin: 0 0 16px; }
-    .cta-preview { margin-bottom: 8px; .cta-button { display: inline-block; background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; } }
+    /* ====== Product Groups / Grid ====== */
+    .product-group { margin-bottom: 32px; }
+    .group-title {
+      font-size: 20px; font-weight: 700; color: #fafafa; margin: 0 0 16px;
+      display: flex; align-items: center; gap: 10px;
+      mat-icon { color: #8b5cf6; font-size: 24px; width: 24px; height: 24px; }
+      .group-count { color: #71717a; font-size: 14px; font-weight: 400; margin-left: auto; }
+    }
 
-    mat-card-actions { padding: 8px 16px 16px !important; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; border-top: 1px solid #27272a; }
-    .approve-btn { color: #22c55e !important; }
-    .reject-btn { color: #ef4444 !important; }
-    .regenerate-btn { color: #8b5cf6 !important; display: flex; align-items: center; gap: 4px; .btn-spinner { display: inline-block; } }
-    .auto-approved-label { color: #22c55e; font-size: 13px; display: flex; align-items: center; gap: 4px; mat-icon { font-size: 18px; width: 18px; height: 18px; } }
+    .videos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
 
-    .meta-badges { position: absolute; top: 40px; left: 12px; display: flex; gap: 6px; z-index: 2; }
-    .platform-badge { background: #3b82f6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-    .placement-badge { background: #8b5cf6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .video-card {
+      background: #18181b !important; border: 1px solid #27272a !important;
+      border-radius: 16px !important; overflow: hidden; color: white;
+      cursor: pointer; transition: all 0.2s;
+      &:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); border-color: #3f3f46 !important; }
+      &.video-approved { border-color: rgba(139, 92, 246, 0.4) !important; }
+    }
 
-    .video-note {
+    .video-thumbnail {
+      width: 100%; height: 180px; position: relative; overflow: hidden; background: #09090b;
+      img { width: 100%; height: 100%; object-fit: cover; }
+    }
+    .thumbnail-placeholder {
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      background: linear-gradient(135deg, #1a1025 0%, #09090b 100%);
+      mat-icon { font-size: 48px; width: 48px; height: 48px; color: #8b5cf6; opacity: 0.3; }
+    }
+
+    .video-status-badge {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 8px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .vstatus-generating { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .vstatus-ready { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .vstatus-approved { background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); }
+    .vstatus-failed { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .status-spinner { display: inline-block; }
+    .status-icon { font-size: 14px; width: 14px; height: 14px; }
+
+    .version-badge {
+      position: absolute; top: 10px; left: 10px;
+      background: rgba(9, 9, 11, 0.8); backdrop-filter: blur(8px);
+      color: #8b5cf6; font-weight: 700; font-size: 13px;
+      padding: 4px 10px; border-radius: 8px;
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .video-card-content { padding: 14px 16px 16px !important; }
+    .video-meta-row {
       display: flex; align-items: center; gap: 6px;
-      background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2);
-      border-radius: 8px; padding: 8px 12px; margin-top: 8px;
-      color: #fbbf24; font-size: 12px;
-      mat-icon { font-size: 16px; width: 16px; height: 16px; }
+      font-size: 14px; color: #d4d4d8; margin-bottom: 10px;
+      .meta-divider { color: #3f3f46; }
+    }
+
+    .video-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .badge {
+      padding: 3px 8px; border-radius: 6px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-provider { background: rgba(139, 92, 246, 0.1); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.2); }
+    .badge-cost { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+    .badge-duration { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+
+    .video-date { font-size: 12px; color: #52525b; }
+
+    /* ====== Modal ====== */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
+      z-index: 1000; display: flex; align-items: center; justify-content: center;
+      padding: 32px;
+    }
+    .modal-content {
+      background: #18181b; border: 1px solid #27272a; border-radius: 20px;
+      max-width: 960px; width: 100%; max-height: 90vh; overflow-y: auto;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px; z-index: 10;
+      background: rgba(9, 9, 11, 0.8); border: 1px solid #27272a;
+      border-radius: 10px; color: #a1a1aa; cursor: pointer;
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      &:hover { color: #fafafa; background: #27272a; }
+    }
+
+    .modal-body { padding: 0; }
+
+    .modal-video-player {
+      width: 100%; background: #09090b; border-radius: 20px 20px 0 0; overflow: hidden;
+    }
+    .video-element { width: 100%; display: block; max-height: 400px; }
+    .video-placeholder-large {
+      width: 100%; height: 320px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      background: linear-gradient(135deg, #1a1025 0%, #09090b 100%);
+      mat-icon { font-size: 64px; width: 64px; height: 64px; color: #8b5cf6; opacity: 0.2; }
+      span { color: #71717a; font-size: 16px; }
+      .placeholder-status { font-size: 13px; color: #52525b; }
+    }
+
+    .modal-info { padding: 28px; }
+    .modal-info-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+      h2 { font-size: 22px; font-weight: 700; color: #fafafa; margin: 0; }
+      .modal-status-badge { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    }
+
+    .modal-meta {
+      display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;
+      span { display: flex; align-items: center; gap: 6px; color: #a1a1aa; font-size: 14px;
+        mat-icon { font-size: 18px; width: 18px; height: 18px; color: #8b5cf6; }
+      }
+    }
+
+    .modal-script-section { margin-bottom: 20px; }
+    .script-text {
+      background: #09090b; border: 1px solid #27272a; border-radius: 10px;
+      padding: 16px; color: #d4d4d8; font-size: 14px; line-height: 1.7;
+      white-space: pre-wrap;
+    }
+    .script-editor {
+      width: 100%; background: #09090b; border: 1px solid #8b5cf6;
+      border-radius: 10px; padding: 16px; color: #fafafa;
+      font-size: 14px; line-height: 1.7; resize: vertical;
+      font-family: inherit;
+      &:focus { outline: none; border-color: #a78bfa; }
+    }
+    .script-edit-actions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
+    .edit-script-btn { color: #8b5cf6 !important; }
+    .cancel-edit-btn { color: #71717a !important; }
+    .save-script-btn {
+      background: #8b5cf6 !important; color: white !important;
+      border-radius: 8px !important;
+    }
+
+    .modal-cost-info {
+      background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 10px; padding: 12px 16px; margin-bottom: 20px;
+      color: #a1a1aa; font-size: 14px;
+      strong { color: #4ade80; }
+    }
+
+    .modal-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .approve-action-btn {
+      background: #22c55e !important; color: white !important;
+      border-radius: 10px !important; padding: 10px 24px !important;
+      font-weight: 600; display: flex; align-items: center; gap: 8px;
+    }
+    .regenerate-action-btn {
+      background: #f59e0b !important; color: #09090b !important;
+      border-radius: 10px !important; padding: 10px 24px !important;
+      font-weight: 600; display: flex; align-items: center; gap: 8px;
+    }
+
+    .regenerate-confirm {
+      background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 10px; padding: 16px; margin-top: 16px;
+      p { color: #a1a1aa; font-size: 14px; margin: 0 0 12px; strong { color: #fbbf24; } }
+      .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+      .confirm-regenerate-btn { background: #f59e0b !important; color: #09090b !important; border-radius: 8px !important; font-weight: 600; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      :host { padding: 16px; }
+      .selectors-row { grid-template-columns: 1fr; }
+      .provider-cards { grid-template-columns: 1fr; }
+      .duration-cost-row { flex-direction: column; align-items: stretch; }
+      .videos-grid { grid-template-columns: 1fr; }
+      .modal-overlay { padding: 16px; }
     }
   `],
 })
-export class CreativesComponent implements OnInit {
+export class CreativesComponent implements OnInit, OnDestroy {
+  // Data
+  sellers: Seller[] = [];
   products: Product[] = [];
-  creatives: (Creative & { regenerating?: boolean })[] = [];
+  referenceVideos: ReferenceVideo[] = [];
+  generatedVideos: GeneratedVideo[] = [];
+  productGroups: ProductVideoGroup[] = [];
+
+  // Form state
+  selectedSellerId: number | null = null;
   selectedProductId: number | null = null;
-  selectedPlatform: string = 'instagram';
-  selectedFormat: string = 'image';
-  selectedPlacement: string = 'feed';
-  operationMode: string = 'manual';
+  selectedRefVideoId: number | null = null;
+  selectedProvider = 'hailuo';
+  selectedDuration = 10;
+  estimatedCost = 0;
+
+  // Providers
+  providers: VideoProvider[] = [
+    { id: 'hailuo', name: 'Hailuo AI', icon: 'movie_filter', costPerSec: 0.50, description: 'Alta qualidade, rapido' },
+    { id: 'runway', name: 'Runway ML', icon: 'theaters', costPerSec: 0.75, description: 'Controle preciso de movimento' },
+    { id: 'heygen', name: 'HeyGen', icon: 'face', costPerSec: 1.00, description: 'Avatares realistas com fala' },
+  ];
+
+  // UI state
   loading = false;
   generating = false;
+  generatingVideos: GeneratedVideo[] = [];
+  previewVideo: GeneratedVideo | null = null;
+  editingScript = false;
+  editedScript = '';
+  showRegenerateConfirm = false;
+
+  // Polling
+  private pollSubscription: Subscription | null = null;
 
   constructor(
-    private creativeService: CreativeService,
+    private videoCreativeService: VideoCreativeService,
+    private sellerService: SellerService,
     private productService: ProductService,
+    private videoService: VideoService,
     private settingsService: SettingsService,
     private snackBar: MatSnackBar,
   ) {}
 
   ngOnInit(): void {
+    this.loadSellers();
     this.loadProducts();
-    this.loadSettings();
+    this.loadReferenceVideos();
+    this.loadGeneratedVideos();
+    this.updateCostEstimate();
+  }
+
+  ngOnDestroy(): void {
+    this.stopPolling();
+  }
+
+  // ====== Data Loading ======
+
+  loadSellers(): void {
+    this.sellerService.getSellers().subscribe({
+      next: (sellers) => this.sellers = sellers,
+      error: () => this.sellers = [],
+    });
   }
 
   loadProducts(): void {
     this.productService.getAll().subscribe({
-      next: (products) => {
-        this.products = products;
-      },
-      error: () => {
-        this.products = [];
-      },
+      next: (products) => this.products = products,
+      error: () => this.products = [],
     });
   }
 
-  loadSettings(): void {
-    this.settingsService.get().subscribe({
-      next: (settings) => {
-        this.operationMode = settings.operation_mode || 'manual';
-      },
+  loadReferenceVideos(): void {
+    this.videoService.getVideos().subscribe({
+      next: (videos) => this.referenceVideos = videos,
+      error: () => this.referenceVideos = [],
     });
   }
 
-  onProductChange(): void {
-    if (this.selectedProductId) {
-      this.loadCreatives();
-    }
-  }
-
-  loadCreatives(): void {
-    if (!this.selectedProductId) return;
+  loadGeneratedVideos(): void {
     this.loading = true;
-    this.creativeService.getAll(this.selectedProductId).subscribe({
-      next: (creatives) => {
-        this.creatives = creatives;
+    this.videoCreativeService.getGeneratedVideos().subscribe({
+      next: (videos) => {
+        this.generatedVideos = videos;
+        this.generatingVideos = videos.filter(v => v.status === 'generating');
+        this.buildProductGroups();
         this.loading = false;
+        if (this.generatingVideos.length > 0) {
+          this.startPolling();
+        }
       },
       error: () => {
-        this.creatives = [];
+        this.generatedVideos = [];
+        this.generatingVideos = [];
+        this.productGroups = [];
         this.loading = false;
-        this.showMessage('Erro ao carregar criativos', true);
       },
     });
   }
 
-  generateCreatives(): void {
-    if (!this.selectedProductId) return;
+  buildProductGroups(): void {
+    const groupMap = new Map<number, ProductVideoGroup>();
+    for (const video of this.generatedVideos) {
+      const pid = video.product_id;
+      if (!groupMap.has(pid)) {
+        groupMap.set(pid, {
+          productId: pid,
+          productName: video.product_name || this.products.find(p => p.id === pid)?.name || 'Produto #' + pid,
+          videos: [],
+        });
+      }
+      groupMap.get(pid)!.videos.push(video);
+    }
+    // Sort videos within each group by version desc
+    for (const group of groupMap.values()) {
+      group.videos.sort((a, b) => (b.version || 0) - (a.version || 0));
+    }
+    this.productGroups = Array.from(groupMap.values());
+  }
+
+  // ====== Provider & Cost ======
+
+  selectProvider(providerId: string): void {
+    this.selectedProvider = providerId;
+    this.updateCostEstimate();
+  }
+
+  onDurationChange(): void {
+    this.updateCostEstimate();
+  }
+
+  updateCostEstimate(): void {
+    // Try API first, fallback to local calculation
+    const provider = this.providers.find(p => p.id === this.selectedProvider);
+    const localCost = provider ? provider.costPerSec * this.selectedDuration : 0;
+    this.estimatedCost = localCost;
+
+    this.videoCreativeService.estimateCost(this.selectedProvider, this.selectedDuration).subscribe({
+      next: (estimate) => {
+        this.estimatedCost = estimate.estimated_cost;
+      },
+      error: () => {
+        // Keep local estimate
+      },
+    });
+  }
+
+  // ====== Generate ======
+
+  canGenerate(): boolean {
+    return this.selectedSellerId !== null && this.selectedProductId !== null;
+  }
+
+  generateVideo(): void {
+    if (!this.canGenerate()) return;
     this.generating = true;
-    this.creativeService.generate(this.selectedProductId, this.selectedPlatform, this.selectedFormat, this.selectedPlacement).subscribe({
-      next: (creatives) => {
-        this.creatives = creatives;
+
+    this.videoCreativeService.generateVideo(
+      this.selectedSellerId!,
+      this.selectedProductId!,
+      this.selectedRefVideoId || undefined,
+      this.selectedProvider,
+      this.selectedDuration,
+    ).subscribe({
+      next: (response) => {
         this.generating = false;
-        this.showMessage('Criativos gerados com sucesso!');
+        this.showMessage('Video sendo gerado! Acompanhe o progresso abaixo.');
+        this.loadGeneratedVideos();
       },
       error: () => {
         this.generating = false;
-        this.showMessage('Erro ao gerar criativos', true);
+        this.showMessage('Erro ao gerar video', true);
       },
     });
   }
 
-  approveCreative(creative: Creative): void {
-    this.creativeService.approve(creative.id).subscribe({
-      next: (updated) => {
-        const idx = this.creatives.findIndex(c => c.id === creative.id);
-        if (idx >= 0) this.creatives[idx] = { ...this.creatives[idx], ...updated };
-        this.showMessage('Criativo aprovado!');
-      },
-      error: () => this.showMessage('Erro ao aprovar', true),
-    });
-  }
+  // ====== Polling ======
 
-  rejectCreative(creative: Creative): void {
-    this.creativeService.reject(creative.id).subscribe({
-      next: (updated) => {
-        const idx = this.creatives.findIndex(c => c.id === creative.id);
-        if (idx >= 0) this.creatives[idx] = { ...this.creatives[idx], ...updated };
-        this.showMessage('Criativo rejeitado');
-      },
-      error: () => this.showMessage('Erro ao rejeitar', true),
-    });
-  }
-
-  regenerateCreative(creative: Creative & { regenerating?: boolean }): void {
-    creative.regenerating = true;
-    this.creativeService.regenerate(creative.id).subscribe({
-      next: (updated) => {
-        const idx = this.creatives.findIndex(c => c.id === creative.id);
-        if (idx >= 0) this.creatives[idx] = { ...updated, regenerating: false };
-        this.showMessage('Criativo regenerado!');
-      },
-      error: () => {
-        creative.regenerating = false;
-        this.showMessage('Erro ao regenerar', true);
+  startPolling(): void {
+    this.stopPolling();
+    this.pollSubscription = interval(3000).pipe(
+      switchMap(() => this.videoCreativeService.getGeneratedVideos())
+    ).subscribe({
+      next: (videos) => {
+        this.generatedVideos = videos;
+        this.generatingVideos = videos.filter(v => v.status === 'generating');
+        this.buildProductGroups();
+        // Update preview video if open
+        if (this.previewVideo) {
+          const updated = videos.find(v => v.id === this.previewVideo!.id);
+          if (updated) this.previewVideo = updated;
+        }
+        // Stop polling when nothing generating
+        if (this.generatingVideos.length === 0) {
+          this.stopPolling();
+          this.showMessage('Video(s) pronto(s)!');
+        }
       },
     });
   }
 
-  getImageUrl(url: string | undefined | null): string {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const base = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
-    return `${base}${url}`;
-  }
-
-  onImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.style.display = 'none';
-    const parent = img.parentElement;
-    if (parent) {
-      // Hide the spinner
-      const spinner = parent.querySelector('.image-loading-placeholder') as HTMLElement;
-      if (spinner) spinner.style.display = 'none';
-      // Show a fallback
-      const fallback = document.createElement('div');
-      fallback.className = 'image-error-fallback';
-      fallback.innerHTML = '<span class="material-icons">broken_image</span><span>Imagem indisponivel — Regenere o criativo</span>';
-      fallback.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#71717a;font-size:13px;background:linear-gradient(135deg,#1a1025,#0f0a18);position:absolute;top:0;left:0;z-index:2;';
-      const icon = fallback.querySelector('.material-icons') as HTMLElement;
-      if (icon) icon.style.cssText = 'font-size:48px;opacity:0.3;';
-      parent.appendChild(fallback);
+  stopPolling(): void {
+    if (this.pollSubscription) {
+      this.pollSubscription.unsubscribe();
+      this.pollSubscription = null;
     }
   }
 
-  onImageLoad(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    const parent = img.parentElement;
-    if (parent) {
-      const spinner = parent.querySelector('.image-loading-placeholder') as HTMLElement;
-      if (spinner) spinner.style.display = 'none';
+  // ====== Preview Modal ======
+
+  openPreview(video: GeneratedVideo): void {
+    if (video.status === 'generating') return;
+    this.previewVideo = { ...video };
+    this.editingScript = false;
+    this.showRegenerateConfirm = false;
+  }
+
+  closePreview(): void {
+    this.previewVideo = null;
+    this.editingScript = false;
+    this.showRegenerateConfirm = false;
+  }
+
+  approveVideo(): void {
+    if (!this.previewVideo) return;
+    this.videoCreativeService.approveVideo(this.previewVideo.id).subscribe({
+      next: (updated) => {
+        this.previewVideo = updated;
+        this.loadGeneratedVideos();
+        this.showMessage('Video aprovado com sucesso!');
+      },
+      error: () => this.showMessage('Erro ao aprovar video', true),
+    });
+  }
+
+  regenerateVideo(): void {
+    if (!this.previewVideo) return;
+    this.showRegenerateConfirm = false;
+    const script = this.editingScript ? this.editedScript : undefined;
+    this.videoCreativeService.regenerateVideo(this.previewVideo.id, script).subscribe({
+      next: () => {
+        this.closePreview();
+        this.showMessage('Regeneracao iniciada!');
+        this.loadGeneratedVideos();
+      },
+      error: () => this.showMessage('Erro ao regenerar video', true),
+    });
+  }
+
+  // ====== Script Editing ======
+
+  startEditScript(): void {
+    this.editingScript = true;
+    this.editedScript = this.previewVideo?.script || '';
+  }
+
+  cancelEditScript(): void {
+    this.editingScript = false;
+  }
+
+  saveScript(): void {
+    if (this.previewVideo) {
+      this.previewVideo = { ...this.previewVideo, script: this.editedScript };
+    }
+    this.editingScript = false;
+    this.showMessage('Roteiro atualizado. Regenere para aplicar.');
+  }
+
+  // ====== Helpers ======
+
+  getProviderName(providerId: string): string {
+    return this.providers.find(p => p.id === providerId)?.name || providerId;
+  }
+
+  getStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      generating: 'Gerando',
+      ready: 'Pronto',
+      approved: 'Aprovado',
+      failed: 'Falhou',
+    };
+    return labels[status] || status;
+  }
+
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return dateStr;
     }
   }
 
