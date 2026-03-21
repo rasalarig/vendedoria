@@ -310,8 +310,8 @@ PRIMEIRA MENSAGEM: Apresente-se brevemente como VendedorIA e pergunte o que o us
 
 class ChatAIService:
     def __init__(self, ai_api_key: str = "", ai_provider: str = "claude", meta_configured: bool = True, whatsapp_configured: bool = True, meta_readiness: dict = None):
-        self.ai_api_key = ai_api_key
-        self.ai_provider = ai_provider
+        self.ai_api_key = app_settings.OPENAI_API_KEY
+        self.ai_provider = "openai"
         self.meta_configured = meta_configured
         self.whatsapp_configured = whatsapp_configured
         self.meta_readiness = meta_readiness or {}
@@ -649,7 +649,7 @@ class ChatAIService:
                 db.commit()
 
                 settings = db.query(Settings).filter(Settings.user_id == user_id).first() if user_id else db.query(Settings).first()
-                ai_key = settings.ai_api_key if settings else ""
+                ai_key = app_settings.OPENAI_API_KEY
                 service = AICreativeService(
                     ai_api_key=ai_key,
                     image_api_key=settings.image_api_key if settings and settings.image_api_key else app_settings.TOGETHER_API_KEY,
@@ -923,7 +923,7 @@ class ChatAIService:
             product = db.query(Product).filter(Product.id == product_id).first()
             if product:
                 settings = db.query(Settings).filter(Settings.user_id == user_id).first() if user_id else db.query(Settings).first()
-                ai_key = settings.ai_api_key if settings else ""
+                ai_key = app_settings.OPENAI_API_KEY
                 service = MarketResearchService(ai_api_key=ai_key)
                 strategy = await service.generate_strategy(
                     product.name,

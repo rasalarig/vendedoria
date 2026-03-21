@@ -429,41 +429,6 @@
       </div>
     </div>
 
-    <!-- Section: IA Config (OPTIONAL) -->
-    <div class="config-section optional">
-      <div class="section-header">
-        <mat-icon class="status-dot optional-dot done">check_circle</mat-icon>
-        <div class="section-title-group">
-          <h2>Inteligencia Artificial</h2>
-          <span class="section-status optional-status">Configurado</span>
-        </div>
-        <span class="optional-badge">Opcional</span>
-      </div>
-      <div class="section-body">
-        <div class="fields-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Provedor de IA</mat-label>
-            <mat-select [(ngModel)]="settings.ai_provider">
-              <mat-option value="claude">Claude (Anthropic)</mat-option>
-              <mat-option value="openai">OpenAI (GPT)</mat-option>
-            </mat-select>
-            <mat-icon matPrefix>smart_toy</mat-icon>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>API Key</mat-label>
-            <input matInput [(ngModel)]="settings.ai_api_key"
-                   [type]="showFields['ai_api_key'] ? 'text' : 'password'"
-                   placeholder="Sua chave de API">
-            <mat-icon matPrefix>key</mat-icon>
-            <button mat-icon-button matSuffix (click)="toggleVisibility('ai_api_key')">
-              <mat-icon>{{ showFields['ai_api_key'] ? 'visibility_off' : 'visibility' }}</mat-icon>
-            </button>
-          </mat-form-field>
-        </div>
-      </div>
-    </div>
-
     <!-- Section: Image Gen (OPTIONAL) -->
     <div class="config-section optional">
       <div class="section-header">
