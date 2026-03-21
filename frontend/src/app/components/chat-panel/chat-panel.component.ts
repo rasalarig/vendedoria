@@ -6,7 +6,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChatService, ChatMessage } from '../../services/chat.service';
-import { SettingsService } from '../../services/settings.service';
 import { Subscription, filter } from 'rxjs';
 
 @Component({
@@ -904,22 +903,11 @@ export class ChatPanelComponent implements OnInit, OnDestroy, AfterViewChecked {
   constructor(
     private chatService: ChatService,
     private router: Router,
-    private settingsService: SettingsService,
   ) {}
 
   ngOnInit(): void {
-    this.settingsService.getStatus().subscribe({
-      next: (status) => {
-        this.aiConfigured = status.ai_configured;
-        if (this.aiConfigured) {
-          this.loadHistory();
-        }
-      },
-      error: () => {
-        this.aiConfigured = true;
-        this.loadHistory();
-      },
-    });
+    this.aiConfigured = true;
+    this.loadHistory();
 
     this.updateContext(this.router.url);
     this.routerSub = this.router.events
@@ -980,13 +968,6 @@ export class ChatPanelComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.chatService.sendMessage(message, file).subscribe({
       next: (response: any) => {
-        if (response.ai_fallback) {
-          this.aiConfigured = false;
-          this.messages = [];
-          this.isLoading = false;
-          this.chatService.clearHistory().subscribe();
-          return;
-        }
         if (response.ai_error) {
           const errorMsg: ChatMessage = {
             id: response.id || 0,

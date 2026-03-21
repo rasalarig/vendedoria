@@ -57,7 +57,7 @@ class SettingsResponse(SettingsSchema):
 async def get_settings_status(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     settings = get_user_settings(db, user_id)
     return {
-        "ai_configured": bool(settings.ai_api_key and len(settings.ai_api_key) > 0),
+        "ai_configured": True,
         "meta_configured": bool(
             settings.meta_app_id and len(settings.meta_app_id) > 0 and
             settings.meta_access_token and len(settings.meta_access_token) > 0 and
