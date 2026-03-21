@@ -7,5 +7,8 @@ from app.models.lead import Lead, LeadInteraction
 from app.models.strategy import MarketStrategy
 from app.models.chat import ChatMessage
 from app.models.user import User
+from app.models.seller import Seller
+from app.models.reference_video import ReferenceVideo
+from app.models.generated_video import GeneratedVideo
 
-__all__ = ["Product", "Settings", "Creative", "Campaign", "Contact", "WhatsAppCampaign", "WhatsAppMessage", "Lead", "LeadInteraction", "MarketStrategy", "ChatMessage", "User"]
+__all__ = ["Product", "Settings", "Creative", "Campaign", "Contact", "WhatsAppCampaign", "WhatsAppMessage", "Lead", "LeadInteraction", "MarketStrategy", "ChatMessage", "User", "Seller", "ReferenceVideo", "GeneratedVideo"]

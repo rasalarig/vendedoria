@@ -6,6 +6,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription, filter } from 'rxjs';
 import { AuthService, AuthUser } from './services/auth.service';
 
@@ -13,6 +14,13 @@ interface NavItem {
   path: string;
   label: string;
   icon: string;
+  divider?: boolean;
+}
+
+interface JourneyStep {
+  label: string;
+  icon: string;
+  path: string;
 }
 
 @Component({
@@ -28,26 +36,68 @@ interface NavItem {
     MatListModule,
     MatIconModule,
     MatButtonModule,
+    MatTooltipModule,
   ],
   template: `
     @if (isLoginPage) {
       <router-outlet></router-outlet>
     } @else {
       <mat-sidenav-container class="app-container">
-        <mat-sidenav mode="side" opened class="app-sidenav">
+        <mat-sidenav mode="side" opened class="app-sidenav"
+                     [class.collapsed]="sidebarCollapsed">
           <div class="brand-area">
-            <span class="brand-logo">VendedorIA</span>
-            <span class="brand-badge">2026</span>
+            @if (!sidebarCollapsed) {
+              <span class="brand-logo">VendedorIA</span>
+              <span class="brand-badge">v2</span>
+            }
+            <button class="collapse-btn" (click)="toggleSidebar()"
+                    [matTooltip]="sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'"
+                    matTooltipPosition="right">
+              <mat-icon>{{ sidebarCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
+            </button>
           </div>
+
+          @if (!sidebarCollapsed) {
+            <div class="journey-progress">
+              <div class="journey-label">Jornada</div>
+              <div class="journey-steps">
+                @for (step of journeySteps; track step.path; let i = $index) {
+                  <div class="journey-step"
+                       [class.completed]="i < currentJourneyStep"
+                       [class.current]="i === currentJourneyStep"
+                       [class.future]="i > currentJourneyStep"
+                       [matTooltip]="step.label"
+                       matTooltipPosition="above">
+                    <div class="step-dot"></div>
+                    @if (i < journeySteps.length - 1) {
+                      <div class="step-connector"
+                           [class.completed]="i < currentJourneyStep"></div>
+                    }
+                  </div>
+                }
+              </div>
+              <div class="journey-labels">
+                <span>{{ journeySteps[0].label }}</span>
+                <span>{{ journeySteps[journeySteps.length - 1].label }}</span>
+              </div>
+            </div>
+          }
 
           <nav class="nav-list">
             @for (item of navItems; track item.path) {
+              @if (item.divider) {
+                <div class="nav-divider"></div>
+              }
               <a class="nav-item"
                  [routerLink]="item.path"
-                 routerLinkActive="active-link">
+                 routerLinkActive="active-link"
+                 [matTooltip]="sidebarCollapsed ? item.label : ''"
+                 matTooltipPosition="right">
                 <div class="nav-indicator"></div>
                 <mat-icon>{{ item.icon }}</mat-icon>
-                <span class="nav-label">{{ item.label }}</span>
+                @if (!sidebarCollapsed) {
+                  <span class="nav-label">{{ item.label }}</span>
+                }
               </a>
             }
           </nav>
@@ -56,13 +106,20 @@ interface NavItem {
             @if (user) {
               <div class="user-area">
                 <img [src]="user.avatar_url" class="user-avatar" referrerpolicy="no-referrer" />
-                <span class="user-name">{{ user.name }}</span>
-                <button (click)="logout()" class="logout-btn" title="Sair">
+                @if (!sidebarCollapsed) {
+                  <span class="user-name">{{ user.name }}</span>
+                }
+                <button (click)="logout()" class="logout-btn"
+                        [matTooltip]="sidebarCollapsed ? 'Sair' : ''"
+                        matTooltipPosition="right"
+                        title="Sair">
                   <mat-icon>logout</mat-icon>
                 </button>
               </div>
             } @else {
-              <span class="version-tag">v1.0</span>
+              @if (!sidebarCollapsed) {
+                <span class="version-tag">v2.0</span>
+              }
             }
           </div>
         </mat-sidenav>
@@ -86,14 +143,22 @@ interface NavItem {
       border-right: 1px solid #27272a !important;
       display: flex;
       flex-direction: column;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-x: hidden;
+    }
+
+    .app-sidenav.collapsed {
+      width: 64px;
     }
 
     .brand-area {
-      padding: 28px 24px 24px;
+      padding: 20px 16px;
       display: flex;
       align-items: center;
       gap: 8px;
       border-bottom: 1px solid #27272a;
+      min-height: 64px;
+      box-sizing: border-box;
     }
 
     .brand-logo {
@@ -104,6 +169,7 @@ interface NavItem {
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      white-space: nowrap;
     }
 
     .brand-badge {
@@ -114,8 +180,117 @@ interface NavItem {
       padding: 2px 8px;
       border-radius: 6px;
       letter-spacing: 0.5px;
+      white-space: nowrap;
     }
 
+    .collapse-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #71717a;
+        transition: color 0.15s ease;
+      }
+
+      &:hover {
+        background: rgba(139, 92, 246, 0.1);
+
+        mat-icon {
+          color: #a1a1aa;
+        }
+      }
+    }
+
+    /* Journey Progress */
+    .journey-progress {
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid #27272a;
+    }
+
+    .journey-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #52525b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .journey-steps {
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+    }
+
+    .journey-step {
+      display: flex;
+      align-items: center;
+      flex: 1;
+
+      &:last-child {
+        flex: 0;
+      }
+    }
+
+    .step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #27272a;
+      border: 2px solid #3f3f46;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+
+    .journey-step.completed .step-dot {
+      background: #22c55e;
+      border-color: #22c55e;
+    }
+
+    .journey-step.current .step-dot {
+      background: #8b5cf6;
+      border-color: #8b5cf6;
+      animation: pulse-dot 2s infinite;
+    }
+
+    .step-connector {
+      flex: 1;
+      height: 2px;
+      background: #27272a;
+      margin: 0 2px;
+      transition: background 0.3s ease;
+    }
+
+    .step-connector.completed {
+      background: #22c55e;
+    }
+
+    .journey-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 10px;
+      color: #52525b;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(139, 92, 246, 0); }
+    }
+
+    /* Nav */
     .nav-list {
       flex: 1;
       padding: 12px 8px;
@@ -123,6 +298,12 @@ interface NavItem {
       flex-direction: column;
       gap: 2px;
       overflow-y: auto;
+    }
+
+    .nav-divider {
+      height: 1px;
+      background: #27272a;
+      margin: 8px 12px;
     }
 
     .nav-item {
@@ -138,6 +319,7 @@ interface NavItem {
       transition: all 0.15s ease;
       position: relative;
       cursor: pointer;
+      white-space: nowrap;
 
       mat-icon {
         font-size: 20px;
@@ -145,6 +327,7 @@ interface NavItem {
         height: 20px;
         color: #71717a;
         transition: color 0.15s ease;
+        flex-shrink: 0;
       }
 
       .nav-indicator {
@@ -157,6 +340,11 @@ interface NavItem {
         background: #8b5cf6;
         border-radius: 0 2px 2px 0;
         transition: height 0.2s ease;
+      }
+
+      .nav-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       &:hover {
@@ -183,7 +371,7 @@ interface NavItem {
     }
 
     .sidebar-footer {
-      padding: 16px 24px;
+      padding: 16px;
       border-top: 1px solid #27272a;
     }
 
@@ -205,6 +393,7 @@ interface NavItem {
       border-radius: 50%;
       object-fit: cover;
       border: 1px solid #27272a;
+      flex-shrink: 0;
     }
 
     .user-name {
@@ -227,6 +416,7 @@ interface NavItem {
       align-items: center;
       justify-content: center;
       transition: background 0.15s ease;
+      flex-shrink: 0;
 
       mat-icon {
         font-size: 18px;
@@ -257,27 +447,43 @@ interface NavItem {
 export class AppComponent implements OnInit, OnDestroy {
   isLoginPage = false;
   user: AuthUser | null = null;
+  sidebarCollapsed = false;
 
   private routerSub!: Subscription;
   private userSub!: Subscription;
 
   navItems: NavItem[] = [
-    { path: 'chat', label: 'Chat IA', icon: 'smart_toy' },
-    { path: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { path: 'products', label: 'Produtos', icon: 'shopping_cart' },
-    { path: 'creatives', label: 'Criativos', icon: 'brush' },
-    { path: 'campaigns', label: 'Campanhas', icon: 'campaign' },
-    { path: 'whatsapp', label: 'WhatsApp', icon: 'chat' },
-    { path: 'leads', label: 'Leads', icon: 'people' },
-    { path: 'strategy', label: 'Estrategia', icon: 'psychology' },
-    { path: 'analytics', label: 'Analytics', icon: 'analytics' },
+    { path: 'home', label: 'Inicio', icon: 'home' },
+    { path: 'sellers', label: 'Vendedores', icon: 'face' },
+    { path: 'products', label: 'Produtos', icon: 'inventory_2' },
+    { path: 'videos', label: 'Videos', icon: 'video_library' },
+    { path: 'creatives', label: 'Criativos', icon: 'movie_creation' },
+    { path: 'campaigns', label: 'Campanhas', icon: 'rocket_launch' },
+    { path: 'dashboard', label: 'Metricas', icon: 'monitoring', divider: true },
     { path: 'settings', label: 'Configuracoes', icon: 'settings' },
   ];
+
+  journeySteps: JourneyStep[] = [
+    { label: 'Vendedor', icon: 'face', path: 'sellers' },
+    { label: 'Produto', icon: 'inventory_2', path: 'products' },
+    { label: 'Video', icon: 'video_library', path: 'videos' },
+    { label: 'Criativo', icon: 'movie_creation', path: 'creatives' },
+    { label: 'Campanha', icon: 'rocket_launch', path: 'campaigns' },
+  ];
+
+  // Default to step 0; will be wired to real progress later
+  currentJourneyStep = 0;
 
   constructor(
     private authService: AuthService,
     private router: Router,
-  ) {}
+  ) {
+    // Restore collapsed state from localStorage
+    const stored = localStorage.getItem('sidebar_collapsed');
+    if (stored !== null) {
+      this.sidebarCollapsed = stored === 'true';
+    }
+  }
 
   ngOnInit(): void {
     this.userSub = this.authService.user$.subscribe(u => this.user = u);
@@ -295,6 +501,11 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.routerSub?.unsubscribe();
     this.userSub?.unsubscribe();
+  }
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    localStorage.setItem('sidebar_collapsed', String(this.sidebarCollapsed));
   }
 
   logout(): void {
