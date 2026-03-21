@@ -629,21 +629,20 @@ export class AppComponent implements OnInit, OnDestroy {
 
   navItems: NavItem[] = [
     { path: 'home', label: 'Inicio', icon: 'home' },
-    { path: 'sellers', label: 'Vendedores', icon: 'face' },
+    { path: 'vendas', label: 'Vendas', icon: 'rocket_launch' },
     { path: 'products', label: 'Produtos', icon: 'inventory_2' },
-    { path: 'videos', label: 'Videos', icon: 'video_library' },
     { path: 'creatives', label: 'Criativos', icon: 'movie_creation' },
-    { path: 'campaigns', label: 'Campanhas', icon: 'rocket_launch' },
+    { path: 'campaigns', label: 'Campanhas', icon: 'campaign' },
     { path: 'dashboard', label: 'Metricas', icon: 'monitoring', divider: true },
     { path: 'settings', label: 'Configuracoes', icon: 'settings' },
   ];
 
   journeySteps: JourneyStep[] = [
-    { label: 'Vendedor', icon: 'face', path: 'sellers' },
     { label: 'Produto', icon: 'inventory_2', path: 'products' },
-    { label: 'Video', icon: 'video_library', path: 'videos' },
+    { label: 'Venda', icon: 'rocket_launch', path: 'vendas' },
     { label: 'Criativo', icon: 'movie_creation', path: 'creatives' },
-    { label: 'Campanha', icon: 'rocket_launch', path: 'campaigns' },
+    { label: 'Campanha', icon: 'campaign', path: 'campaigns' },
+    { label: 'Metricas', icon: 'monitoring', path: 'dashboard' },
   ];
 
   currentJourneyStep = 0;

@@ -7,6 +7,8 @@ export const routes: Routes = [
   { path: 'home', loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent), canActivate: [authGuard] },
   { path: 'sellers', loadComponent: () => import('./pages/sellers/sellers.component').then(m => m.SellersComponent), canActivate: [authGuard] },
   { path: 'sellers/create', loadComponent: () => import('./pages/sellers/seller-create.component').then(m => m.SellerCreateComponent), canActivate: [authGuard] },
+  { path: 'vendas', loadComponent: () => import('./pages/vendas/vendas.component').then(m => m.VendasComponent), canActivate: [authGuard] },
+  { path: 'vendas/nova', loadComponent: () => import('./pages/vendas/venda-create.component').then(m => m.VendaCreateComponent), canActivate: [authGuard] },
   { path: 'products', loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsComponent), canActivate: [authGuard] },
   { path: 'videos', loadComponent: () => import('./pages/videos/reference-videos.component').then(m => m.ReferenceVideosComponent), canActivate: [authGuard] },
   { path: 'creatives', loadComponent: () => import('./pages/creatives/creatives.component').then(m => m.CreativesComponent), canActivate: [authGuard] },
