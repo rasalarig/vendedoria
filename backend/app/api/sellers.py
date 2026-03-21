@@ -83,7 +83,7 @@ FACES_CATALOG: List[dict] = [
         "gender": "male",
         "age_range": "30-40",
         "style": "profissional",
-        "thumbnail_url": "/assets/faces/vendedor.avif",
+        "thumbnail_url": "/assets/faces/vendedor.png",
         "is_custom": False,
     },
     {
@@ -92,7 +92,7 @@ FACES_CATALOG: List[dict] = [
         "gender": "female",
         "age_range": "25-35",
         "style": "profissional",
-        "thumbnail_url": "/assets/faces/vendedora.avif",
+        "thumbnail_url": "/assets/faces/vendedora.png",
         "is_custom": False,
     },
     {
