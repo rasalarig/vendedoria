@@ -310,8 +310,8 @@ PRIMEIRA MENSAGEM: Apresente-se brevemente como VendedorIA e pergunte o que o us
 
 class ChatAIService:
     def __init__(self, ai_api_key: str = "", ai_provider: str = "claude", meta_configured: bool = True, whatsapp_configured: bool = True, meta_readiness: dict = None):
-        self.ai_api_key = app_settings.OPENAI_API_KEY
-        self.ai_provider = "openai"
+        self.ai_api_key = app_settings.TOGETHER_API_KEY
+        self.ai_provider = "together"
         self.meta_configured = meta_configured
         self.whatsapp_configured = whatsapp_configured
         self.meta_readiness = meta_readiness or {}
@@ -515,7 +515,35 @@ class ChatAIService:
     async def _call_ai(self, messages: List[Dict], db: Session = None) -> Tuple[str, bool, Optional[str]]:
         """Call Claude/OpenAI API. Returns (text, is_fallback, error_detail)."""
         system_prompt = self._build_system_prompt(db)
-        if self.ai_api_key and self.ai_provider == "claude":
+        if self.ai_api_key and self.ai_provider == "together":
+            try:
+                together_messages = [{"role": "system", "content": system_prompt}]
+                together_messages.extend(messages)
+
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    response = await client.post(
+                        "https://api.together.xyz/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {self.ai_api_key}",
+                            "Content-Type": "application/json",
+                        },
+                        json={
+                            "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+                            "max_tokens": 2000,
+                            "messages": together_messages,
+                        },
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        return (data["choices"][0]["message"]["content"], False, None)
+                    else:
+                        error_msg = self._parse_api_error("Together AI", response.status_code, response.text)
+                        return (error_msg, False, error_msg)
+            except Exception as e:
+                error_msg = f"Erro de conexao com a API Together AI: {str(e)}"
+                return (error_msg, False, error_msg)
+
+        elif self.ai_api_key and self.ai_provider == "claude":
             try:
                 async with httpx.AsyncClient(timeout=30.0) as client:
                     response = await client.post(
@@ -649,7 +677,7 @@ class ChatAIService:
                 db.commit()
 
                 settings = db.query(Settings).filter(Settings.user_id == user_id).first() if user_id else db.query(Settings).first()
-                ai_key = app_settings.OPENAI_API_KEY
+                ai_key = app_settings.TOGETHER_API_KEY
                 service = AICreativeService(
                     ai_api_key=ai_key,
                     image_api_key=settings.image_api_key if settings and settings.image_api_key else app_settings.TOGETHER_API_KEY,
@@ -923,7 +951,7 @@ class ChatAIService:
             product = db.query(Product).filter(Product.id == product_id).first()
             if product:
                 settings = db.query(Settings).filter(Settings.user_id == user_id).first() if user_id else db.query(Settings).first()
-                ai_key = app_settings.OPENAI_API_KEY
+                ai_key = app_settings.TOGETHER_API_KEY
                 service = MarketResearchService(ai_api_key=ai_key)
                 strategy = await service.generate_strategy(
                     product.name,
