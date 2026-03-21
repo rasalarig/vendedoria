@@ -1,3 +1,5 @@
+import types
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
@@ -19,7 +21,7 @@ router = APIRouter(prefix="/creatives", tags=["video-generation"])
 
 
 class GenerateVideoRequest(BaseModel):
-    seller_id: int
+    seller_id: Optional[int] = None
     product_id: int
     reference_video_id: Optional[int] = None
     provider: str = Field(default="veo3")
@@ -114,14 +116,20 @@ async def generate_video(
 ):
     """Start video generation: generate script via LLM, create record, log cost."""
 
-    # Validate seller belongs to user
-    seller = (
-        db.query(Seller)
-        .filter(Seller.id == request.seller_id, Seller.user_id == user_id)
-        .first()
-    )
+    # Validate seller belongs to user (optional now)
+    seller = None
+    if request.seller_id:
+        seller = (
+            db.query(Seller)
+            .filter(Seller.id == request.seller_id, Seller.user_id == user_id)
+            .first()
+        )
+    # Use a default seller object if none provided/found
     if not seller:
-        raise HTTPException(status_code=404, detail="Vendedor nao encontrado")
+        seller = types.SimpleNamespace(
+            name='Apresentador', personality='informal',
+            language_style='', catchphrases=''
+        )
 
     # Validate product belongs to user
     product = (
@@ -295,10 +303,17 @@ async def regenerate_video(
     seller = db.query(Seller).filter(Seller.id == video.seller_id).first() if video.seller_id else None
     product = db.query(Product).filter(Product.id == video.product_id).first() if video.product_id else None
 
-    if not seller or not product:
+    if not product:
         raise HTTPException(
             status_code=400,
-            detail="Vendedor ou produto associado nao encontrado para regenerar",
+            detail="Produto associado nao encontrado para regenerar",
+        )
+
+    # Use a default seller object if none found
+    if not seller:
+        seller = types.SimpleNamespace(
+            name='Apresentador', personality='informal',
+            language_style='', catchphrases=''
         )
 
     provider = "veo3"

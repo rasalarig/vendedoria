@@ -1551,7 +1551,7 @@ export class VendaCreateComponent implements OnInit {
       ? 'http://localhost:8000'
       : '';
 
-    this.http.post<any>(`${backendUrl}/api/video-generation/generate`, {
+    this.http.post<any>(`${backendUrl}/api/creatives/generate-video`, {
       product_id: this.selectedProduct!.id,
       duration: 10,
     }).subscribe({
