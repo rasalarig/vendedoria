@@ -101,27 +101,21 @@ interface ProductVideoGroup {
           </mat-form-field>
         </div>
 
-        <!-- Provider selector (cards) -->
+        <!-- Provider info (Veo 3) -->
         <div class="provider-section">
           <label class="field-label">Provedor de Video</label>
           <div class="provider-cards">
-            @for (provider of providers; track provider.id) {
-              <div class="provider-card"
-                   [class.selected]="selectedProvider === provider.id"
-                   (click)="selectProvider(provider.id)">
-                <div class="provider-icon-wrap">
-                  <mat-icon>{{ provider.icon }}</mat-icon>
-                </div>
-                <div class="provider-info">
-                  <span class="provider-name">{{ provider.name }}</span>
-                  <span class="provider-cost">R$ {{ provider.costPerSec.toFixed(2) }}/seg</span>
-                </div>
-                <span class="provider-desc">{{ provider.description }}</span>
-                @if (selectedProvider === provider.id) {
-                  <div class="provider-check"><mat-icon>check_circle</mat-icon></div>
-                }
+            <div class="provider-card selected">
+              <div class="provider-icon-wrap">
+                <mat-icon>auto_awesome</mat-icon>
               </div>
-            }
+              <div class="provider-info">
+                <span class="provider-name">Google Veo 3</span>
+                <span class="provider-cost">R$ 0.05/seg</span>
+              </div>
+              <span class="provider-desc">IA generativa de video de ultima geracao</span>
+              <div class="provider-check"><mat-icon>check_circle</mat-icon></div>
+            </div>
           </div>
         </div>
 
@@ -410,7 +404,7 @@ interface ProductVideoGroup {
 
     /* Provider cards */
     .provider-section { margin-bottom: 24px; }
-    .provider-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .provider-cards { display: grid; grid-template-columns: 1fr; gap: 12px; max-width: 400px; }
     .provider-card {
       background: #09090b;
       border: 2px solid #27272a;
@@ -691,15 +685,13 @@ export class CreativesComponent implements OnInit, OnDestroy {
   selectedSellerId: number | null = null;
   selectedProductId: number | null = null;
   selectedRefVideoId: number | null = null;
-  selectedProvider = 'hailuo';
+  selectedProvider = 'veo3';
   selectedDuration = 10;
   estimatedCost = 0;
 
-  // Providers
+  // Provider (single: Google Veo 3)
   providers: VideoProvider[] = [
-    { id: 'hailuo', name: 'Hailuo AI', icon: 'movie_filter', costPerSec: 0.50, description: 'Alta qualidade, rapido' },
-    { id: 'runway', name: 'Runway ML', icon: 'theaters', costPerSec: 0.75, description: 'Controle preciso de movimento' },
-    { id: 'heygen', name: 'HeyGen', icon: 'face', costPerSec: 1.00, description: 'Avatares realistas com fala' },
+    { id: 'veo3', name: 'Google Veo 3', icon: 'auto_awesome', costPerSec: 0.05, description: 'IA generativa de video de ultima geracao' },
   ];
 
   // UI state
@@ -801,8 +793,8 @@ export class CreativesComponent implements OnInit, OnDestroy {
 
   // ====== Provider & Cost ======
 
-  selectProvider(providerId: string): void {
-    this.selectedProvider = providerId;
+  selectProvider(_providerId: string): void {
+    // Single provider (Veo 3), no-op
     this.updateCostEstimate();
   }
 
@@ -812,11 +804,10 @@ export class CreativesComponent implements OnInit, OnDestroy {
 
   updateCostEstimate(): void {
     // Try API first, fallback to local calculation
-    const provider = this.providers.find(p => p.id === this.selectedProvider);
-    const localCost = provider ? provider.costPerSec * this.selectedDuration : 0;
+    const localCost = 0.05 * this.selectedDuration;
     this.estimatedCost = localCost;
 
-    this.videoCreativeService.estimateCost(this.selectedProvider, this.selectedDuration).subscribe({
+    this.videoCreativeService.estimateCost('veo3', this.selectedDuration).subscribe({
       next: (estimate) => {
         this.estimatedCost = estimate.estimated_cost;
       },
@@ -840,7 +831,7 @@ export class CreativesComponent implements OnInit, OnDestroy {
       this.selectedSellerId!,
       this.selectedProductId!,
       this.selectedRefVideoId || undefined,
-      this.selectedProvider,
+      'veo3',
       this.selectedDuration,
     ).subscribe({
       next: (response) => {
@@ -950,6 +941,7 @@ export class CreativesComponent implements OnInit, OnDestroy {
   // ====== Helpers ======
 
   getProviderName(providerId: string): string {
+    if (providerId === 'veo3') return 'Google Veo 3';
     return this.providers.find(p => p.id === providerId)?.name || providerId;
   }
 

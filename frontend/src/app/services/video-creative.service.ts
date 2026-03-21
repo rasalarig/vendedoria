@@ -50,7 +50,7 @@ export class VideoCreativeService {
 
   constructor(private http: HttpClient) {}
 
-  estimateCost(provider: string, duration: number): Observable<CostEstimate> {
+  estimateCost(provider: string = 'veo3', duration: number = 10): Observable<CostEstimate> {
     return this.http.get<CostEstimate>(
       `${this.apiUrl}/estimate-cost?provider=${encodeURIComponent(provider)}&duration=${duration}`
     );

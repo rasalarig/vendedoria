@@ -14,9 +14,7 @@ class Settings(BaseSettings):
     META_FB_LOGIN_CONFIG_ID: str = "1675802386923357"
     META_APP_ID: str = ""
     META_APP_SECRET: str = ""
-    HAILUO_API_KEY: str = ""
-    RUNWAY_API_KEY: str = ""
-    HEYGEN_API_KEY: str = ""
+    GOOGLE_AI_KEY: str = "AIzaSyBbVj6ivyNcRzlug1NJBS2umrJxKWuQXp8"
 
     class Config:
         env_file = ".env"

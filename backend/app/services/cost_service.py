@@ -11,9 +11,7 @@ class CostService:
 
     # Provider costs per second/unit
     PROVIDER_COSTS = {
-        "hailuo": {"video_per_second": 0.084, "min_duration": 5},
-        "runway": {"video_per_second": 0.05, "min_duration": 5},
-        "heygen": {"video_per_second": 0.10, "min_duration": 5},
+        "veo3": {"video_per_second": 0.05, "min_duration": 5},
         "flux": {"image_per_unit": 0.04},
         "together": {"image_per_unit": 0.01},
     }

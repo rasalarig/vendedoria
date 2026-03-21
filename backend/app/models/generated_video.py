@@ -15,7 +15,7 @@ class GeneratedVideo(Base):
     file_size = Column(Integer, nullable=False)
     duration = Column(Float, nullable=True)
     status = Column(String(50), nullable=False, default="generating")  # generating, ready, failed, approved
-    provider = Column(String(50), nullable=True)  # hailuo, runway, heygen
+    provider = Column(String(50), nullable=True)  # veo3
     cost_usd = Column(Float, nullable=True)
     script = Column(Text, nullable=True)
     thumbnail_path = Column(String(500), nullable=True)

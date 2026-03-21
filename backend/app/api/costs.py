@@ -50,7 +50,7 @@ class CostLogResponse(BaseModel):
 
 @router.get("/estimate", response_model=CostEstimateResponse)
 def estimate_cost(
-    provider: str = Query(..., description="Provider name (hailuo, runway, heygen, flux, together)"),
+    provider: str = Query(..., description="Provider name (veo3, flux, together)"),
     type: str = Query(..., description="Generation type (video_generation, image_generation, tts)"),
     duration: float = Query(5, description="Duration in seconds (for video providers)"),
 ):

@@ -22,7 +22,7 @@ class GenerateVideoRequest(BaseModel):
     seller_id: int
     product_id: int
     reference_video_id: Optional[int] = None
-    provider: str = Field(default="hailuo", pattern="^(hailuo|runway|heygen)$")
+    provider: str = Field(default="veo3")
     duration: float = Field(default=10, ge=5, le=60)
     style_tags: Optional[List[str]] = None
 
@@ -148,10 +148,7 @@ async def generate_video(
         reference_video_path = ref_video.filename
 
     # Initialize service
-    try:
-        service = VideoGenerationService(provider=request.provider)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    service = VideoGenerationService()
 
     # Generate script via LLM
     script = await service.generate_script(
@@ -179,7 +176,7 @@ async def generate_video(
         file_size=0,  # mock: no actual file yet
         duration=request.duration,
         status=result["status"],
-        provider=request.provider,
+        provider="veo3",
         cost_usd=result["cost_usd"],
         script=script,
     )
@@ -192,9 +189,9 @@ async def generate_video(
         db=db,
         user_id=user_id,
         type="video_generation",
-        provider=request.provider,
+        provider="veo3",
         amount_usd=result["cost_usd"],
-        description=f"Video ad: {product.name} ({request.duration}s via {request.provider})",
+        description=f"Video ad: {product.name} ({request.duration}s via Google Veo 3)",
         ref_type="generated_video",
         ref_id=video_record.id,
     )
@@ -206,7 +203,7 @@ async def generate_video(
         video_id=video_record.id,
         script=script,
         status=result["status"],
-        provider=request.provider,
+        provider="veo3",
         provider_name=result["provider_name"],
         duration_seconds=request.duration,
         estimated_cost_usd=cost_estimate["estimated_cost_usd"],
@@ -217,16 +214,12 @@ async def generate_video(
 
 @router.get("/estimate-cost", response_model=CostEstimateResponse)
 async def estimate_cost(
-    provider: str = Query(default="hailuo", pattern="^(hailuo|runway|heygen)$"),
+    provider: str = Query(default="veo3"),
     duration: float = Query(default=10, ge=5, le=60),
     user_id: int = Depends(get_current_user_id),
 ):
     """Get cost estimate for video generation."""
-    try:
-        service = VideoGenerationService(provider=provider)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
+    service = VideoGenerationService()
     estimate = await service.estimate_cost(duration)
     return CostEstimateResponse(**estimate)
 
@@ -308,13 +301,9 @@ async def regenerate_video(
             detail="Vendedor ou produto associado nao encontrado para regenerar",
         )
 
-    provider = video.provider or "hailuo"
+    provider = "veo3"
     duration = video.duration or 10
-
-    try:
-        service = VideoGenerationService(provider=provider)
-    except ValueError:
-        service = VideoGenerationService(provider="hailuo")
+    service = VideoGenerationService()
 
     # Generate new script
     script = await service.generate_script(seller=seller, product=product)
@@ -342,7 +331,7 @@ async def regenerate_video(
         type="video_generation",
         provider=provider,
         amount_usd=result["cost_usd"],
-        description=f"Regenerate video ad: {product.name} ({duration}s via {provider})",
+        description=f"Regenerate video ad: {product.name} ({duration}s via Google Veo 3)",
         ref_type="generated_video",
         ref_id=video.id,
     )
