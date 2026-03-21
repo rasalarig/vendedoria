@@ -1569,7 +1569,16 @@ export class VendaCreateComponent implements OnInit {
       },
       error: (err) => {
         this.generatingVideo = false;
-        const detail = err?.error?.detail || err?.message || 'Erro desconhecido ao gerar video.';
+        let detail = 'Erro desconhecido ao gerar video.';
+        if (typeof err?.error?.detail === 'string') {
+          detail = err.error.detail;
+        } else if (typeof err?.error === 'string') {
+          detail = err.error;
+        } else if (typeof err?.message === 'string') {
+          detail = err.message;
+        } else if (err?.status) {
+          detail = `Erro HTTP ${err.status} ao gerar video.`;
+        }
         this.videoError = detail;
       },
     });
