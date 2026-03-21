@@ -10,7 +10,7 @@ import httpx
 from app.core.config import settings
 
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
-VEO_MODEL = "veo-3.0-generate-preview"
+VEO_MODEL = "veo-3.0-generate-001"
 
 
 class VideoGenerationService:
@@ -203,14 +203,13 @@ Retorne APENAS o texto do roteiro, sem marcacoes, sem titulos, sem instrucoes de
         task_id = str(uuid.uuid4())
 
         if not self.api_key:
-            return self._mock_result(task_id, duration_seconds)
+            raise Exception("GOOGLE_AI_KEY nao configurada. Configure nas variaveis de ambiente.")
 
         try:
             result = await self._generate_veo3(task_id, script, seller, product, duration_seconds)
             return result
         except Exception as e:
-            print(f"Veo 3 generation error: {e}")
-            return self._mock_result(task_id, duration_seconds)
+            raise Exception(f"Erro na geracao de video Veo 3: {str(e)}")
 
     async def _generate_veo3(self, task_id, script, seller, product, duration) -> dict:
         """Call Google Veo 3 API with correct async format."""
@@ -244,7 +243,6 @@ Retorne APENAS o texto do roteiro, sem marcacoes, sem titulos, sem instrucoes de
                 "aspectRatio": "9:16",
                 "durationSeconds": min(int(duration), 8),
                 "sampleCount": 1,
-                "personGeneration": "allow_adult",
             },
         }
 
@@ -262,13 +260,14 @@ Retorne APENAS o texto do roteiro, sem marcacoes, sem titulos, sem instrucoes de
             )
 
             if response.status_code != 200:
-                print(f"Veo 3 start error {response.status_code}: {response.text[:300]}")
-                return self._mock_result(task_id, duration)
+                error_msg = response.json().get("error", {}).get("message", response.text[:300])
+                if response.status_code == 429:
+                    raise Exception(f"Quota do Google AI excedida. Aguarde alguns minutos ou verifique seu plano em https://ai.google.dev. Detalhes: {error_msg}")
+                raise Exception(f"Erro ao iniciar geracao (HTTP {response.status_code}): {error_msg}")
 
             operation_name = response.json().get("name")
             if not operation_name:
-                print("Veo 3: no operation name returned")
-                return self._mock_result(task_id, duration)
+                raise Exception("Veo 3 nao retornou ID da operacao. Resposta inesperada da API.")
 
         # Step 2: Poll for completion (36 * 10s = 360s max)
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -288,8 +287,7 @@ Retorne APENAS o texto do roteiro, sem marcacoes, sem titulos, sem instrucoes de
                     try:
                         video_uri = poll_data["response"]["generateVideoResponse"]["generatedSamples"][0]["video"]["uri"]
                     except (KeyError, IndexError):
-                        print(f"Veo 3: unexpected response structure: {json.dumps(poll_data)[:500]}")
-                        return self._mock_result(task_id, duration)
+                        raise Exception(f"Resposta inesperada do Veo 3: {json.dumps(poll_data)[:300]}")
 
                     # Step 3: Download video
                     async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as dl_client:
@@ -324,11 +322,9 @@ Retorne APENAS o texto do roteiro, sem marcacoes, sem titulos, sem instrucoes de
                                 "mock": False,
                             }
                         else:
-                            print(f"Veo 3 download error: {video_resp.status_code}")
-                            return self._mock_result(task_id, duration)
+                            raise Exception(f"Erro ao baixar o video gerado (HTTP {video_resp.status_code})")
 
-        print("Veo 3: polling timed out after 360s")
-        return self._mock_result(task_id, duration)
+        raise Exception("Tempo limite excedido (6 min). O video pode ainda estar sendo gerado. Tente novamente em alguns minutos.")
 
     async def _load_actor_photo(self, seller) -> Optional[bytes]:
         """Try to load actor face photo from the faces catalog."""

@@ -165,66 +165,71 @@ async def generate_video(
     # Initialize service
     service = VideoGenerationService()
 
-    # Generate script via LLM
-    script = await service.generate_script(
-        seller=seller,
-        product=product,
-        style_tags=request.style_tags,
-    )
+    try:
+        # Generate script via LLM
+        script = await service.generate_script(
+            seller=seller,
+            product=product,
+            style_tags=request.style_tags,
+        )
 
-    # Generate video (mock for now)
-    result = await service.generate_video(
-        script=script,
-        seller=seller,
-        product=product,
-        duration_seconds=request.duration,
-        reference_video_path=reference_video_path,
-    )
+        # Generate video
+        result = await service.generate_video(
+            script=script,
+            seller=seller,
+            product=product,
+            duration_seconds=request.duration,
+            reference_video_path=reference_video_path,
+        )
 
-    # Create GeneratedVideo record
-    video_record = GeneratedVideo(
-        user_id=user_id,
-        seller_id=request.seller_id,
-        product_id=request.product_id,
-        reference_video_id=request.reference_video_id,
-        filename=result["filename"],
-        file_size=0,  # mock: no actual file yet
-        duration=request.duration,
-        status=result["status"],
-        provider="veo3",
-        cost_usd=result["cost_usd"],
-        script=script,
-    )
-    db.add(video_record)
-    db.commit()
-    db.refresh(video_record)
+        # Create GeneratedVideo record
+        video_record = GeneratedVideo(
+            user_id=user_id,
+            seller_id=request.seller_id,
+            product_id=request.product_id,
+            reference_video_id=request.reference_video_id,
+            filename=result["filename"],
+            file_size=result.get("file_size", 0),
+            duration=request.duration,
+            status=result["status"],
+            provider="veo3",
+            cost_usd=result["cost_usd"],
+            script=script,
+        )
+        db.add(video_record)
+        db.commit()
+        db.refresh(video_record)
 
-    # Log cost
-    CostService.log_cost(
-        db=db,
-        user_id=user_id,
-        type="video_generation",
-        provider="veo3",
-        amount_usd=result["cost_usd"],
-        description=f"Video ad: {product.name} ({request.duration}s via Google Veo 3)",
-        ref_type="generated_video",
-        ref_id=video_record.id,
-    )
+        # Log cost
+        CostService.log_cost(
+            db=db,
+            user_id=user_id,
+            type="video_generation",
+            provider="veo3",
+            amount_usd=result["cost_usd"],
+            description=f"Video ad: {product.name} ({request.duration}s via Google Veo 3)",
+            ref_type="generated_video",
+            ref_id=video_record.id,
+        )
 
-    # Cost estimate for response
-    cost_estimate = await service.estimate_cost(request.duration)
+        # Cost estimate for response
+        cost_estimate = await service.estimate_cost(request.duration)
 
-    return GenerateVideoResponse(
-        video_id=video_record.id,
-        script=script,
-        status=result["status"],
-        provider="veo3",
-        provider_name=result["provider_name"],
-        duration_seconds=request.duration,
-        estimated_cost_usd=cost_estimate["estimated_cost_usd"],
-        estimated_cost_brl=cost_estimate["estimated_cost_brl"],
-        mock=result.get("mock", False),
-    )
+        return GenerateVideoResponse(
+            video_id=video_record.id,
+            script=script,
+            status=result["status"],
+            provider="veo3",
+            provider_name=result["provider_name"],
+            duration_seconds=request.duration,
+            estimated_cost_usd=cost_estimate["estimated_cost_usd"],
+            estimated_cost_brl=cost_estimate["estimated_cost_brl"],
+            mock=result.get("mock", False),
+        )
+    except HTTPException:
+        raise  # re-raise HTTP exceptions as-is
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/estimate-cost", response_model=CostEstimateResponse)
