@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
+import os
+import uuid
 
 from app.core.database import get_db
 from app.core.auth import get_current_user_id
@@ -9,12 +11,17 @@ from app.models.seller import Seller
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
+_backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_data_dir = "/app/data" if os.path.exists("/app/data") else _backend_dir
+UPLOAD_DIR = os.path.join(_data_dir, "uploads", "faces")
+
 
 # --------------- Pydantic Schemas ---------------
 
 class SellerCreate(BaseModel):
     name: str
     avatar_face: str
+    avatar_face_url: Optional[str] = None
     voice_id: str
     personality: str = "informal"
     language_style: Optional[str] = None
@@ -24,6 +31,7 @@ class SellerCreate(BaseModel):
 class SellerUpdate(BaseModel):
     name: Optional[str] = None
     avatar_face: Optional[str] = None
+    avatar_face_url: Optional[str] = None
     voice_id: Optional[str] = None
     personality: Optional[str] = None
     language_style: Optional[str] = None
@@ -35,6 +43,7 @@ class SellerResponse(BaseModel):
     user_id: int
     name: str
     avatar_face: str
+    avatar_face_url: Optional[str] = None
     voice_id: str
     personality: str
     language_style: Optional[str] = None
@@ -53,6 +62,7 @@ class FaceOption(BaseModel):
     age_range: str
     style: str
     thumbnail_url: str
+    is_custom: bool = False
 
 
 class VoiceOption(BaseModel):
@@ -67,18 +77,33 @@ class VoiceOption(BaseModel):
 # --------------- Static catalogs ---------------
 
 FACES_CATALOG: List[dict] = [
-    {"id": "face_1", "name": "Lucas", "gender": "masculino", "age_range": "25-35", "style": "profissional", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_1"},
-    {"id": "face_2", "name": "Ana", "gender": "feminino", "age_range": "25-35", "style": "profissional", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_2"},
-    {"id": "face_3", "name": "Carlos", "gender": "masculino", "age_range": "35-45", "style": "executivo", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_3"},
-    {"id": "face_4", "name": "Mariana", "gender": "feminino", "age_range": "20-30", "style": "casual", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_4"},
-    {"id": "face_5", "name": "Pedro", "gender": "masculino", "age_range": "20-30", "style": "casual", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_5"},
-    {"id": "face_6", "name": "Julia", "gender": "feminino", "age_range": "35-45", "style": "executivo", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_6"},
-    {"id": "face_7", "name": "Rafael", "gender": "masculino", "age_range": "30-40", "style": "moderno", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_7"},
-    {"id": "face_8", "name": "Camila", "gender": "feminino", "age_range": "30-40", "style": "moderno", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_8"},
-    {"id": "face_9", "name": "Fernando", "gender": "masculino", "age_range": "40-50", "style": "classico", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_9"},
-    {"id": "face_10", "name": "Beatriz", "gender": "feminino", "age_range": "20-30", "style": "jovem", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_10"},
-    {"id": "face_11", "name": "Diego", "gender": "masculino", "age_range": "20-30", "style": "jovem", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_11"},
-    {"id": "face_12", "name": "Isabela", "gender": "feminino", "age_range": "40-50", "style": "classico", "thumbnail_url": "https://api.dicebear.com/7.x/personas/svg?seed=face_12"},
+    {
+        "id": "vendedor_1",
+        "name": "Carlos",
+        "gender": "male",
+        "age_range": "30-40",
+        "style": "profissional",
+        "thumbnail_url": "/assets/faces/vendedor.avif",
+        "is_custom": False,
+    },
+    {
+        "id": "vendedora_1",
+        "name": "Ana",
+        "gender": "female",
+        "age_range": "25-35",
+        "style": "profissional",
+        "thumbnail_url": "/assets/faces/vendedora.avif",
+        "is_custom": False,
+    },
+    {
+        "id": "custom",
+        "name": "Personalizado",
+        "gender": "other",
+        "age_range": "",
+        "style": "custom",
+        "thumbnail_url": "",
+        "is_custom": True,
+    },
 ]
 
 VOICES_CATALOG: List[dict] = [
@@ -101,6 +126,7 @@ def seller_to_response(seller: Seller) -> dict:
         "user_id": seller.user_id,
         "name": seller.name,
         "avatar_face": seller.avatar_face,
+        "avatar_face_url": seller.avatar_face_url,
         "voice_id": seller.voice_id,
         "personality": seller.personality,
         "language_style": seller.language_style,
@@ -124,6 +150,56 @@ async def list_voices():
     return VOICES_CATALOG
 
 
+# --------------- Face upload endpoint ---------------
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/avif"}
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".avif"}
+
+
+@router.post("/faces/upload")
+async def upload_custom_face(
+    file: UploadFile = File(...),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Upload a custom face photo for seller avatar."""
+    # Validate content type
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Tipo de arquivo nao permitido. Use: JPG, PNG, WebP ou AVIF",
+        )
+
+    # Validate extension
+    _, ext = os.path.splitext(file.filename or "upload.jpg")
+    ext = ext.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Extensao de arquivo nao permitida. Use: .jpg, .png, .webp ou .avif",
+        )
+
+    # Create upload directory if needed
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    # Generate unique filename
+    unique_id = uuid.uuid4().hex[:12]
+    filename = f"{user_id}_{unique_id}{ext}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+
+    # Save the file
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    face_id = f"custom_{unique_id}"
+    thumbnail_url = f"/uploads/faces/{filename}"
+
+    return {
+        "face_id": face_id,
+        "thumbnail_url": thumbnail_url,
+    }
+
+
 # --------------- CRUD endpoints (auth required) ---------------
 
 @router.post("", response_model=SellerResponse)
@@ -136,6 +212,7 @@ async def create_seller(
         user_id=user_id,
         name=data.name,
         avatar_face=data.avatar_face,
+        avatar_face_url=data.avatar_face_url,
         voice_id=data.voice_id,
         personality=data.personality,
         language_style=data.language_style,
@@ -188,6 +265,8 @@ async def update_seller(
         seller.name = data.name
     if data.avatar_face is not None:
         seller.avatar_face = data.avatar_face
+    if data.avatar_face_url is not None:
+        seller.avatar_face_url = data.avatar_face_url
     if data.voice_id is not None:
         seller.voice_id = data.voice_id
     if data.personality is not None:

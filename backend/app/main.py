@@ -179,6 +179,7 @@ async def data_deletion():
 # Mount uploads directory for serving static files
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_DIR, "creatives"), exist_ok=True)
+os.makedirs(os.path.join(UPLOAD_DIR, "faces"), exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_DIR, "videos"), exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_DIR, "videos", "generated"), exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")

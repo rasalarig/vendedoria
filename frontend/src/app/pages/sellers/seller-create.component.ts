@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -47,23 +47,67 @@ interface PersonalityOption {
             <p class="step-hint">Escolha o rosto</p>
             <div class="faces-grid">
               @for (face of faces; track face.id) {
+                @if (!face.is_custom) {
+                  <div
+                    class="face-card"
+                    [class.selected]="selectedFace?.id === face.id"
+                    (click)="selectFace(face)"
+                  >
+                    <div class="face-img-wrap">
+                      <img [src]="face.thumbnail_url" [alt]="face.name">
+                      @if (selectedFace?.id === face.id) {
+                        <div class="check-overlay">
+                          <mat-icon>check_circle</mat-icon>
+                        </div>
+                      }
+                    </div>
+                    <span class="face-name">{{ face.name }}</span>
+                  </div>
+                }
+              }
+
+              <!-- Upload card -->
+              @if (!uploadedFaceUrl) {
+                <div
+                  class="face-card upload-card"
+                  [class.selected]="selectedFace?.id?.startsWith('custom')"
+                  (click)="triggerUpload()"
+                >
+                  <div class="face-img-wrap upload-placeholder">
+                    @if (uploading) {
+                      <mat-icon class="spin">hourglass_empty</mat-icon>
+                    } @else {
+                      <mat-icon class="upload-icon">add_a_photo</mat-icon>
+                    }
+                  </div>
+                  <span class="face-name">{{ uploading ? 'Enviando...' : 'Enviar sua foto' }}</span>
+                </div>
+              } @else {
                 <div
                   class="face-card"
-                  [class.selected]="selectedFace?.id === face.id"
-                  (click)="selectFace(face)"
+                  [class.selected]="selectedFace?.id?.startsWith('custom')"
+                  (click)="selectCustomFace()"
                 >
                   <div class="face-img-wrap">
-                    <img [src]="face.thumbnail_url" [alt]="face.name">
-                    @if (selectedFace?.id === face.id) {
+                    <img [src]="uploadedFaceUrl" alt="Foto personalizada">
+                    @if (selectedFace?.id?.startsWith('custom')) {
                       <div class="check-overlay">
                         <mat-icon>check_circle</mat-icon>
                       </div>
                     }
                   </div>
-                  <span class="face-name">{{ face.name }}</span>
+                  <span class="face-name">Personalizado</span>
+                  <button class="change-photo-btn" (click)="triggerUpload(); $event.stopPropagation()">Trocar</button>
                 </div>
               }
             </div>
+            <input
+              #fileInput
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              style="display: none"
+              (change)="onFileSelected($event)"
+            >
           </section>
 
           <!-- Step 2: Voice -->
@@ -158,7 +202,7 @@ interface PersonalityOption {
             <div class="preview-card">
               @if (selectedFace) {
                 <div class="preview-avatar">
-                  <img [src]="selectedFace.thumbnail_url" [alt]="selectedFace.name">
+                  <img [src]="getPreviewImageUrl()" [alt]="selectedFace.name">
                 </div>
                 <h3 class="preview-name">{{ sellerName || selectedFace.name }}</h3>
                 @if (selectedPersonality) {
@@ -276,17 +320,17 @@ interface PersonalityOption {
     .faces-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      gap: 16px;
     }
 
     .face-card {
       background: #18181b;
       border: 2px solid #27272a;
-      border-radius: 14px;
-      padding: 12px;
+      border-radius: 16px;
+      padding: 16px;
       text-align: center;
       cursor: pointer;
-      transition: border-color 0.2s ease, transform 0.15s ease;
+      transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 
       &:hover {
         border-color: #3f3f46;
@@ -295,16 +339,17 @@ interface PersonalityOption {
 
       &.selected {
         border-color: #8b5cf6;
-        box-shadow: 0 0 16px rgba(139, 92, 246, 0.2);
+        border-width: 3px;
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.25);
       }
     }
 
     .face-img-wrap {
       position: relative;
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 8px;
-      border-radius: 50%;
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 12px;
+      border-radius: 16px;
       overflow: hidden;
       background: #09090b;
 
@@ -323,18 +368,68 @@ interface PersonalityOption {
         justify-content: center;
 
         mat-icon {
-          font-size: 32px;
-          width: 32px;
-          height: 32px;
+          font-size: 40px;
+          width: 40px;
+          height: 40px;
           color: white;
         }
       }
     }
 
     .face-name {
-      font-size: 13px;
+      font-size: 14px;
       color: #a1a1aa;
-      font-weight: 500;
+      font-weight: 600;
+      display: block;
+    }
+
+    /* Upload card */
+    .upload-card {
+      border-style: dashed;
+      border-color: #27272a;
+
+      &:hover {
+        border-color: #8b5cf6;
+        border-style: dashed;
+      }
+    }
+
+    .upload-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #09090b;
+      border: none;
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: #3f3f46;
+      transition: color 0.2s ease;
+    }
+
+    .upload-card:hover .upload-icon {
+      color: #8b5cf6;
+    }
+
+    .change-photo-btn {
+      display: inline-block;
+      margin-top: 6px;
+      background: rgba(139, 92, 246, 0.15);
+      color: #a78bfa;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 8px;
+      padding: 3px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: rgba(139, 92, 246, 0.3);
+      }
     }
 
     /* Voices */
@@ -527,9 +622,9 @@ interface PersonalityOption {
     }
 
     .preview-avatar {
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
+      width: 160px;
+      height: 160px;
+      border-radius: 20px;
       overflow: hidden;
       margin-bottom: 20px;
       border: 3px solid #8b5cf6;
@@ -627,6 +722,8 @@ interface PersonalityOption {
   `],
 })
 export class SellerCreateComponent implements OnInit {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   faces: SellerFace[] = [];
   voices: SellerVoice[] = [];
   selectedFace: SellerFace | null = null;
@@ -635,6 +732,11 @@ export class SellerCreateComponent implements OnInit {
   sellerName = '';
   catchphrases = '';
   creating = false;
+  uploading = false;
+
+  // Custom face upload state
+  uploadedFaceId: string | null = null;
+  uploadedFaceUrl: string | null = null;
 
   personalities: PersonalityOption[] = [
     { key: 'informal', label: 'Informal', icon: 'sentiment_satisfied', desc: 'Fala como amigo, usa girias' },
@@ -665,6 +767,59 @@ export class SellerCreateComponent implements OnInit {
     }
   }
 
+  selectCustomFace(): void {
+    if (this.uploadedFaceId && this.uploadedFaceUrl) {
+      this.selectedFace = {
+        id: this.uploadedFaceId,
+        name: 'Personalizado',
+        gender: 'other',
+        age_range: '',
+        style: 'custom',
+        thumbnail_url: this.uploadedFaceUrl,
+        is_custom: true,
+      };
+    }
+  }
+
+  triggerUpload(): void {
+    this.fileInput.nativeElement.value = '';
+    this.fileInput.nativeElement.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploading = true;
+    this.sellerService.uploadFace(file).subscribe({
+      next: (result) => {
+        this.uploadedFaceId = result.face_id;
+        // Build full URL for localhost dev
+        const baseUrl = window.location.hostname === 'localhost'
+          ? 'http://localhost:8000'
+          : '';
+        this.uploadedFaceUrl = baseUrl + result.thumbnail_url;
+        this.uploading = false;
+
+        // Auto-select the uploaded face
+        this.selectCustomFace();
+      },
+      error: () => {
+        this.uploading = false;
+        window.alert('Erro ao enviar foto. Tente novamente.');
+      },
+    });
+  }
+
+  getPreviewImageUrl(): string {
+    if (!this.selectedFace) return '';
+    if (this.selectedFace.id.startsWith('custom') && this.uploadedFaceUrl) {
+      return this.uploadedFaceUrl;
+    }
+    return this.selectedFace.thumbnail_url;
+  }
+
   selectVoice(voice: SellerVoice): void {
     this.selectedVoice = voice;
   }
@@ -685,14 +840,21 @@ export class SellerCreateComponent implements OnInit {
     if (!this.canCreate() || this.creating) return;
     this.creating = true;
 
-    this.sellerService.createSeller({
+    const payload: any = {
       name: this.sellerName.trim(),
       avatar_face: this.selectedFace!.id,
       voice_id: this.selectedVoice!.id,
       personality: this.selectedPersonality!,
       language_style: '',
       catchphrases: this.catchphrases.trim(),
-    }).subscribe({
+    };
+
+    // If custom face, include the URL
+    if (this.selectedFace!.id.startsWith('custom') && this.uploadedFaceUrl) {
+      payload.avatar_face_url = this.uploadedFaceUrl;
+    }
+
+    this.sellerService.createSeller(payload).subscribe({
       next: () => {
         this.router.navigate(['/sellers']);
       },

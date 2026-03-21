@@ -48,8 +48,8 @@ import { SellerService, Seller, SellerFace } from '../../services/seller.service
           @for (seller of sellers; track seller.id) {
             <div class="seller-card">
               <div class="card-avatar">
-                @if (getFaceThumbnail(seller.avatar_face)) {
-                  <img [src]="getFaceThumbnail(seller.avatar_face)" [alt]="seller.name">
+                @if (getFaceThumbnail(seller)) {
+                  <img [src]="getFaceThumbnail(seller)" [alt]="seller.name">
                 } @else {
                   <div class="avatar-placeholder">
                     <mat-icon>face</mat-icon>
@@ -358,8 +358,18 @@ export class SellersComponent implements OnInit {
     });
   }
 
-  getFaceThumbnail(faceId: string): string | null {
-    return this.faceMap[faceId] || null;
+  getFaceThumbnail(seller: Seller): string | null {
+    // Custom faces: use the stored avatar_face_url
+    if (seller.avatar_face.startsWith('custom') && seller.avatar_face_url) {
+      const baseUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:8000'
+        : '';
+      // If already a full URL, return as-is; otherwise prepend base
+      return seller.avatar_face_url.startsWith('http')
+        ? seller.avatar_face_url
+        : baseUrl + seller.avatar_face_url;
+    }
+    return this.faceMap[seller.avatar_face] || null;
   }
 
   getVoiceName(voiceId: string): string | null {

@@ -10,6 +10,7 @@ class Seller(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String(200), nullable=False)
     avatar_face = Column(String(100), nullable=False)
+    avatar_face_url = Column(String(500), nullable=True)
     voice_id = Column(String(100), nullable=False)
     personality = Column(String(50), nullable=False, default="informal")
     language_style = Column(String(500), nullable=True)

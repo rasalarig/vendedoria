@@ -9,6 +9,7 @@ export interface SellerFace {
   age_range: string;
   style: string;
   thumbnail_url: string;
+  is_custom: boolean;
 }
 
 export interface SellerVoice {
@@ -24,11 +25,17 @@ export interface Seller {
   id: number;
   name: string;
   avatar_face: string;
+  avatar_face_url: string | null;
   voice_id: string;
   personality: string;
   language_style: string;
   catchphrases: string;
   created_at: string;
+}
+
+export interface FaceUploadResult {
+  face_id: string;
+  thumbnail_url: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -47,6 +54,12 @@ export class SellerService {
     return this.http.get<SellerVoice[]>(`${this.apiUrl}/voices`);
   }
 
+  uploadFace(file: File): Observable<FaceUploadResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<FaceUploadResult>(`${this.apiUrl}/faces/upload`, formData);
+  }
+
   getSellers(): Observable<Seller[]> {
     return this.http.get<Seller[]>(this.apiUrl);
   }
@@ -54,6 +67,7 @@ export class SellerService {
   createSeller(data: {
     name: string;
     avatar_face: string;
+    avatar_face_url?: string;
     voice_id: string;
     personality: string;
     language_style: string;
