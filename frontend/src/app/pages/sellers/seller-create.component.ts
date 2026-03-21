@@ -122,15 +122,15 @@ interface PersonalityOption {
                   (click)="selectVoice(voice)"
                 >
                   <div class="voice-icon">
-                    <mat-icon>{{ voice.gender === 'female' ? 'woman' : 'man' }}</mat-icon>
+                    <mat-icon>{{ voice.gender === 'feminino' || voice.gender === 'female' ? 'woman' : 'man' }}</mat-icon>
                   </div>
                   <div class="voice-info">
                     <span class="voice-name">{{ voice.name }}</span>
                     <span class="voice-tone">{{ voice.tone }}</span>
                   </div>
-                  <button class="play-btn" disabled title="Preview indisponivel">
-                    <mat-icon>play_circle_outline</mat-icon>
-                  </button>
+                  @if (selectedVoice?.id === voice.id) {
+                    <mat-icon class="check-icon">check_circle</mat-icon>
+                  }
                 </div>
               }
             </div>
@@ -496,19 +496,10 @@ interface PersonalityOption {
       font-weight: 500;
     }
 
-    .play-btn {
-      background: none;
-      border: none;
-      cursor: not-allowed;
-      opacity: 0.3;
-      padding: 4px;
-
-      mat-icon {
-        font-size: 28px;
-        width: 28px;
-        height: 28px;
-        color: #71717a;
-      }
+    .check-icon {
+      color: #8b5cf6;
+      font-size: 24px;
+      margin-left: auto;
     }
 
     /* Personality */
