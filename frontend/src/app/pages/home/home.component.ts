@@ -8,9 +8,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 interface DashboardData {
-  sellers: any[];
   products: any[];
-  videos: any[];
   campaigns: any[];
 }
 
@@ -63,25 +61,10 @@ interface DashboardData {
         </div>
 
         <div class="cards-grid">
-          <!-- Vendedores -->
+          <!-- Produtos -->
           <div class="summary-card" [style.border-left-color]="cardConfig[0].color">
             <div class="card-header">
               <div class="card-icon" [style.background]="cardConfig[0].color + '20'" [style.color]="cardConfig[0].color">
-                <mat-icon>face</mat-icon>
-              </div>
-              <span class="card-count">{{ data.sellers.length }}</span>
-            </div>
-            <h3 class="card-label">Vendedores</h3>
-            <div class="card-actions">
-              <a routerLink="/sellers" class="card-link">Ver todos</a>
-              <a routerLink="/sellers/create" class="card-link primary">Criar novo</a>
-            </div>
-          </div>
-
-          <!-- Produtos -->
-          <div class="summary-card" [style.border-left-color]="cardConfig[1].color">
-            <div class="card-header">
-              <div class="card-icon" [style.background]="cardConfig[1].color + '20'" [style.color]="cardConfig[1].color">
                 <mat-icon>inventory_2</mat-icon>
               </div>
               <span class="card-count">{{ data.products.length }}</span>
@@ -93,24 +76,10 @@ interface DashboardData {
             </div>
           </div>
 
-          <!-- Videos -->
-          <div class="summary-card" [style.border-left-color]="cardConfig[2].color">
-            <div class="card-header">
-              <div class="card-icon" [style.background]="cardConfig[2].color + '20'" [style.color]="cardConfig[2].color">
-                <mat-icon>videocam</mat-icon>
-              </div>
-              <span class="card-count">{{ data.videos.length }}</span>
-            </div>
-            <h3 class="card-label">Videos de Referencia</h3>
-            <div class="card-actions">
-              <a routerLink="/videos" class="card-link">Ver galeria</a>
-            </div>
-          </div>
-
           <!-- Criativos -->
-          <div class="summary-card" [style.border-left-color]="cardConfig[3].color">
+          <div class="summary-card" [style.border-left-color]="cardConfig[1].color">
             <div class="card-header">
-              <div class="card-icon" [style.background]="cardConfig[3].color + '20'" [style.color]="cardConfig[3].color">
+              <div class="card-icon" [style.background]="cardConfig[1].color + '20'" [style.color]="cardConfig[1].color">
                 <mat-icon>auto_awesome</mat-icon>
               </div>
               <span class="card-count">{{ creativesCount }}</span>
@@ -122,9 +91,9 @@ interface DashboardData {
           </div>
 
           <!-- Campanhas -->
-          <div class="summary-card" [style.border-left-color]="cardConfig[4].color">
+          <div class="summary-card" [style.border-left-color]="cardConfig[2].color">
             <div class="card-header">
-              <div class="card-icon" [style.background]="cardConfig[4].color + '20'" [style.color]="cardConfig[4].color">
+              <div class="card-icon" [style.background]="cardConfig[2].color + '20'" [style.color]="cardConfig[2].color">
                 <mat-icon>campaign</mat-icon>
               </div>
               <span class="card-count">{{ activeCampaigns }}</span>
@@ -439,7 +408,7 @@ export class HomeComponent implements OnInit {
   isEmpty = true;
   userName = '';
 
-  data: DashboardData = { sellers: [], products: [], videos: [], campaigns: [] };
+  data: DashboardData = { products: [], campaigns: [] };
   creativesCount = 0;
   activeCampaigns = 0;
 
@@ -452,17 +421,15 @@ export class HomeComponent implements OnInit {
   private backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
 
   journeySteps = [
-    { number: 'Passo 1', label: 'Criar Vendedor', icon: 'face', color: '#8b5cf6' },
-    { number: 'Passo 2', label: 'Cadastrar Produto', icon: 'inventory_2', color: '#3b82f6' },
-    { number: 'Passo 3', label: 'Subir Videos', icon: 'videocam', color: '#10b981' },
-    { number: 'Passo 4', label: 'Gerar Criativo', icon: 'auto_awesome', color: '#f59e0b' },
-    { number: 'Passo 5', label: 'Lancar Campanha', icon: 'campaign', color: '#ef4444' },
+    { number: 'Passo 1', label: 'Cadastrar Produto', icon: 'inventory_2', color: '#8b5cf6' },
+    { number: 'Passo 2', label: 'Criar Venda', icon: 'rocket_launch', color: '#3b82f6' },
+    { number: 'Passo 3', label: 'Gerar Criativo', icon: 'auto_awesome', color: '#10b981' },
+    { number: 'Passo 4', label: 'Lancar Campanha', icon: 'campaign', color: '#f59e0b' },
+    { number: 'Passo 5', label: 'Acompanhar Metricas', icon: 'insights', color: '#ef4444' },
   ];
 
   cardConfig = [
     { color: '#8b5cf6' },
-    { color: '#3b82f6' },
-    { color: '#10b981' },
     { color: '#f59e0b' },
     { color: '#ef4444' },
   ];
@@ -472,17 +439,14 @@ export class HomeComponent implements OnInit {
     this.userName = user?.name?.split(' ')[0] || 'Empreendedor';
 
     forkJoin({
-      sellers: this.http.get<any[]>(`${this.backendUrl}/api/sellers`).pipe(catchError(() => of([]))),
       products: this.http.get<any[]>(`${this.backendUrl}/api/products`).pipe(catchError(() => of([]))),
-      videos: this.http.get<any[]>(`${this.backendUrl}/api/reference-videos`).pipe(catchError(() => of([]))),
       campaigns: this.http.get<any[]>(`${this.backendUrl}/api/campaigns`).pipe(catchError(() => of([]))),
     }).subscribe(result => {
       this.data = result;
       this.activeCampaigns = result.campaigns.filter((c: any) => c.status === 'active' || c.status === 'ACTIVE').length;
       this.creativesCount = 0; // Will be computed when creatives endpoint exists
 
-      const totalItems = result.sellers.length + result.products.length + result.videos.length + result.campaigns.length;
-      this.isEmpty = totalItems === 0;
+      this.isEmpty = (result.products.length + result.campaigns.length) === 0;
       this.loading = false;
     });
   }

@@ -273,10 +273,64 @@ interface WizardStep {
           </div>
         }
 
-        <!-- Step 5: Revisar e Gerar -->
+        <!-- Step 5: Criar Video -->
         @if (currentStep === 5) {
           <div class="step-header">
-            <h2>Revisar e Gerar</h2>
+            <h2>Criar Video</h2>
+            <p>Gere o video da campanha com Google Veo 3</p>
+          </div>
+
+          @if (generatingVideo) {
+            <div class="loading-state">
+              <mat-icon class="spin">hourglass_empty</mat-icon>
+              <p>Gerando seu video com Google Veo 3...</p>
+            </div>
+          } @else if (videoError) {
+            <div class="video-error-state">
+              <mat-icon>error_outline</mat-icon>
+              <p>{{ videoError }}</p>
+              <button class="btn-primary" (click)="generateVideo()">
+                <mat-icon>refresh</mat-icon>
+                Tentar Novamente
+              </button>
+            </div>
+          } @else if (generatedVideoUrl) {
+            <div class="video-preview-wrap">
+              <video [src]="generatedVideoUrl" controls class="video-preview"></video>
+              <div class="video-actions">
+                @if (videoApproved) {
+                  <div class="video-approved-badge">
+                    <mat-icon>check_circle</mat-icon>
+                    Video Aprovado
+                  </div>
+                } @else {
+                  <button class="btn-primary" (click)="approveVideo()">
+                    <mat-icon>thumb_up</mat-icon>
+                    Aprovar Video
+                  </button>
+                }
+                <button class="btn-secondary" (click)="generateVideo()">
+                  <mat-icon>refresh</mat-icon>
+                  Gerar Novamente
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="video-generate-prompt">
+              <mat-icon class="video-prompt-icon">videocam</mat-icon>
+              <p>Clique abaixo para gerar um video com inteligencia artificial</p>
+              <button class="btn-generate" (click)="generateVideo()">
+                <mat-icon>auto_awesome</mat-icon>
+                Gerar Video
+              </button>
+            </div>
+          }
+        }
+
+        <!-- Step 6: Revisar e Publicar -->
+        @if (currentStep === 6) {
+          <div class="step-header">
+            <h2>Revisar e Publicar</h2>
             <p>Confira tudo antes de lancar sua campanha</p>
           </div>
 
@@ -317,6 +371,15 @@ interface WizardStep {
                 <span>{{ selectedSaleType?.label }}</span>
               </div>
             </div>
+
+            <div class="review-item">
+              <span class="review-label">Video</span>
+              <div class="review-value">
+                <mat-icon>videocam</mat-icon>
+                <span>Video aprovado</span>
+                <mat-icon style="color: #22c55e; margin-left: auto;">check_circle</mat-icon>
+              </div>
+            </div>
           </div>
 
           <div class="generate-action">
@@ -328,14 +391,14 @@ interface WizardStep {
                 Gerando...
               } @else {
                 <mat-icon>rocket_launch</mat-icon>
-                Gerar Criativo e Campanha
+                Publicar Campanha
               }
             </button>
           </div>
         }
 
-        <!-- Step 6: Acompanhar -->
-        @if (currentStep === 6) {
+        <!-- Step 7: Acompanhar -->
+        @if (currentStep === 7) {
           <div class="success-state">
             <div class="success-icon-wrap">
               <mat-icon>check_circle</mat-icon>
@@ -357,7 +420,7 @@ interface WizardStep {
       </div>
 
       <!-- Navigation buttons -->
-      @if (currentStep < 6) {
+      @if (currentStep < 7) {
         <div class="wizard-nav">
           @if (currentStep > 1) {
             <button class="btn-back" (click)="prevStep()">
@@ -368,7 +431,7 @@ interface WizardStep {
             <div></div>
           }
 
-          @if (currentStep < 5) {
+          @if (currentStep < 6) {
             <button class="btn-next"
                     [disabled]="!canAdvance()"
                     (click)="nextStep()">
@@ -833,6 +896,83 @@ interface WizardStep {
       line-height: 1.5;
     }
 
+    /* Video step */
+    .video-generate-prompt {
+      text-align: center;
+      padding: 60px 0;
+
+      .video-prompt-icon {
+        font-size: 64px;
+        width: 64px;
+        height: 64px;
+        color: #3f3f46;
+        margin-bottom: 16px;
+      }
+
+      p {
+        color: #71717a;
+        font-size: 15px;
+        margin: 0 0 24px;
+      }
+    }
+
+    .video-preview-wrap {
+      text-align: center;
+
+      .video-preview {
+        width: 100%;
+        max-width: 640px;
+        border-radius: 16px;
+        background: #09090b;
+        border: 2px solid #27272a;
+      }
+
+      .video-actions {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        margin-top: 24px;
+      }
+    }
+
+    .video-approved-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(34, 197, 94, 0.12);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 10px;
+      padding: 10px 24px;
+      font-size: 15px;
+      font-weight: 700;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .video-error-state {
+      text-align: center;
+      padding: 60px 0;
+
+      mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        color: #ef4444;
+        margin-bottom: 12px;
+      }
+
+      p {
+        color: #a1a1aa;
+        font-size: 15px;
+        margin: 0 0 24px;
+      }
+    }
+
     /* Review */
     .review-grid {
       display: flex;
@@ -1179,8 +1319,9 @@ export class VendaCreateComponent implements OnInit {
     { number: 2, label: 'Plataforma' },
     { number: 3, label: 'Ator' },
     { number: 4, label: 'Tipo' },
-    { number: 5, label: 'Revisar' },
-    { number: 6, label: 'Lancar' },
+    { number: 5, label: 'Video' },
+    { number: 6, label: 'Revisar' },
+    { number: 7, label: 'Lancar' },
   ];
 
   // Step 1
@@ -1244,7 +1385,13 @@ export class VendaCreateComponent implements OnInit {
   ];
   selectedSaleType: SaleType | null = null;
 
-  // Step 5
+  // Step 5 - Video
+  generatingVideo = false;
+  generatedVideoUrl: string | null = null;
+  videoApproved = false;
+  videoError: string | null = null;
+
+  // Step 6 - Review & Generate
   generating = false;
 
   constructor(
@@ -1292,6 +1439,7 @@ export class VendaCreateComponent implements OnInit {
       case 2: return !!this.selectedPlatform;
       case 3: return !!this.selectedFace;
       case 4: return !!this.selectedSaleType;
+      case 5: return this.videoApproved;
       default: return false;
     }
   }
@@ -1391,20 +1539,57 @@ export class VendaCreateComponent implements OnInit {
     this.selectedSaleType = saleType;
   }
 
-  // Step 5
+  // Step 5 - Video generation
+  generateVideo(): void {
+    if (this.generatingVideo) return;
+    this.generatingVideo = true;
+    this.videoApproved = false;
+    this.generatedVideoUrl = null;
+    this.videoError = null;
+
+    const backendUrl = window.location.hostname === 'localhost'
+      ? 'http://localhost:8000'
+      : '';
+
+    this.http.post<any>(`${backendUrl}/api/video-generation/generate`, {
+      product_id: this.selectedProduct!.id,
+      duration: 10,
+    }).subscribe({
+      next: (response) => {
+        this.generatingVideo = false;
+        if (response.video_url) {
+          this.generatedVideoUrl = response.video_url;
+        } else if (response.status === 'completed' && response.url) {
+          this.generatedVideoUrl = response.url;
+        } else {
+          this.videoError = 'Video gerado mas nenhuma URL retornada. Tente novamente.';
+        }
+      },
+      error: (err) => {
+        this.generatingVideo = false;
+        this.videoError = 'Erro ao gerar video. Tente novamente.';
+      },
+    });
+  }
+
+  approveVideo(): void {
+    this.videoApproved = true;
+  }
+
+  // Step 6 - Review & Publish
   generate(): void {
     if (this.generating) return;
     this.generating = true;
 
-    // Simulate generation delay, then go to step 6
+    // Simulate campaign publish delay, then go to step 7
     setTimeout(() => {
       this.generating = false;
-      this.currentStep = 6;
+      this.currentStep = 7;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 2000);
   }
 
-  // Step 6
+  // Step 7
   goToMetrics(): void {
     this.router.navigate(['/dashboard']);
   }

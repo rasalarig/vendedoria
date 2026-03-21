@@ -15,9 +15,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatInputModule } from '@angular/material/input';
 import { MatBadgeModule } from '@angular/material/badge';
 import { VideoCreativeService, GeneratedVideo, CostEstimate } from '../../services/video-creative.service';
-import { SellerService, Seller } from '../../services/seller.service';
 import { ProductService, Product } from '../../services/product.service';
-import { VideoService, ReferenceVideo } from '../../services/video.service';
 import { SettingsService } from '../../services/settings.service';
 import { Subscription, interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -65,37 +63,13 @@ interface ProductVideoGroup {
           Gerar Novo Criativo em Video
         </h1>
 
-        <!-- Row of 3 selectors -->
+        <!-- Product selector -->
         <div class="selectors-row">
-          <mat-form-field appearance="outline" class="selector-field">
-            <mat-label>Vendedor</mat-label>
-            <mat-select [(value)]="selectedSellerId">
-              @for (seller of sellers; track seller.id) {
-                <mat-option [value]="seller.id">
-                  <span class="seller-option">
-                    <span class="seller-avatar-small">{{ seller.name.charAt(0) }}</span>
-                    {{ seller.name }}
-                  </span>
-                </mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
           <mat-form-field appearance="outline" class="selector-field">
             <mat-label>Produto</mat-label>
             <mat-select [(value)]="selectedProductId">
               @for (product of products; track product.id) {
                 <mat-option [value]="product.id">{{ product.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="selector-field">
-            <mat-label>Video Referencia (opcional)</mat-label>
-            <mat-select [(value)]="selectedRefVideoId">
-              <mat-option [value]="null">Nenhum</mat-option>
-              @for (video of referenceVideos; track video.id) {
-                <mat-option [value]="video.id">{{ video.original_filename }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -182,7 +156,7 @@ interface ProductVideoGroup {
         <div class="empty-state">
           <mat-icon class="empty-icon">movie_creation</mat-icon>
           <p>Nenhum video criativo gerado ainda</p>
-          <p class="empty-hint">Selecione vendedor, produto e clique em "Gerar Video" para comecar</p>
+          <p class="empty-hint">Selecione o produto e clique em "Gerar Video" para comecar</p>
         </div>
       }
 
@@ -233,8 +207,6 @@ interface ProductVideoGroup {
 
                   <mat-card-content class="video-card-content">
                     <div class="video-meta-row">
-                      <span class="meta-seller">{{ video.seller_name || 'Vendedor' }}</span>
-                      <span class="meta-divider">|</span>
                       <span class="meta-product">{{ video.product_name || 'Produto' }}</span>
                     </div>
                     <div class="video-badges">
@@ -285,7 +257,6 @@ interface ProductVideoGroup {
                 </div>
 
                 <div class="modal-meta">
-                  <span><mat-icon>person</mat-icon> {{ previewVideo.seller_name || 'Vendedor' }}</span>
                   <span><mat-icon>timer</mat-icon> {{ previewVideo.duration }}s</span>
                   <span><mat-icon>paid</mat-icon> R$ {{ previewVideo.cost.toFixed(2) }}</span>
                   <span><mat-icon>smart_toy</mat-icon> {{ getProviderName(previewVideo.provider) }}</span>
@@ -379,21 +350,12 @@ interface ProductVideoGroup {
 
     .selectors-row {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: minmax(0, 400px);
       gap: 16px;
       margin-bottom: 24px;
     }
 
     .selector-field { width: 100%; margin-bottom: -1.25em; }
-
-    .seller-option { display: flex; align-items: center; gap: 8px; }
-    .seller-avatar-small {
-      width: 24px; height: 24px; border-radius: 50%;
-      background: linear-gradient(135deg, #8b5cf6, #ec4899);
-      color: white; font-size: 12px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
 
     .field-label {
       display: flex; align-items: center; gap: 8px;
@@ -551,7 +513,6 @@ interface ProductVideoGroup {
     .video-meta-row {
       display: flex; align-items: center; gap: 6px;
       font-size: 14px; color: #d4d4d8; margin-bottom: 10px;
-      .meta-divider { color: #3f3f46; }
     }
 
     .video-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
@@ -665,7 +626,7 @@ interface ProductVideoGroup {
     /* Responsive */
     @media (max-width: 768px) {
       :host { padding: 16px; }
-      .selectors-row { grid-template-columns: 1fr; }
+      .selectors-row { grid-template-columns: 1fr; max-width: 100%; }
       .provider-cards { grid-template-columns: 1fr; }
       .duration-cost-row { flex-direction: column; align-items: stretch; }
       .videos-grid { grid-template-columns: 1fr; }
@@ -675,16 +636,12 @@ interface ProductVideoGroup {
 })
 export class CreativesComponent implements OnInit, OnDestroy {
   // Data
-  sellers: Seller[] = [];
   products: Product[] = [];
-  referenceVideos: ReferenceVideo[] = [];
   generatedVideos: GeneratedVideo[] = [];
   productGroups: ProductVideoGroup[] = [];
 
   // Form state
-  selectedSellerId: number | null = null;
   selectedProductId: number | null = null;
-  selectedRefVideoId: number | null = null;
   selectedProvider = 'veo3';
   selectedDuration = 10;
   estimatedCost = 0;
@@ -708,17 +665,13 @@ export class CreativesComponent implements OnInit, OnDestroy {
 
   constructor(
     private videoCreativeService: VideoCreativeService,
-    private sellerService: SellerService,
     private productService: ProductService,
-    private videoService: VideoService,
     private settingsService: SettingsService,
     private snackBar: MatSnackBar,
   ) {}
 
   ngOnInit(): void {
-    this.loadSellers();
     this.loadProducts();
-    this.loadReferenceVideos();
     this.loadGeneratedVideos();
     this.updateCostEstimate();
   }
@@ -729,24 +682,10 @@ export class CreativesComponent implements OnInit, OnDestroy {
 
   // ====== Data Loading ======
 
-  loadSellers(): void {
-    this.sellerService.getSellers().subscribe({
-      next: (sellers) => this.sellers = sellers,
-      error: () => this.sellers = [],
-    });
-  }
-
   loadProducts(): void {
     this.productService.getAll().subscribe({
       next: (products) => this.products = products,
       error: () => this.products = [],
-    });
-  }
-
-  loadReferenceVideos(): void {
-    this.videoService.getVideos().subscribe({
-      next: (videos) => this.referenceVideos = videos,
-      error: () => this.referenceVideos = [],
     });
   }
 
@@ -820,7 +759,7 @@ export class CreativesComponent implements OnInit, OnDestroy {
   // ====== Generate ======
 
   canGenerate(): boolean {
-    return this.selectedSellerId !== null && this.selectedProductId !== null;
+    return this.selectedProductId !== null;
   }
 
   generateVideo(): void {
@@ -828,9 +767,7 @@ export class CreativesComponent implements OnInit, OnDestroy {
     this.generating = true;
 
     this.videoCreativeService.generateVideo(
-      this.selectedSellerId!,
       this.selectedProductId!,
-      this.selectedRefVideoId || undefined,
       'veo3',
       this.selectedDuration,
     ).subscribe({

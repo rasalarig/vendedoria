@@ -30,7 +30,7 @@ export interface GeneratedVideo {
 }
 
 export interface GenerateVideoRequest {
-  seller_id: number;
+  seller_id?: number;
   product_id: number;
   reference_video_id?: number;
   provider?: string;
@@ -57,17 +57,13 @@ export class VideoCreativeService {
   }
 
   generateVideo(
-    sellerId: number,
     productId: number,
-    refVideoId?: number,
     provider?: string,
     duration?: number
   ): Observable<GenerateVideoResponse> {
     const body: GenerateVideoRequest = {
-      seller_id: sellerId,
       product_id: productId,
     };
-    if (refVideoId) body.reference_video_id = refVideoId;
     if (provider) body.provider = provider;
     if (duration) body.duration = duration;
     return this.http.post<GenerateVideoResponse>(`${this.apiUrl}/generate-video`, body);
