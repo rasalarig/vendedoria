@@ -1,14 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription, filter } from 'rxjs';
 import { AuthService, AuthUser } from './services/auth.service';
+import { ChatPanelComponent } from './components/chat-panel/chat-panel.component';
 
 interface NavItem {
   path: string;
@@ -31,20 +29,18 @@ interface JourneyStep {
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatListModule,
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
+    ChatPanelComponent,
   ],
   template: `
     @if (isLoginPage) {
       <router-outlet></router-outlet>
     } @else {
-      <mat-sidenav-container class="app-container">
-        <mat-sidenav mode="side" opened class="app-sidenav"
-                     [class.collapsed]="sidebarCollapsed">
+      <div class="app-layout">
+        <!-- Left nav sidebar -->
+        <aside class="nav-sidebar" [class.collapsed]="sidebarCollapsed">
           <div class="brand-area">
             @if (!sidebarCollapsed) {
               <span class="brand-logo">VendedorIA</span>
@@ -122,33 +118,74 @@ interface JourneyStep {
               }
             }
           </div>
-        </mat-sidenav>
+        </aside>
 
-        <mat-sidenav-content class="app-content">
-          <div class="main-content">
+        <!-- Main content -->
+        <main class="main-content">
+          <div class="main-content-inner">
             <router-outlet></router-outlet>
           </div>
-        </mat-sidenav-content>
-      </mat-sidenav-container>
+        </main>
+
+        <!-- Right chat sidebar (desktop) -->
+        @if (!isMobileOverlay) {
+          <aside class="chat-sidebar" [class.collapsed]="chatCollapsed">
+            <div class="chat-toggle" (click)="toggleChat()">
+              <mat-icon>{{ chatCollapsed ? 'smart_toy' : 'chevron_right' }}</mat-icon>
+            </div>
+            @if (!chatCollapsed) {
+              <app-chat-panel (collapse)="toggleChat()"></app-chat-panel>
+            } @else {
+              <div class="chat-collapsed-icon" (click)="toggleChat()">
+                <mat-icon>smart_toy</mat-icon>
+              </div>
+            }
+          </aside>
+        }
+
+        <!-- Mobile: floating button + fullscreen overlay -->
+        @if (isMobileOverlay) {
+          @if (!mobileChatOpen) {
+            <button class="mobile-chat-fab" (click)="toggleMobileChat()">
+              <mat-icon>smart_toy</mat-icon>
+            </button>
+          }
+          @if (mobileChatOpen) {
+            <div class="mobile-chat-overlay">
+              <app-chat-panel (collapse)="toggleMobileChat()"></app-chat-panel>
+            </div>
+          }
+        }
+      </div>
     }
   `,
   styles: [`
-    .app-container {
+    /* 3-panel layout */
+    .app-layout {
+      display: flex;
       height: 100vh;
+      overflow: hidden;
+      position: relative;
     }
 
-    .app-sidenav {
+    /* Left nav sidebar */
+    .nav-sidebar {
       width: 240px;
-      background: #09090b !important;
-      border-right: 1px solid #27272a !important;
+      min-width: 240px;
+      background: #09090b;
+      border-right: 1px solid #27272a;
       display: flex;
       flex-direction: column;
-      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                  min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       overflow-x: hidden;
-    }
+      overflow-y: hidden;
+      flex-shrink: 0;
 
-    .app-sidenav.collapsed {
-      width: 64px;
+      &.collapsed {
+        width: 64px;
+        min-width: 64px;
+      }
     }
 
     .brand-area {
@@ -434,13 +471,148 @@ interface JourneyStep {
       }
     }
 
-    .app-content {
+    /* Main content */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
       background: #09090b;
+      min-width: 0;
     }
 
-    .main-content {
+    .main-content-inner {
       max-width: 1440px;
       margin: 0 auto;
+    }
+
+    /* Right chat sidebar */
+    .chat-sidebar {
+      width: 380px;
+      min-width: 380px;
+      height: 100vh;
+      background: #0a0a0f;
+      border-left: 1px solid #27272a;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.2s ease, min-width 0.2s ease;
+      position: relative;
+      flex-shrink: 0;
+
+      &.collapsed {
+        width: 48px;
+        min-width: 48px;
+      }
+    }
+
+    .chat-toggle {
+      position: absolute;
+      left: -16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #18181b;
+      border: 1px solid #27272a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: background 0.15s, border-color 0.15s;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #71717a;
+        transition: color 0.15s;
+      }
+
+      &:hover {
+        background: #27272a;
+        border-color: #8b5cf6;
+
+        mat-icon {
+          color: #a1a1aa;
+        }
+      }
+    }
+
+    .chat-collapsed-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      cursor: pointer;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        color: #52525b;
+        transition: color 0.15s;
+      }
+
+      &:hover mat-icon {
+        color: #8b5cf6;
+      }
+    }
+
+    /* Mobile floating button */
+    .mobile-chat-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+      z-index: 1000;
+      transition: transform 0.2s, box-shadow 0.2s;
+
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+
+      &:hover {
+        transform: scale(1.08);
+        box-shadow: 0 6px 28px rgba(139, 92, 246, 0.5);
+      }
+    }
+
+    /* Mobile fullscreen overlay */
+    .mobile-chat-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: #0a0a0f;
+    }
+
+    /* Responsive */
+    @media (max-width: 1023px) {
+      .chat-sidebar {
+        /* Below 1024 starts collapsed — handled by code */
+      }
+    }
+
+    @media (max-width: 767px) {
+      .nav-sidebar {
+        width: 64px;
+        min-width: 64px;
+      }
+
+      .chat-sidebar {
+        display: none;
+      }
     }
   `],
 })
@@ -448,6 +620,9 @@ export class AppComponent implements OnInit, OnDestroy {
   isLoginPage = false;
   user: AuthUser | null = null;
   sidebarCollapsed = false;
+  chatCollapsed = false;
+  isMobileOverlay = false;
+  mobileChatOpen = false;
 
   private routerSub!: Subscription;
   private userSub!: Subscription;
@@ -471,18 +646,26 @@ export class AppComponent implements OnInit, OnDestroy {
     { label: 'Campanha', icon: 'rocket_launch', path: 'campaigns' },
   ];
 
-  // Default to step 0; will be wired to real progress later
   currentJourneyStep = 0;
 
   constructor(
     private authService: AuthService,
     private router: Router,
   ) {
-    // Restore collapsed state from localStorage
+    // Restore sidebar collapsed state
     const stored = localStorage.getItem('sidebar_collapsed');
     if (stored !== null) {
       this.sidebarCollapsed = stored === 'true';
     }
+
+    // Restore chat collapsed state
+    const chatStored = localStorage.getItem('vendedoria_chat_collapsed');
+    if (chatStored !== null) {
+      this.chatCollapsed = chatStored === 'true';
+    }
+
+    // Check responsive on init
+    this.checkResponsive();
   }
 
   ngOnInit(): void {
@@ -503,9 +686,36 @@ export class AppComponent implements OnInit, OnDestroy {
     this.userSub?.unsubscribe();
   }
 
+  @HostListener('window:resize')
+  onResize(): void {
+    this.checkResponsive();
+  }
+
+  private checkResponsive(): void {
+    const width = window.innerWidth;
+    this.isMobileOverlay = width < 768;
+
+    // On medium screens, default chat to collapsed if no explicit preference was saved
+    if (width < 1024 && width >= 768) {
+      const chatStored = localStorage.getItem('vendedoria_chat_collapsed');
+      if (chatStored === null) {
+        this.chatCollapsed = true;
+      }
+    }
+  }
+
   toggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
     localStorage.setItem('sidebar_collapsed', String(this.sidebarCollapsed));
+  }
+
+  toggleChat(): void {
+    this.chatCollapsed = !this.chatCollapsed;
+    localStorage.setItem('vendedoria_chat_collapsed', String(this.chatCollapsed));
+  }
+
+  toggleMobileChat(): void {
+    this.mobileChatOpen = !this.mobileChatOpen;
   }
 
   logout(): void {

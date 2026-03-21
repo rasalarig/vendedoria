@@ -12,7 +12,7 @@ export const routes: Routes = [
   { path: 'creatives', loadComponent: () => import('./pages/creatives/creatives.component').then(m => m.CreativesComponent), canActivate: [authGuard] },
   { path: 'campaigns', loadComponent: () => import('./pages/campaigns/campaigns.component').then(m => m.CampaignsComponent), canActivate: [authGuard] },
   { path: 'wizard', loadComponent: () => import('./pages/wizard/wizard.component').then(m => m.WizardComponent), canActivate: [authGuard] },
-  { path: 'chat', loadComponent: () => import('./pages/chat/chat.component').then(m => m.ChatComponent), canActivate: [authGuard] },
+  { path: 'chat', redirectTo: 'home', pathMatch: 'full' },
   { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent), canActivate: [authGuard] },
   { path: 'whatsapp', loadComponent: () => import('./pages/whatsapp/whatsapp.component').then(m => m.WhatsappComponent), canActivate: [authGuard] },
   { path: 'leads', loadComponent: () => import('./pages/leads/leads.component').then(m => m.LeadsComponent), canActivate: [authGuard] },
