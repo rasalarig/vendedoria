@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { Product } from '../../services/product.service';
 
 export interface ProductDialogData {
@@ -23,6 +24,7 @@ export interface ProductDialogData {
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    MatSelectModule,
   ],
   template: `
     <div class="dialog-wrapper">
@@ -70,6 +72,30 @@ export interface ProductDialogData {
             @if (form.get('price')?.hasError('required') && form.get('price')?.touched) {
               <mat-error>Preco e obrigatorio</mat-error>
             }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tipo</mat-label>
+            <mat-select formControlName="product_type">
+              <mat-option value="produto">
+                <mat-icon>inventory_2</mat-icon> Produto
+              </mat-option>
+              <mat-option value="servico">
+                <mat-icon>design_services</mat-icon> Servico
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tipo de Pagamento</mat-label>
+            <mat-select formControlName="pricing_type">
+              <mat-option value="one_time">
+                <mat-icon>payments</mat-icon> Pagamento Unico
+              </mat-option>
+              <mat-option value="monthly">
+                <mat-icon>autorenew</mat-icon> Mensal (Recorrente)
+              </mat-option>
+            </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -254,6 +280,8 @@ export class ProductDialogComponent implements OnInit {
     this.form = this.fb.group({
       name: [p?.name || '', Validators.required],
       price: [p?.price || null, Validators.required],
+      product_type: [p?.product_type || 'produto'],
+      pricing_type: [p?.pricing_type || 'one_time'],
       description: [p?.description || ''],
       website_url: [p?.website_url || ''],
     });
@@ -316,8 +344,8 @@ export class ProductDialogComponent implements OnInit {
     formData.append('price', values.price.toString());
     if (values.description) formData.append('description', values.description);
     if (values.website_url) formData.append('website_url', values.website_url);
-    // Send simplified defaults for backward compatibility
-    formData.append('pricing_type', 'one_time');
+    formData.append('product_type', values.product_type || 'produto');
+    formData.append('pricing_type', values.pricing_type || 'one_time');
     if (this.selectedFile) {
       formData.append('image', this.selectedFile);
     }

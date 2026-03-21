@@ -25,6 +25,7 @@ class ProductResponse(BaseModel):
     target_audience: Optional[str] = None
     differentials: Optional[str] = None
     image_path: Optional[str] = None
+    product_type: Optional[str] = "produto"
     pricing_type: Optional[str] = "one_time"
     recurrence_period: Optional[str] = None
     website_url: Optional[str] = None
@@ -44,6 +45,7 @@ def product_to_response(product: Product) -> dict:
         "target_audience": product.target_audience,
         "differentials": product.differentials,
         "image_path": product.image_path,
+        "product_type": product.product_type or "produto",
         "pricing_type": product.pricing_type or "one_time",
         "recurrence_period": product.recurrence_period,
         "website_url": product.website_url,
@@ -59,6 +61,7 @@ async def create_product(
     description: Optional[str] = Form(None),
     target_audience: Optional[str] = Form(None),
     differentials: Optional[str] = Form(None),
+    product_type: Optional[str] = Form("produto"),
     pricing_type: Optional[str] = Form("one_time"),
     recurrence_period: Optional[str] = Form(None),
     website_url: Optional[str] = Form(None),
@@ -83,6 +86,7 @@ async def create_product(
         target_audience=target_audience,
         differentials=differentials,
         image_path=image_path,
+        product_type=product_type or "produto",
         pricing_type=pricing_type or "one_time",
         recurrence_period=recurrence_period,
         website_url=website_url,
@@ -116,6 +120,7 @@ async def update_product(
     description: Optional[str] = Form(None),
     target_audience: Optional[str] = Form(None),
     differentials: Optional[str] = Form(None),
+    product_type: Optional[str] = Form("produto"),
     pricing_type: Optional[str] = Form("one_time"),
     recurrence_period: Optional[str] = Form(None),
     website_url: Optional[str] = Form(None),
@@ -132,6 +137,7 @@ async def update_product(
     product.description = description
     product.target_audience = target_audience
     product.differentials = differentials
+    product.product_type = product_type or "produto"
     product.pricing_type = pricing_type or "one_time"
     product.recurrence_period = recurrence_period
     product.website_url = website_url

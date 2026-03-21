@@ -27,6 +27,7 @@ class GenerateVideoRequest(BaseModel):
     provider: str = Field(default="veo3")
     duration: float = Field(default=10, ge=5, le=60)
     style_tags: Optional[List[str]] = None
+    face_url: Optional[str] = None
 
 
 class GenerateVideoResponse(BaseModel):
@@ -128,8 +129,14 @@ async def generate_video(
     if not seller:
         seller = types.SimpleNamespace(
             name='Apresentador', personality='informal',
-            language_style='', catchphrases=''
+            language_style='', catchphrases='',
+            face_url=request.face_url,
+            thumbnail_url=request.face_url,
         )
+    elif request.face_url:
+        # Attach face_url to existing seller object for Veo 3 actor photo
+        seller.face_url = request.face_url
+        seller.thumbnail_url = request.face_url
 
     # Validate product belongs to user
     product = (

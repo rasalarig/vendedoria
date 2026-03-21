@@ -1,3 +1,4 @@
+import asyncio
 import json
 import uuid
 import os
@@ -7,6 +8,9 @@ from typing import Optional
 import httpx
 
 from app.core.config import settings
+
+BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
+VEO_MODEL = "veo-3.0-generate-preview"
 
 
 class VideoGenerationService:
@@ -209,70 +213,149 @@ Retorne APENAS o texto do roteiro, sem marcacoes, sem titulos, sem instrucoes de
             return self._mock_result(task_id, duration_seconds)
 
     async def _generate_veo3(self, task_id, script, seller, product, duration) -> dict:
-        """Call Google Veo 3 API via Gemini endpoint."""
-        seller_name = getattr(seller, 'name', 'Vendedor') or 'Vendedor'
+        """Call Google Veo 3 API with correct async format."""
+        seller_name = getattr(seller, 'name', 'Apresentador') or 'Apresentador'
         product_name = getattr(product, 'name', 'Produto') or 'Produto'
+        product_desc = getattr(product, 'description', '') or ''
 
         prompt = (
             f"Create a professional Brazilian Portuguese sales video ad. "
-            f"A professional salesperson named {seller_name} presenting the product '{product_name}'. "
-            f"The script to follow: {script[:500]}. "
+            f"A charismatic presenter named {seller_name} speaks directly to camera, "
+            f"presenting the product '{product_name}': {product_desc[:200]}. "
+            f"The script: {script[:400]}. "
             f"Style: modern, engaging social media ad for Instagram Reels/TikTok. "
-            f"Duration: approximately {int(duration)} seconds."
+            f"Well-lit, professional setting, confident body language."
         )
 
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            # Use Gemini API with Veo 3 model for video generation
+        # Build request instance
+        instance: dict = {"prompt": prompt}
+
+        # Try to load actor photo if available
+        actor_photo_bytes = await self._load_actor_photo(seller)
+        if actor_photo_bytes:
+            instance["image"] = {
+                "bytesBase64Encoded": base64.b64encode(actor_photo_bytes).decode("utf-8"),
+                "mimeType": "image/png",
+            }
+
+        payload = {
+            "instances": [instance],
+            "parameters": {
+                "aspectRatio": "9:16",
+                "durationSeconds": min(int(duration), 8),
+                "sampleCount": 1,
+                "personGeneration": "allow_adult",
+            },
+        }
+
+        headers = {
+            "x-goog-api-key": self.api_key,
+            "Content-Type": "application/json",
+        }
+
+        # Step 1: Start generation
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                "https://generativelanguage.googleapis.com/v1beta/models/veo-3.0-generate-preview:predictVideo",
-                params={"key": self.api_key},
-                headers={"Content-Type": "application/json"},
-                json={
-                    "instances": [{"prompt": prompt}],
-                    "parameters": {
-                        "aspectRatio": "9:16",
-                        "durationSeconds": min(int(duration), 8),
-                        "personGeneration": "allow_adult",
-                    },
-                },
+                f"{BASE_URL}/models/{VEO_MODEL}:predictLongRunning",
+                headers=headers,
+                json=payload,
             )
 
-            if response.status_code == 200:
-                data = response.json()
-                # Save video from response
-                video_data = data.get("predictions", [{}])[0]
-                video_bytes = base64.b64decode(video_data.get("video", "")) if video_data.get("video") else None
+            if response.status_code != 200:
+                print(f"Veo 3 start error {response.status_code}: {response.text[:300]}")
+                return self._mock_result(task_id, duration)
 
-                if video_bytes:
-                    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                    data_dir = "/app/data" if os.path.exists("/app/data") else backend_dir
-                    video_dir = os.path.join(data_dir, "uploads", "videos", "generated")
-                    os.makedirs(video_dir, exist_ok=True)
-                    filename = f"veo3_{task_id}.mp4"
-                    filepath = os.path.join(video_dir, filename)
-                    with open(filepath, "wb") as f:
-                        f.write(video_bytes)
+            operation_name = response.json().get("name")
+            if not operation_name:
+                print("Veo 3: no operation name returned")
+                return self._mock_result(task_id, duration)
 
-                    cost = self.COST_PER_SECOND * duration
-                    return {
-                        "task_id": task_id,
-                        "status": "completed",
-                        "provider": "veo3",
-                        "provider_name": self.PROVIDER_NAME,
-                        "filename": filename,
-                        "file_path": f"/uploads/videos/generated/{filename}",
-                        "file_size": len(video_bytes),
-                        "duration_seconds": duration,
-                        "cost_usd": round(cost, 3),
-                        "cost_brl": round(cost * self.USD_TO_BRL, 2),
-                        "mock": False,
-                    }
+        # Step 2: Poll for completion (36 * 10s = 360s max)
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            for _ in range(36):
+                await asyncio.sleep(10)
+                poll_resp = await client.get(
+                    f"{BASE_URL}/{operation_name}",
+                    headers={"x-goog-api-key": self.api_key},
+                )
+                if poll_resp.status_code != 200:
+                    print(f"Veo 3 poll error {poll_resp.status_code}: {poll_resp.text[:200]}")
+                    continue
 
-            # If API call fails, log and fall through to mock
-            print(f"Veo 3 API response {response.status_code}: {response.text[:300]}")
+                poll_data = poll_resp.json()
+                if poll_data.get("done"):
+                    # Extract video URI
+                    try:
+                        video_uri = poll_data["response"]["generateVideoResponse"]["generatedSamples"][0]["video"]["uri"]
+                    except (KeyError, IndexError):
+                        print(f"Veo 3: unexpected response structure: {json.dumps(poll_data)[:500]}")
+                        return self._mock_result(task_id, duration)
 
-        # Fallback to mock if real API is not available yet
+                    # Step 3: Download video
+                    async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as dl_client:
+                        video_resp = await dl_client.get(
+                            video_uri,
+                            headers={"x-goog-api-key": self.api_key},
+                        )
+                        if video_resp.status_code == 200:
+                            video_bytes = video_resp.content
+                            # Save to disk
+                            backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                            data_dir = "/app/data" if os.path.exists("/app/data") else backend_dir
+                            video_dir = os.path.join(data_dir, "uploads", "videos", "generated")
+                            os.makedirs(video_dir, exist_ok=True)
+                            filename = f"veo3_{task_id}.mp4"
+                            filepath = os.path.join(video_dir, filename)
+                            with open(filepath, "wb") as f:
+                                f.write(video_bytes)
+
+                            cost = self.COST_PER_SECOND * duration
+                            return {
+                                "task_id": task_id,
+                                "status": "completed",
+                                "provider": "veo3",
+                                "provider_name": self.PROVIDER_NAME,
+                                "filename": filename,
+                                "file_path": f"/uploads/videos/generated/{filename}",
+                                "file_size": len(video_bytes),
+                                "duration_seconds": duration,
+                                "cost_usd": round(cost, 3),
+                                "cost_brl": round(cost * self.USD_TO_BRL, 2),
+                                "mock": False,
+                            }
+                        else:
+                            print(f"Veo 3 download error: {video_resp.status_code}")
+                            return self._mock_result(task_id, duration)
+
+        print("Veo 3: polling timed out after 360s")
         return self._mock_result(task_id, duration)
+
+    async def _load_actor_photo(self, seller) -> Optional[bytes]:
+        """Try to load actor face photo from the faces catalog."""
+        face_url = getattr(seller, 'face_url', None) or getattr(seller, 'thumbnail_url', None)
+        if not face_url:
+            return None
+
+        # If it's a local path
+        if face_url.startswith('/'):
+            backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            data_dir = "/app/data" if os.path.exists("/app/data") else backend_dir
+            local_path = os.path.join(data_dir, face_url.lstrip('/'))
+            if os.path.exists(local_path):
+                with open(local_path, 'rb') as f:
+                    return f.read()
+
+        # If it's a URL, download it
+        if face_url.startswith('http'):
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    resp = await client.get(face_url)
+                    if resp.status_code == 200:
+                        return resp.content
+            except Exception as e:
+                print(f"Failed to download actor photo: {e}")
+
+        return None
 
     def _mock_result(self, task_id: str, duration_seconds: float) -> dict:
         """Return a mock result when the real API is unavailable."""

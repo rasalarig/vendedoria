@@ -10,6 +10,7 @@ export interface Product {
   target_audience: string;
   differentials: string;
   image_path: string | null;
+  product_type?: string;  // produto, servico
   pricing_type: string;  // one_time, monthly, yearly, weekly, custom
   recurrence_period?: string;
   website_url?: string;

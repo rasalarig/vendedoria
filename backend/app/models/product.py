@@ -13,6 +13,7 @@ class Product(Base):
     target_audience = Column(String(500), nullable=True)
     differentials = Column(Text, nullable=True)
     image_path = Column(String(500), nullable=True)
+    product_type = Column(String(20), default="produto")  # produto, servico
     pricing_type = Column(String(20), default="one_time")  # one_time, monthly, yearly, weekly, custom
     recurrence_period = Column(String(50), nullable=True)  # custom period description if pricing_type is "custom"
     website_url = Column(String(500), nullable=True)  # Landing page URL for ad campaigns
