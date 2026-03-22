@@ -288,3 +288,40 @@ def get_packages():
         {"amount_usd": k, "amount_brl": round(k * USD_TO_BRL, 2), "label": v["label"]}
         for k, v in CREDIT_PACKAGES.items()
     ]
+
+
+BONUS_AMOUNT_USD = 0.55  # Enough for 1 script + 1 video
+
+
+@router.post("/reset")
+def reset_credits(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Reset wallet: clear all history and restore welcome bonus. For testing only."""
+    from app.models.cost_log import CostLog
+
+    # Clear all cost logs and credit transactions for user
+    db.query(CostLog).filter(CostLog.user_id == user_id).delete()
+    db.query(CreditTransaction).filter(CreditTransaction.user_id == user_id).delete()
+
+    # Reset balance to bonus
+    user = db.query(User).filter(User.id == user_id).first()
+    if user:
+        user.credit_balance_usd = BONUS_AMOUNT_USD
+
+    # Create bonus transaction
+    bonus = CreditTransaction(
+        user_id=user_id,
+        amount_usd=BONUS_AMOUNT_USD,
+        type="bonus",
+        description="Bonus de boas-vindas - teste gratis (1 roteiro + 1 video)",
+    )
+    db.add(bonus)
+    db.commit()
+
+    return {
+        "status": "ok",
+        "balance_usd": BONUS_AMOUNT_USD,
+        "balance_brl": round(BONUS_AMOUNT_USD * USD_TO_BRL, 2),
+    }

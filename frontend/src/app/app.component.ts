@@ -222,6 +222,9 @@ interface JourneyStep {
             <button (click)="addCredits(); closeWalletModal()" style="margin-top: 16px; padding: 12px; border-radius: 10px; border: none; background: #7c3aed; color: #fff; cursor: pointer; font-size: 15px; font-weight: 600; width: 100%;">
               + Adicionar Creditos
             </button>
+            <button (click)="resetCredits()" style="margin-top: 8px; padding: 10px; border-radius: 10px; border: 1px solid #555; background: transparent; color: #888; cursor: pointer; font-size: 13px; width: 100%;">
+              Resetar Carteira (bonus inicial)
+            </button>
           </div>
         </div>
       }
@@ -974,6 +977,19 @@ export class AppComponent implements OnInit, OnDestroy {
         const detail = err?.error?.detail || 'Stripe nao configurado';
         alert('Erro: ' + detail);
       }
+    });
+  }
+
+  resetCredits(): void {
+    if (!confirm('Resetar carteira? O historico sera apagado e voce recebera o bonus inicial de R$ 3,03 (1 roteiro + 1 video).')) return;
+    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+    this.http.post<any>(`${apiUrl}/credits/reset`, {}).subscribe({
+      next: (res) => {
+        this.creditBalance = res.balance_usd;
+        this.creditBalanceBrl = res.balance_brl;
+        this.openWalletModal(); // refresh history
+      },
+      error: () => alert('Erro ao resetar carteira')
     });
   }
 }
