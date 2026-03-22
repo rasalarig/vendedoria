@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   template: `
     <div class="admin-page">
       <!-- Header -->
@@ -15,18 +16,20 @@ import { HttpClient } from '@angular/common/http';
       </div>
 
       <!-- Loading -->
-      <div *ngIf="loading" class="loading-state">
-        <span class="material-symbols-outlined spin">progress_activity</span>
-        <p>Carregando dados...</p>
-      </div>
+      @if (loading) {
+        <div class="loading-state">
+          <mat-icon class="spin">hourglass_empty</mat-icon>
+          <p>Carregando dados...</p>
+        </div>
+      }
 
       <!-- Content -->
-      <ng-container *ngIf="!loading && summary">
+      @if (!loading && summary) {
         <!-- Summary Cards -->
         <div class="summary-row">
           <div class="summary-card cost-card">
             <div class="summary-icon">
-              <span class="material-symbols-outlined">trending_down</span>
+              <mat-icon>trending_down</mat-icon>
             </div>
             <div class="summary-info">
               <span class="summary-label">Custo Plataformas</span>
@@ -35,7 +38,7 @@ import { HttpClient } from '@angular/common/http';
           </div>
           <div class="summary-card revenue-card">
             <div class="summary-icon">
-              <span class="material-symbols-outlined">trending_up</span>
+              <mat-icon>trending_up</mat-icon>
             </div>
             <div class="summary-info">
               <span class="summary-label">Receita Total</span>
@@ -44,7 +47,7 @@ import { HttpClient } from '@angular/common/http';
           </div>
           <div class="summary-card profit-card">
             <div class="summary-icon">
-              <span class="material-symbols-outlined">account_balance</span>
+              <mat-icon>account_balance</mat-icon>
             </div>
             <div class="summary-info">
               <span class="summary-label">Lucro</span>
@@ -53,7 +56,7 @@ import { HttpClient } from '@angular/common/http';
           </div>
           <div class="summary-card users-card">
             <div class="summary-icon">
-              <span class="material-symbols-outlined">group</span>
+              <mat-icon>group</mat-icon>
             </div>
             <div class="summary-info">
               <span class="summary-label">Usuarios Ativos</span>
@@ -65,94 +68,108 @@ import { HttpClient } from '@angular/common/http';
         <!-- Platform Cards Grid -->
         <h2 class="section-title">Plataformas</h2>
         <div class="platforms-grid">
-          <div class="platform-card" *ngFor="let p of platforms">
-            <!-- Alert Banner -->
-            <div class="alert-banner" *ngIf="p.alert_level === 'warning'" [class.warning]="true">
-              <span class="material-symbols-outlined">warning</span>
-              <span>{{ p.alert_message }}</span>
-            </div>
-            <div class="alert-banner" *ngIf="p.alert_level === 'critical'" [class.critical]="true">
-              <span class="material-symbols-outlined">error</span>
-              <span>{{ p.alert_message }}</span>
-            </div>
+          @for (p of platforms; track p.id) {
+            <div class="platform-card">
+              <!-- Alert Banner -->
+              @if (p.alert_level === 'warning') {
+                <div class="alert-banner warning">
+                  <mat-icon>warning</mat-icon>
+                  <span>{{ p.alert_message }}</span>
+                </div>
+              }
+              @if (p.alert_level === 'critical') {
+                <div class="alert-banner critical">
+                  <mat-icon>error</mat-icon>
+                  <span>{{ p.alert_message }}</span>
+                </div>
+              }
 
-            <div class="platform-header">
-              <div class="platform-icon">
-                <span class="material-symbols-outlined">{{ p.icon }}</span>
+              <div class="platform-header">
+                <div class="platform-icon">
+                  <mat-icon>{{ p.icon }}</mat-icon>
+                </div>
+                <div class="platform-title">
+                  <h3>{{ p.name }}</h3>
+                  <p>{{ p.description }}</p>
+                </div>
+                <span class="status-badge" [class.configured]="p.configured" [class.not-configured]="!p.configured">
+                  @if (p.configured) {
+                    <mat-icon>check_circle</mat-icon>
+                  }
+                  @if (!p.configured) {
+                    <mat-icon>cancel</mat-icon>
+                  }
+                  {{ p.configured ? 'Ativo' : 'Inativo' }}
+                </span>
               </div>
-              <div class="platform-title">
-                <h3>{{ p.name }}</h3>
-                <p>{{ p.description }}</p>
+
+              <div class="platform-metrics">
+                <!-- Together AI / Veo3 metrics -->
+                @if (p.total_spent_usd !== undefined) {
+                  <div class="metric">
+                    <span class="metric-label">Gasto Total</span>
+                    <span class="metric-value">US$ {{ formatBrl(p.total_spent_usd) }}</span>
+                  </div>
+                  <div class="metric">
+                    <span class="metric-label">Requisicoes</span>
+                    <span class="metric-value">{{ p.total_requests }}</span>
+                  </div>
+                  @if (p.cost_per_request_usd !== undefined) {
+                    <div class="metric">
+                      <span class="metric-label">Custo/Req</span>
+                      <span class="metric-value">US$ {{ formatBrl(p.cost_per_request_usd) }}</span>
+                    </div>
+                  }
+                }
+
+                <!-- Stripe metrics -->
+                @if (p.total_revenue_usd !== undefined) {
+                  <div class="metric">
+                    <span class="metric-label">Receita</span>
+                    <span class="metric-value">US$ {{ formatBrl(p.total_revenue_usd) }}</span>
+                  </div>
+                  <div class="metric">
+                    <span class="metric-label">Transacoes</span>
+                    <span class="metric-value">{{ p.total_transactions }}</span>
+                  </div>
+                  <div class="metric">
+                    <span class="metric-label">Saldo Usuarios</span>
+                    <span class="metric-value">US$ {{ formatBrl(p.total_user_balance_usd) }}</span>
+                  </div>
+                }
+
+                <!-- Meta Ads metrics -->
+                @if (p.account_status !== undefined) {
+                  <div class="metric">
+                    <span class="metric-label">Status</span>
+                    <span class="metric-value" [class.connected]="p.account_status === 'connected'">
+                      {{ p.account_status === 'connected' ? 'Conectado' : 'Desconectado' }}
+                    </span>
+                  </div>
+                }
+
+                <!-- Veo3 specific -->
+                @if (p.videos_generated !== undefined) {
+                  <div class="metric">
+                    <span class="metric-label">Videos Gerados</span>
+                    <span class="metric-value">{{ p.videos_generated }}</span>
+                  </div>
+                }
               </div>
-              <span class="status-badge" [class.configured]="p.configured" [class.not-configured]="!p.configured">
-                <span class="material-symbols-outlined" *ngIf="p.configured">check_circle</span>
-                <span class="material-symbols-outlined" *ngIf="!p.configured">cancel</span>
-                {{ p.configured ? 'Ativo' : 'Inativo' }}
-              </span>
+
+              <!-- Spend progress bar for platforms with spending -->
+              @if (p.total_spent_usd !== undefined && p.total_spent_usd > 0) {
+                <div class="spend-bar-container">
+                  <div class="spend-bar">
+                    <div class="spend-bar-fill" [style.width.%]="getSpendPercent(p)"></div>
+                  </div>
+                  <span class="spend-bar-label">{{ getSpendPercent(p) | number:'1.0-0' }}% do gasto total</span>
+                </div>
+              }
             </div>
-
-            <div class="platform-metrics">
-              <!-- Together AI / Veo3 metrics -->
-              <ng-container *ngIf="p.total_spent_usd !== undefined">
-                <div class="metric">
-                  <span class="metric-label">Gasto Total</span>
-                  <span class="metric-value">US$ {{ formatBrl(p.total_spent_usd) }}</span>
-                </div>
-                <div class="metric">
-                  <span class="metric-label">Requisicoes</span>
-                  <span class="metric-value">{{ p.total_requests }}</span>
-                </div>
-                <div class="metric" *ngIf="p.cost_per_request_usd !== undefined">
-                  <span class="metric-label">Custo/Req</span>
-                  <span class="metric-value">US$ {{ formatBrl(p.cost_per_request_usd) }}</span>
-                </div>
-              </ng-container>
-
-              <!-- Stripe metrics -->
-              <ng-container *ngIf="p.total_revenue_usd !== undefined">
-                <div class="metric">
-                  <span class="metric-label">Receita</span>
-                  <span class="metric-value">US$ {{ formatBrl(p.total_revenue_usd) }}</span>
-                </div>
-                <div class="metric">
-                  <span class="metric-label">Transacoes</span>
-                  <span class="metric-value">{{ p.total_transactions }}</span>
-                </div>
-                <div class="metric">
-                  <span class="metric-label">Saldo Usuarios</span>
-                  <span class="metric-value">US$ {{ formatBrl(p.total_user_balance_usd) }}</span>
-                </div>
-              </ng-container>
-
-              <!-- Meta Ads metrics -->
-              <ng-container *ngIf="p.account_status !== undefined">
-                <div class="metric">
-                  <span class="metric-label">Status</span>
-                  <span class="metric-value" [class.connected]="p.account_status === 'connected'">
-                    {{ p.account_status === 'connected' ? 'Conectado' : 'Desconectado' }}
-                  </span>
-                </div>
-              </ng-container>
-
-              <!-- Veo3 specific -->
-              <ng-container *ngIf="p.videos_generated !== undefined">
-                <div class="metric">
-                  <span class="metric-label">Videos Gerados</span>
-                  <span class="metric-value">{{ p.videos_generated }}</span>
-                </div>
-              </ng-container>
-            </div>
-
-            <!-- Spend progress bar for platforms with spending -->
-            <div class="spend-bar-container" *ngIf="p.total_spent_usd !== undefined && p.total_spent_usd > 0">
-              <div class="spend-bar">
-                <div class="spend-bar-fill" [style.width.%]="getSpendPercent(p)"></div>
-              </div>
-              <span class="spend-bar-label">{{ getSpendPercent(p) | number:'1.0-0' }}% do gasto total</span>
-            </div>
-          </div>
+          }
         </div>
-      </ng-container>
+      }
     </div>
   `,
   styles: [`
@@ -192,8 +209,10 @@ import { HttpClient } from '@angular/common/http';
       color: #a1a1aa;
     }
 
-    .loading-state .material-symbols-outlined {
+    .loading-state mat-icon {
       font-size: 40px;
+      width: 40px;
+      height: 40px;
       margin-bottom: 12px;
     }
 
@@ -338,8 +357,10 @@ import { HttpClient } from '@angular/common/http';
       border: 1px solid rgba(239, 68, 68, 0.25);
     }
 
-    .alert-banner .material-symbols-outlined {
+    .alert-banner mat-icon {
       font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
 
     /* Platform Header */
@@ -362,8 +383,10 @@ import { HttpClient } from '@angular/common/http';
       flex-shrink: 0;
     }
 
-    .platform-icon .material-symbols-outlined {
+    .platform-icon mat-icon {
       font-size: 24px;
+      width: 24px;
+      height: 24px;
     }
 
     .platform-title {
@@ -395,8 +418,10 @@ import { HttpClient } from '@angular/common/http';
       flex-shrink: 0;
     }
 
-    .status-badge .material-symbols-outlined {
+    .status-badge mat-icon {
       font-size: 16px;
+      width: 16px;
+      height: 16px;
     }
 
     .status-badge.configured {
