@@ -20,6 +20,15 @@ router = APIRouter(prefix="/creatives", tags=["video-generation"])
 # --------------- Request / Response schemas ---------------
 
 
+class GenerateScriptRequest(BaseModel):
+    product_id: int
+    face_url: Optional[str] = None
+
+
+class GenerateScriptResponse(BaseModel):
+    script: str
+
+
 class GenerateVideoRequest(BaseModel):
     seller_id: Optional[int] = None
     product_id: int
@@ -28,6 +37,8 @@ class GenerateVideoRequest(BaseModel):
     duration: float = Field(default=10, ge=5, le=60)
     style_tags: Optional[List[str]] = None
     face_url: Optional[str] = None
+    script: Optional[str] = None  # Pre-approved script, skip generation if provided
+    image_urls: Optional[List[str]] = None  # Additional images for the video
 
 
 class GenerateVideoResponse(BaseModel):
@@ -110,6 +121,35 @@ def _video_to_response(v: GeneratedVideo, db: Session) -> dict:
 # --------------- Endpoints ---------------
 
 
+@router.post("/generate-script", response_model=GenerateScriptResponse)
+async def generate_script(
+    request: GenerateScriptRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Generate just the script via LLM without creating a video."""
+    product = (
+        db.query(Product)
+        .filter(Product.id == request.product_id, Product.user_id == user_id)
+        .first()
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto nao encontrado")
+
+    seller = types.SimpleNamespace(
+        name='Apresentador', personality='informal',
+        language_style='', catchphrases='',
+        face_url=request.face_url, thumbnail_url=request.face_url,
+    )
+
+    service = VideoGenerationService()
+    try:
+        script = await service.generate_script(seller=seller, product=product)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return GenerateScriptResponse(script=script)
+
+
 @router.post("/generate-video", response_model=GenerateVideoResponse)
 async def generate_video(
     request: GenerateVideoRequest,
@@ -167,12 +207,15 @@ async def generate_video(
     service = VideoGenerationService()
 
     try:
-        # Generate script via LLM
-        script = await service.generate_script(
-            seller=seller,
-            product=product,
-            style_tags=request.style_tags,
-        )
+        # Use pre-approved script if provided, otherwise generate via LLM
+        if request.script:
+            script = request.script
+        else:
+            script = await service.generate_script(
+                seller=seller,
+                product=product,
+                style_tags=request.style_tags,
+            )
 
         # Generate video
         result = await service.generate_video(

@@ -171,7 +171,7 @@ interface WizardStep {
         <!-- Step 3: Quem sera o ator? -->
         @if (currentStep === 3) {
           <div class="step-header">
-            <h2>Quem sera o ator?</h2>
+            <h2>Quem sera o ator/atriz?</h2>
             <p>Escolha o rosto para o video da campanha</p>
           </div>
 
@@ -238,6 +238,29 @@ interface WizardStep {
               style="display: none"
               (change)="onFileSelected($event)"
             >
+
+            <!-- Additional images section -->
+            <div class="additional-images-section">
+              <h3>Imagens adicionais para o enredo (opcional)</h3>
+              <p class="hint">Fotos do produto, cenarios ou cenas para compor o video</p>
+
+              <div class="images-strip">
+                @for (img of additionalImages; track img.previewUrl) {
+                  <div class="strip-thumb">
+                    <img [src]="img.previewUrl" alt="Imagem adicional">
+                    <button class="remove-btn" (click)="removeAdditionalImage(img)">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                }
+                <div class="strip-add" (click)="additionalImageInput.click()">
+                  <mat-icon>add_photo_alternate</mat-icon>
+                  <span>Adicionar</span>
+                </div>
+              </div>
+              <input #additionalImageInput type="file" multiple accept="image/*"
+                     (change)="onAdditionalImagesSelected($event)" style="display:none">
+            </div>
           }
         }
 
@@ -273,57 +296,101 @@ interface WizardStep {
           </div>
         }
 
-        <!-- Step 5: Criar Video -->
+        <!-- Step 5: Roteiro e Video -->
         @if (currentStep === 5) {
           <div class="step-header">
-            <h2>Criar Video</h2>
-            <p>Gere o video da campanha com Google Veo 3</p>
+            <h2>Roteiro do Video</h2>
+            <p class="step-subtitle">Revise e edite o roteiro antes de gerar o video</p>
           </div>
 
-          @if (generatingVideo) {
+          @if (scriptLoading) {
             <div class="loading-state">
               <mat-icon class="spin">hourglass_empty</mat-icon>
-              <p>Gerando seu video com Google Veo 3...</p>
+              <p>Gerando roteiro com IA...</p>
             </div>
-          } @else if (videoError) {
-            <div class="video-error-state">
-              <mat-icon>error_outline</mat-icon>
-              <p>{{ videoError }}</p>
-              <button class="btn-primary" (click)="generateVideo()">
-                <mat-icon>refresh</mat-icon>
-                Tentar Novamente
-              </button>
-            </div>
-          } @else if (generatedVideoUrl) {
-            <div class="video-preview-wrap">
-              <video [src]="generatedVideoUrl" controls class="video-preview"></video>
-              <div class="video-actions">
-                @if (videoApproved) {
-                  <div class="video-approved-badge">
-                    <mat-icon>check_circle</mat-icon>
-                    Video Aprovado
-                  </div>
-                } @else {
-                  <button class="btn-primary" (click)="approveVideo()">
-                    <mat-icon>thumb_up</mat-icon>
-                    Aprovar Video
-                  </button>
-                }
-                <button class="btn-secondary" (click)="generateVideo()">
+          } @else if (!scriptApproved) {
+            <!-- Script editing phase -->
+            <div class="script-edit-section">
+              <label class="script-label">Roteiro (edite como quiser):</label>
+              <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6"></textarea>
+
+              <!-- Storyboard preview -->
+              <div class="storyboard-section">
+                <label class="script-label">Imagens do enredo:</label>
+                <div class="storyboard-strip">
+                  @if (selectedFace) {
+                    <div class="storyboard-item main">
+                      <img [src]="getFacePreviewUrl()" [alt]="selectedFace.name">
+                      <span>Ator/Atriz</span>
+                    </div>
+                  }
+                  @for (img of additionalImages; track img.previewUrl) {
+                    <div class="storyboard-item">
+                      <img [src]="img.previewUrl" alt="Cena">
+                      <span>Cena {{ $index + 1 }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="script-actions">
+                <button class="btn-secondary" (click)="generateScript()">
                   <mat-icon>refresh</mat-icon>
-                  Gerar Novamente
+                  Gerar Novo Roteiro
+                </button>
+                <button class="btn-primary" (click)="approveScript()">
+                  <mat-icon>check</mat-icon>
+                  Gerar Video com este Roteiro
                 </button>
               </div>
             </div>
           } @else {
-            <div class="video-generate-prompt">
-              <mat-icon class="video-prompt-icon">videocam</mat-icon>
-              <p>Clique abaixo para gerar um video com inteligencia artificial</p>
-              <button class="btn-generate" (click)="generateVideo()">
-                <mat-icon>auto_awesome</mat-icon>
-                Gerar Video
-              </button>
-            </div>
+            <!-- Video generation phase -->
+            @if (generatingVideo) {
+              <div class="loading-state">
+                <mat-icon class="spin">hourglass_empty</mat-icon>
+                <p>Gerando seu video com Google Veo 3...</p>
+                <p class="hint">Isso pode levar ate 6 minutos</p>
+              </div>
+            } @else if (videoError) {
+              <div class="video-error-state">
+                <mat-icon>error_outline</mat-icon>
+                <p>{{ videoError }}</p>
+                <button class="btn-primary" (click)="generateVideo()">
+                  <mat-icon>refresh</mat-icon>
+                  Tentar Novamente
+                </button>
+                <button class="btn-secondary" (click)="scriptApproved = false">
+                  <mat-icon>edit</mat-icon>
+                  Editar Roteiro
+                </button>
+              </div>
+            } @else if (generatedVideoUrl) {
+              <div class="video-preview-wrap">
+                <video [src]="generatedVideoUrl" controls class="video-preview"></video>
+                <div class="video-actions">
+                  @if (videoApproved) {
+                    <div class="video-approved-badge">
+                      <mat-icon>check_circle</mat-icon>
+                      Video Aprovado
+                    </div>
+                  } @else {
+                    <button class="btn-primary" (click)="approveVideo()">
+                      <mat-icon>thumb_up</mat-icon>
+                      Aprovar Video
+                    </button>
+                  }
+                  <button class="btn-secondary" (click)="generateVideo()">
+                    <mat-icon>refresh</mat-icon>
+                    Gerar Novamente
+                  </button>
+                  <button class="btn-secondary" (click)="scriptApproved = false">
+                    <mat-icon>edit</mat-icon>
+                    Editar Roteiro
+                  </button>
+                </div>
+              </div>
+            }
           }
         }
 
@@ -355,7 +422,7 @@ interface WizardStep {
             </div>
 
             <div class="review-item">
-              <span class="review-label">Ator</span>
+              <span class="review-label">Ator/Atriz</span>
               <div class="review-value review-face">
                 @if (selectedFace) {
                   <img [src]="getFacePreviewUrl()" [alt]="selectedFace.name" class="review-avatar">
@@ -917,12 +984,19 @@ interface WizardStep {
     }
 
     .video-preview-wrap {
-      text-align: center;
+      max-height: 55vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
 
       .video-preview {
+        max-height: 45vh;
         width: 100%;
+        object-fit: contain;
+        border-radius: 12px;
         max-width: 640px;
-        border-radius: 16px;
         background: #09090b;
         border: 2px solid #27272a;
       }
@@ -1276,6 +1350,61 @@ interface WizardStep {
       to { transform: rotate(360deg); }
     }
 
+    /* Script editing */
+    .script-edit-section { display: flex; flex-direction: column; gap: 16px; }
+    .script-label { color: #a1a1aa; font-size: 14px; font-weight: 500; }
+    .script-textarea {
+      background: #18181b; border: 1px solid #27272a; border-radius: 8px;
+      color: #fafafa; padding: 16px; font-size: 15px; line-height: 1.6;
+      resize: vertical; min-height: 120px; font-family: inherit;
+    }
+    .script-textarea:focus { outline: none; border-color: #8b5cf6; }
+    .script-actions { display: flex; gap: 12px; justify-content: flex-end; }
+    .storyboard-section { margin-top: 8px; }
+    .storyboard-strip {
+      display: flex; gap: 12px; overflow-x: auto; padding: 8px 0;
+    }
+    .storyboard-item {
+      flex-shrink: 0; text-align: center;
+    }
+    .storyboard-item img {
+      width: 80px; height: 80px; object-fit: cover; border-radius: 8px;
+      border: 2px solid #27272a;
+    }
+    .storyboard-item.main img { border-color: #8b5cf6; }
+    .storyboard-item span { display: block; font-size: 11px; color: #71717a; margin-top: 4px; }
+
+    /* Additional images */
+    .additional-images-section { margin-top: 24px; padding-top: 24px; border-top: 1px solid #27272a; }
+    .additional-images-section h3 { font-size: 16px; color: #e4e4e7; margin: 0 0 4px; }
+    .additional-images-section .hint { font-size: 13px; color: #71717a; margin: 0 0 12px; }
+    .images-strip { display: flex; gap: 12px; overflow-x: auto; padding: 4px 0; }
+    .strip-thumb {
+      position: relative; flex-shrink: 0;
+    }
+    .strip-thumb img {
+      width: 80px; height: 80px; object-fit: cover; border-radius: 8px;
+      border: 1px solid #27272a;
+    }
+    .strip-thumb .remove-btn {
+      position: absolute; top: -6px; right: -6px; width: 22px; height: 22px;
+      border-radius: 50%; background: #ef4444; border: none; color: white;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .strip-thumb .remove-btn mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .strip-add {
+      width: 80px; height: 80px; border: 2px dashed #27272a; border-radius: 8px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; gap: 4px; flex-shrink: 0;
+    }
+    .strip-add mat-icon { color: #71717a; }
+    .strip-add span { font-size: 11px; color: #71717a; }
+    .strip-add:hover { border-color: #8b5cf6; }
+    .strip-add:hover mat-icon, .strip-add:hover span { color: #8b5cf6; }
+
+    .step-subtitle { color: #71717a; font-size: 15px; margin: 0; }
+    .hint { font-size: 13px; color: #71717a; }
+
     /* Responsive */
     @media (max-width: 700px) {
       :host {
@@ -1317,9 +1446,9 @@ export class VendaCreateComponent implements OnInit {
   steps: WizardStep[] = [
     { number: 1, label: 'Produto' },
     { number: 2, label: 'Plataforma' },
-    { number: 3, label: 'Ator' },
+    { number: 3, label: 'Ator/Atriz' },
     { number: 4, label: 'Tipo' },
-    { number: 5, label: 'Video' },
+    { number: 5, label: 'Roteiro' },
     { number: 6, label: 'Revisar' },
     { number: 7, label: 'Lancar' },
   ];
@@ -1385,6 +1514,14 @@ export class VendaCreateComponent implements OnInit {
   ];
   selectedSaleType: SaleType | null = null;
 
+  // Step 3 - Additional images
+  additionalImages: {file: File, previewUrl: string}[] = [];
+
+  // Step 5 - Script
+  scriptText = '';
+  scriptLoading = false;
+  scriptApproved = false;
+
   // Step 5 - Video
   generatingVideo = false;
   generatedVideoUrl: string | null = null;
@@ -1449,6 +1586,9 @@ export class VendaCreateComponent implements OnInit {
     this.currentStep++;
     if (this.currentStep === 3) {
       this.loadFaces();
+    }
+    if (this.currentStep === 5 && !this.scriptText) {
+      this.generateScript();
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -1534,9 +1674,53 @@ export class VendaCreateComponent implements OnInit {
     return this.selectedFace.thumbnail_url;
   }
 
+  // Step 3 - Additional images
+  onAdditionalImagesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      for (let i = 0; i < input.files.length; i++) {
+        const file = input.files[i];
+        const previewUrl = URL.createObjectURL(file);
+        this.additionalImages.push({ file, previewUrl });
+      }
+    }
+    input.value = ''; // reset to allow re-selecting same files
+  }
+
+  removeAdditionalImage(img: {file: File, previewUrl: string}): void {
+    URL.revokeObjectURL(img.previewUrl);
+    this.additionalImages = this.additionalImages.filter(i => i !== img);
+  }
+
   // Step 4
   selectSaleType(saleType: SaleType): void {
     this.selectedSaleType = saleType;
+  }
+
+  // Step 5 - Script generation
+  generateScript(): void {
+    this.scriptLoading = true;
+    this.scriptApproved = false;
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const faceUrl = this.getFacePreviewUrl();
+    this.http.post<any>(`${backendUrl}/api/creatives/generate-script`, {
+      product_id: this.selectedProduct!.id,
+      face_url: faceUrl || undefined,
+    }).subscribe({
+      next: (res) => {
+        this.scriptLoading = false;
+        this.scriptText = res.script;
+      },
+      error: () => {
+        this.scriptLoading = false;
+        this.scriptText = 'Erro ao gerar roteiro. Escreva seu proprio roteiro abaixo.';
+      },
+    });
+  }
+
+  approveScript(): void {
+    this.scriptApproved = true;
+    this.generateVideo(); // auto-start video generation
   }
 
   // Step 5 - Video generation
@@ -1556,6 +1740,7 @@ export class VendaCreateComponent implements OnInit {
       product_id: this.selectedProduct!.id,
       duration: 10,
       face_url: faceUrl || undefined,
+      script: this.scriptText || undefined,
     }).subscribe({
       next: (response) => {
         this.generatingVideo = false;
