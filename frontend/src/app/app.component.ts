@@ -172,8 +172,8 @@ interface JourneyStep {
       </div>
 
       @if (walletModalOpen) {
-        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;" (click)="closeWalletModal()">
-          <div style="background: #1e1e2e; border: 1px solid #444; border-radius: 16px; padding: 28px 32px; max-width: 520px; width: 95%; max-height: 80vh; color: #fff; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">
+        <div class="wallet-modal-overlay" (click)="closeWalletModal()">
+          <div class="wallet-modal-content" (click)="$event.stopPropagation()">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
               <h2 style="margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px;">
                 <mat-icon>account_balance_wallet</mat-icon> Minha Carteira
@@ -714,6 +714,44 @@ interface JourneyStep {
       background: #0a0a0f;
     }
 
+    /* Wallet modal */
+    .wallet-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wallet-modal-content {
+      background: #1e1e2e;
+      border: 1px solid #444;
+      border-radius: 16px;
+      padding: 28px 32px;
+      max-width: 520px;
+      width: 95%;
+      max-height: 80vh;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (max-width: 480px) {
+      .wallet-modal-content {
+        max-width: 100%;
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        padding: 20px 16px;
+      }
+    }
+
     /* Responsive */
     @media (max-width: 1023px) {
       .chat-sidebar {
@@ -729,6 +767,47 @@ interface JourneyStep {
 
       .chat-sidebar {
         display: none;
+      }
+
+      .credit-bar {
+        flex-wrap: wrap;
+        padding: 0.4rem 0.75rem;
+        gap: 0.5rem;
+        justify-content: center;
+      }
+
+      .credit-amount {
+        font-size: 0.85rem;
+      }
+
+      .credit-add-btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+      }
+
+      .main-content-inner {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .nav-sidebar {
+        width: 52px;
+        min-width: 52px;
+      }
+
+      .credit-bar {
+        padding: 0.35rem 0.5rem;
+        gap: 0.4rem;
+      }
+
+      .credit-amount {
+        font-size: 0.8rem;
+      }
+
+      .credit-add-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
       }
     }
   `],

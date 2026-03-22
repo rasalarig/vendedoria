@@ -618,3 +618,113 @@
     background: rgba(139, 92, 246, 0.06);
   }
 }
+
+// ====================================================
+// Responsive
+// ====================================================
+@media (max-width: 768px) {
+  :host {
+    padding: 20px 16px;
+  }
+
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
+  }
+
+  .kpi-number {
+    font-size: 28px;
+  }
+
+  .kpi-body {
+    padding: 16px;
+  }
+
+  .glass-card {
+    padding: 16px;
+  }
+
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chart-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .campaigns-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quick-actions {
+    flex-direction: column;
+  }
+
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .action-btn-primary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .section-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  :host {
+    padding: 16px 10px;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .kpi-number {
+    font-size: 24px;
+  }
+
+  .kpi-currency {
+    font-size: 18px;
+  }
+
+  .kpi-unit {
+    font-size: 18px;
+  }
+
+  .kpi-label {
+    font-size: 10px;
+  }
+
+  .bar-track {
+    width: 20px;
+  }
+
+  .chart-tab {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .period-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .chart-area {
+    height: 200px;
+  }
+}

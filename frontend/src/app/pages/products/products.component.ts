@@ -278,6 +278,68 @@ import { ProductDialogComponent, ProductDialogData } from './product-dialog.comp
         height: 14px;
       }
     }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      :host {
+        padding: 20px 16px;
+      }
+
+      .page-header {
+        flex-direction: column;
+        gap: 16px;
+
+        h1 {
+          font-size: 26px;
+        }
+      }
+
+      .new-btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+      }
+
+      .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+      }
+
+      .empty-state {
+        padding: 48px 16px;
+      }
+
+      .cta-btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      :host {
+        padding: 16px 12px;
+      }
+
+      .page-header h1 {
+        font-size: 22px;
+      }
+
+      .products-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .product-image {
+        height: 160px;
+      }
+
+      .product-price {
+        font-size: 20px;
+      }
+
+      .delete-btn {
+        opacity: 1;
+      }
+    }
   `],
 })
 export class ProductsComponent implements OnInit {
@@ -327,10 +389,13 @@ export class ProductsComponent implements OnInit {
 
   openDialog(product?: Product): void {
     const dialogData: ProductDialogData = { product };
+    const isMobile = window.innerWidth <= 480;
     const dialogRef = this.dialog.open(ProductDialogComponent, {
-      width: '480px',
+      width: isMobile ? '100vw' : '480px',
+      maxWidth: isMobile ? '100vw' : '80vw',
+      height: isMobile ? '100vh' : 'auto',
       data: dialogData,
-      panelClass: 'dark-dialog',
+      panelClass: isMobile ? ['dark-dialog', 'mobile-fullscreen-dialog'] : 'dark-dialog',
     });
 
     dialogRef.afterClosed().subscribe((formData: FormData | null) => {

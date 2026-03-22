@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     META_APP_ID: str = ""
     META_APP_SECRET: str = ""
     GOOGLE_AI_KEY: str = "AIzaSyBbVj6ivyNcRzlug1NJBS2umrJxKWuQXp8"
-    STRIPE_SECRET_KEY: str = ""
+    STRIPE_SECRET_KEY: str = "sk_test_51Odd67JmyEQQcEiJfIUGD9GEQkheTkLCQh3G8Jo9bJRBvy4KPfzHmarKT4uSxwNjPOvZLwoJ7a2McIcS005etszJwe"
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_PRICE_5: str = ""   # Stripe Price ID for $5 credits
     STRIPE_PRICE_20: str = ""  # Stripe Price ID for $20 credits

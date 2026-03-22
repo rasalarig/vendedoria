@@ -571,8 +571,8 @@ interface WizardStep {
     </div>
 
     @if (costConfirmAction) {
-      <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-        <div style="background: #1e1e2e; border: 1px solid #444; border-radius: 12px; padding: 24px 32px; max-width: 420px; width: 90%; color: #fff;">
+      <div class="cost-modal-overlay">
+        <div class="cost-modal-content">
           <h3 style="margin: 0 0 16px; font-size: 18px; display: flex; align-items: center; gap: 8px;">
             Confirmar Uso de Creditos
           </h3>
@@ -1518,8 +1518,8 @@ interface WizardStep {
     .step-subtitle { color: #71717a; font-size: 15px; margin: 0; }
     .hint { font-size: 13px; color: #71717a; }
 
-    /* Responsive */
-    @media (max-width: 700px) {
+    /* Responsive - tablet */
+    @media (max-width: 768px) {
       :host {
         padding: 20px 16px;
       }
@@ -1528,21 +1528,245 @@ interface WizardStep {
         display: none;
       }
 
+      .stepper-circle {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+      }
+
       .stepper-line {
         margin-bottom: 0;
+        min-width: 16px;
+        max-width: 32px;
+      }
+
+      .step-header h2 {
+        font-size: 22px;
+      }
+
+      .step-content {
+        min-height: auto;
       }
 
       .products-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
       }
 
       .faces-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
       }
 
       .face-img-wrap {
         width: 100px;
         height: 100px;
+      }
+
+      .styles-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .video-preview-wrap .video-preview {
+        max-width: 100%;
+      }
+
+      .video-preview-wrap .video-actions {
+        flex-wrap: wrap;
+      }
+
+      .script-actions {
+        flex-wrap: wrap;
+      }
+
+      .btn-primary, .btn-secondary {
+        min-height: 44px;
+        justify-content: center;
+      }
+
+      .btn-next, .btn-back {
+        min-height: 44px;
+      }
+
+      .wizard-nav {
+        margin-top: 24px;
+        padding-top: 16px;
+      }
+
+      .review-item {
+        padding: 14px 16px;
+      }
+
+      .btn-generate {
+        width: 100%;
+        justify-content: center;
+        padding: 14px 24px;
+        font-size: 16px;
+      }
+
+      .success-actions {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .success-actions .btn-primary,
+      .success-actions .btn-secondary {
+        width: 100%;
+      }
+
+      .script-textarea {
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .script-chat-section {
+        padding: 0.75rem;
+      }
+
+      .platform-card {
+        padding: 16px;
+      }
+
+      .sale-type-card {
+        padding: 16px;
+        gap: 12px;
+      }
+    }
+
+    /* Responsive - phone */
+    @media (max-width: 480px) {
+      :host {
+        padding: 16px 10px;
+      }
+
+      .stepper {
+        margin-bottom: 24px;
+      }
+
+      .stepper-circle {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+      }
+
+      .step-check {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+
+      .stepper-line {
+        min-width: 10px;
+        max-width: 20px;
+      }
+
+      .step-header h2 {
+        font-size: 20px;
+      }
+
+      .step-header p {
+        font-size: 13px;
+      }
+
+      .products-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .product-card {
+        padding: 10px;
+      }
+
+      .product-img {
+        height: 100px;
+      }
+
+      .faces-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .face-card {
+        padding: 10px;
+      }
+
+      .face-img-wrap {
+        width: 80px;
+        height: 80px;
+      }
+
+      .styles-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+      }
+
+      .style-chip {
+        padding: 0.5rem;
+      }
+
+      .style-chip .style-desc {
+        font-size: 0.6rem;
+      }
+
+      .video-preview-wrap .video-preview {
+        max-height: 35vh;
+        max-width: 100%;
+      }
+
+      .video-preview-wrap .video-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .video-preview-wrap .video-actions .btn-primary,
+      .video-preview-wrap .video-actions .btn-secondary {
+        width: 100%;
+      }
+
+      .script-actions {
+        flex-direction: column;
+      }
+
+      .script-actions .btn-primary,
+      .script-actions .btn-secondary {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .btn-next {
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+
+      .btn-back {
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+
+      .btn-generate {
+        padding: 12px 20px;
+        font-size: 15px;
+      }
+
+      .sale-type-icon {
+        width: 40px;
+        height: 40px;
+      }
+
+      .sale-type-label {
+        font-size: 16px;
+      }
+
+      .sale-type-desc {
+        font-size: 13px;
+      }
+
+      .loading-state {
+        padding: 40px 0;
+      }
+
+      .empty-state {
+        padding: 40px 0;
       }
     }
 
@@ -1588,6 +1812,24 @@ interface WizardStep {
     }
     .btn-send:disabled { opacity: .4; cursor: not-allowed; }
     .btn-send:hover:not(:disabled) { background: #4f46e5; }
+
+    /* Cost confirmation modal */
+    .cost-modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7); z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cost-modal-content {
+      background: #1e1e2e; border: 1px solid #444; border-radius: 12px;
+      padding: 24px 32px; max-width: 420px; width: 90%; color: #fff;
+    }
+    @media (max-width: 480px) {
+      .cost-modal-content {
+        max-width: 100%; width: 100%; height: 100vh;
+        border-radius: 0; padding: 20px 16px;
+        display: flex; flex-direction: column; justify-content: center;
+      }
+    }
   `],
 })
 export class VendaCreateComponent implements OnInit {

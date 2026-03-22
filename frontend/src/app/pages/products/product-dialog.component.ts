@@ -260,6 +260,32 @@ export interface ProductDialogData {
         margin-right: 4px;
       }
     }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .dialog-wrapper {
+        min-width: unset;
+        width: 100%;
+      }
+
+      .dialog-title {
+        font-size: 18px;
+      }
+
+      .photo-zone {
+        height: 130px;
+      }
+
+      .save-btn {
+        min-height: 44px;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .cancel-btn {
+        min-height: 44px;
+      }
+    }
   `],
 })
 export class ProductDialogComponent implements OnInit {

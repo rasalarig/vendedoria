@@ -791,12 +791,44 @@ import { switchMap } from 'rxjs/operators';
     @media (max-width: 768px) {
       :host { padding: 16px; }
       .page-header { flex-direction: column; gap: 16px; }
+      .btn-new-campaign { width: 100%; justify-content: center; min-height: 44px; }
       .platforms-grid { grid-template-columns: 1fr; }
       .campaigns-grid { grid-template-columns: 1fr; }
+      .creatives-grid { grid-template-columns: repeat(2, 1fr); }
       .step-connector { width: 24px; }
       .step-label { font-size: 10px; }
+      .step-number { width: 32px; height: 32px; font-size: 14px; }
       .preset-buttons { flex-wrap: wrap; }
       .duration-options { flex-wrap: wrap; justify-content: center; }
+      .wizard-container { padding: 20px 16px; }
+      .wizard-step { max-width: 100%; }
+      .wizard-actions { flex-direction: row; }
+      .btn-next, .btn-back, .btn-publish { min-height: 44px; }
+      .btn-publish { width: auto; }
+      .campaign-card-metrics { flex-wrap: wrap; gap: 12px; }
+      .campaign-card-actions { flex-wrap: wrap; }
+      .action-btn { min-height: 44px; }
+      .budget-display .budget-value { font-size: 48px; }
+      .review-card { padding: 16px; }
+    }
+
+    @media (max-width: 480px) {
+      :host { padding: 12px 10px; }
+      h1 { font-size: 26px; }
+      .wizard-container { padding: 16px 12px; }
+      .step-indicators { gap: 0; }
+      .step-connector { width: 16px; margin: 0 4px; margin-bottom: 24px; }
+      .step-label { display: none; }
+      .step-number { width: 28px; height: 28px; font-size: 12px; }
+      .creatives-grid { grid-template-columns: 1fr; }
+      .creative-thumbnail { height: 140px; }
+      .budget-display .budget-value { font-size: 40px; }
+      .preset-buttons { gap: 8px; }
+      .preset-btn { padding: 6px 14px; font-size: 13px; }
+      .duration-btn { padding: 8px 14px; font-size: 13px; }
+      .platform-card { padding: 20px 16px; }
+      .platform-card h3 { font-size: 16px; }
+      .campaign-card { padding: 16px; }
     }
   `],
 })

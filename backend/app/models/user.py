@@ -11,5 +11,5 @@ class User(Base):
     name = Column(String(200), nullable=False)
     avatar_url = Column(String(500), nullable=True)
     google_id = Column(String(100), unique=True, nullable=True)
-    credit_balance_usd = Column(Float, nullable=False, default=1.0, server_default="1.0")
+    credit_balance_usd = Column(Float, nullable=False, default=0.55, server_default="0.55")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
