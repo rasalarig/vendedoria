@@ -565,6 +565,59 @@ interface WizardStep {
         </div>
       }
     </div>
+
+    @if (costConfirmAction) {
+      <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+        <div style="background: #1e1e2e; border: 1px solid #444; border-radius: 12px; padding: 24px 32px; max-width: 420px; width: 90%; color: #fff;">
+          <h3 style="margin: 0 0 16px; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+            Confirmar Uso de Creditos
+          </h3>
+          @if (costConfirmData) {
+            <div style="background: #2a2a3e; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #aaa;">Acao:</span>
+                <span style="font-weight: 600;">{{ costConfirmAction === 'script' ? 'Gerar Roteiro' : costConfirmAction === 'video' ? 'Gerar Video' : costConfirmAction === 'refine' ? 'Refinar Roteiro' : 'Chat IA' }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #aaa;">Custo estimado:</span>
+                <span style="font-weight: 600; color: #f59e0b;">R$ {{ costConfirmData.estimated_cost_brl | number:'1.2-2' }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #aaa;">Seu saldo atual:</span>
+                <span style="font-weight: 600;" [style.color]="costConfirmData.sufficient ? '#10b981' : '#ef4444'">R$ {{ costConfirmData.balance_brl | number:'1.2-2' }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: #aaa;">Saldo apos:</span>
+                <span style="font-weight: 600;" [style.color]="costConfirmData.sufficient ? '#10b981' : '#ef4444'">R$ {{ (costConfirmData.balance_brl - costConfirmData.estimated_cost_brl) | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            @if (!costConfirmData.sufficient) {
+              <div style="background: #3b1a1a; border: 1px solid #ef4444; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #fca5a5; font-size: 14px;">
+                Saldo insuficiente! Adicione creditos para continuar.
+              </div>
+            }
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+              <button (click)="cancelCost()" style="padding: 10px 20px; border-radius: 8px; border: 1px solid #555; background: transparent; color: #ccc; cursor: pointer; font-size: 14px;">
+                Cancelar
+              </button>
+              @if (costConfirmData.sufficient) {
+                <button (click)="confirmCost()" style="padding: 10px 20px; border-radius: 8px; border: none; background: #7c3aed; color: #fff; cursor: pointer; font-size: 14px; font-weight: 600;">
+                  Confirmar e Prosseguir
+                </button>
+              } @else {
+                <button (click)="cancelCost()" style="padding: 10px 20px; border-radius: 8px; border: none; background: #7c3aed; color: #fff; cursor: pointer; font-size: 14px; font-weight: 600;">
+                  Adicionar Creditos
+                </button>
+              }
+            </div>
+          } @else {
+            <div style="text-align: center; padding: 20px;">
+              <div style="color: #aaa;">Calculando custo...</div>
+            </div>
+          }
+        </div>
+      </div>
+    }
   `,
   styles: [`
     :host {
@@ -1643,6 +1696,12 @@ export class VendaCreateComponent implements OnInit {
   videoApproved = false;
   videoError: string | null = null;
 
+  // Cost confirmation
+  costConfirmAction: string | null = null;
+  costConfirmData: {action: string, estimated_cost_usd: number, estimated_cost_brl: number, balance_usd: number, balance_brl: number, sufficient: boolean, breakdown: string} | null = null;
+  costConfirmLoading = false;
+  private _pendingCostAction: (() => void) | null = null;
+
   // Step 6 - Review & Generate
   generating = false;
 
@@ -1836,8 +1895,54 @@ export class VendaCreateComponent implements OnInit {
     this.selectedSaleType = saleType;
   }
 
+  // Cost confirmation
+  requestCostConfirm(action: string, onConfirm: () => void, duration: number = 10): void {
+    this.costConfirmLoading = true;
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    this.http.get<any>(`${backendUrl}/api/credits/estimate`, {
+      params: { action, duration: duration.toString() }
+    }).subscribe({
+      next: (data) => {
+        this.costConfirmLoading = false;
+        if (!data.sufficient) {
+          this.costConfirmData = data;
+          this.costConfirmAction = action;
+          this._pendingCostAction = null;
+        } else {
+          this.costConfirmData = data;
+          this.costConfirmAction = action;
+          this._pendingCostAction = onConfirm;
+        }
+      },
+      error: () => {
+        this.costConfirmLoading = false;
+        // If estimate fails, proceed anyway (don't block the user)
+        onConfirm();
+      }
+    });
+  }
+
+  confirmCost(): void {
+    this.costConfirmAction = null;
+    this.costConfirmData = null;
+    if (this._pendingCostAction) {
+      this._pendingCostAction();
+      this._pendingCostAction = null;
+    }
+  }
+
+  cancelCost(): void {
+    this.costConfirmAction = null;
+    this.costConfirmData = null;
+    this._pendingCostAction = null;
+  }
+
   // Step 5 - Script generation
   generateScript(): void {
+    this.requestCostConfirm('script', () => this._doGenerateScript());
+  }
+
+  private _doGenerateScript(): void {
     this.scriptLoading = true;
     this.scriptApproved = false;
     const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
@@ -1860,22 +1965,27 @@ export class VendaCreateComponent implements OnInit {
   }
 
   regenerateVideo(): void {
-    this.generatedVideoUrl = null;
-    this.videoApproved = false;
-    this.scriptApproved = true;
-    this.generateVideo();
+    this.requestCostConfirm('video', () => {
+      this.generatedVideoUrl = null;
+      this.videoApproved = false;
+      this.scriptApproved = true;
+      this.generateVideo();
+    });
   }
 
   approveScript(): void {
     this.scriptApproved = true;
-    // Only generate video if we don't already have one
     if (!this.generatedVideoUrl) {
-      this.generateVideo();
+      this.requestCostConfirm('video', () => this.generateVideo());
     }
   }
 
   sendScriptChat(): void {
     if (!this.scriptChatInput.trim() || this.scriptChatLoading) return;
+    this.requestCostConfirm('refine', () => this._doSendScriptChat());
+  }
+
+  private _doSendScriptChat(): void {
     const instruction = this.scriptChatInput.trim();
     this.scriptChatMessages.push({ role: 'user', text: instruction });
     this.scriptChatInput = '';

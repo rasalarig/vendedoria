@@ -1,5 +1,5 @@
 import stripe
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
@@ -29,6 +29,61 @@ class CheckoutRequest(BaseModel):
 class CheckoutResponse(BaseModel):
     checkout_url: str
     session_id: str
+
+
+class EstimateResponse(BaseModel):
+    action: str
+    estimated_cost_usd: float
+    estimated_cost_brl: float
+    balance_usd: float
+    balance_brl: float
+    sufficient: bool
+    breakdown: str
+
+
+# Cost table for LLM-based actions (USD)
+ACTION_COSTS = {
+    "script": 0.01,
+    "refine": 0.01,
+    "chat": 0.005,
+}
+
+
+@router.get("/estimate", response_model=EstimateResponse)
+def estimate_action_cost(
+    action: str = Query(...),  # "script", "video", "refine", "chat"
+    duration: float = Query(default=10),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Estimate cost of an action and check if user has sufficient balance."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado")
+
+    balance = user.credit_balance_usd or 0.0
+
+    if action in ACTION_COSTS:
+        estimated_usd = ACTION_COSTS[action]
+        breakdown = f"{action}: ${estimated_usd} (Together AI LLM)"
+    elif action == "video":
+        estimate = CostService.estimate_cost("veo3", "video", duration)
+        estimated_usd = estimate["estimated_usd"]
+        breakdown = estimate.get("breakdown", f"video: ${estimated_usd}")
+    else:
+        raise HTTPException(status_code=400, detail=f"Acao desconhecida: {action}")
+
+    estimated_brl = round(estimated_usd * USD_TO_BRL, 2)
+
+    return EstimateResponse(
+        action=action,
+        estimated_cost_usd=round(estimated_usd, 4),
+        estimated_cost_brl=estimated_brl,
+        balance_usd=round(balance, 2),
+        balance_brl=round(balance * USD_TO_BRL, 2),
+        sufficient=balance >= estimated_usd,
+        breakdown=breakdown,
+    )
 
 
 CREDIT_PACKAGES = {
