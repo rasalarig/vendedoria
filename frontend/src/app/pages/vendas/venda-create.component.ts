@@ -1720,7 +1720,7 @@ export class VendaCreateComponent implements OnInit {
     this.scriptApproved = false;
     const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
     const faceUrl = this.getFacePreviewUrl();
-    this.http.post<any>(`${backendUrl}/api/creatives/generate-script`, {
+    this.http.post<any>(`${backendUrl}/api/creatives/script/generate`, {
       product_id: this.selectedProduct!.id,
       face_url: faceUrl || undefined,
     }).subscribe({

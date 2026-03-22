@@ -121,7 +121,7 @@ def _video_to_response(v: GeneratedVideo, db: Session) -> dict:
 # --------------- Endpoints ---------------
 
 
-@router.post("/generate-script", response_model=GenerateScriptResponse)
+@router.post("/script/generate", response_model=GenerateScriptResponse)
 async def generate_script(
     request: GenerateScriptRequest,
     db: Session = Depends(get_db),
