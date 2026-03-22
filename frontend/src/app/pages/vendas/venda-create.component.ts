@@ -384,8 +384,8 @@ interface WizardStep {
                   Gerar Novo Roteiro
                 </button>
                 <button class="btn-primary" (click)="approveScript()">
-                  <mat-icon>check</mat-icon>
-                  Gerar Video com este Roteiro
+                  <mat-icon>{{ generatedVideoUrl ? 'play_arrow' : 'check' }}</mat-icon>
+                  {{ generatedVideoUrl ? 'Ver Video Gerado' : 'Gerar Video com este Roteiro' }}
                 </button>
               </div>
             </div>
@@ -1850,7 +1850,10 @@ export class VendaCreateComponent implements OnInit {
 
   approveScript(): void {
     this.scriptApproved = true;
-    this.generateVideo(); // auto-start video generation
+    // Only generate video if we don't already have one
+    if (!this.generatedVideoUrl) {
+      this.generateVideo();
+    }
   }
 
   sendScriptChat(): void {
@@ -1893,10 +1896,19 @@ export class VendaCreateComponent implements OnInit {
       : '';
 
     const faceUrl = this.getFacePreviewUrl();
+    // Convert frontend asset URLs to backend-accessible paths
+    let backendFaceUrl = faceUrl;
+    if (faceUrl && faceUrl.startsWith('/assets/')) {
+      // Face images from catalog - send the path so backend can look it up
+      backendFaceUrl = faceUrl;
+    } else if (faceUrl && !faceUrl.startsWith('http')) {
+      // Relative backend path - prefix with backend URL
+      backendFaceUrl = backendUrl + faceUrl;
+    }
     this.http.post<any>(`${backendUrl}/api/creatives/generate-video`, {
       product_id: this.selectedProduct!.id,
       duration: 10,
-      face_url: faceUrl || undefined,
+      face_url: backendFaceUrl || undefined,
       script: this.scriptText || undefined,
     }).subscribe({
       next: (response) => {

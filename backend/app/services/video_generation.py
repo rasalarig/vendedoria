@@ -258,7 +258,7 @@ Retorne APENAS o texto do roteiro atualizado, sem explicacoes ou comentarios."""
             f"Create a professional Brazilian Portuguese sales video ad. "
             f"A charismatic presenter named {seller_name} speaks directly to camera, "
             f"presenting the product '{product_name}': {product_desc[:200]}. "
-            f"The script: {script[:400]}. "
+            f"The script to be narrated: {script[:1000]}. "
             f"Style: modern, engaging social media ad for Instagram Reels/TikTok. "
             f"Well-lit, professional setting, confident body language."
         )
