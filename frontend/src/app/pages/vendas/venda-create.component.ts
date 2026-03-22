@@ -239,6 +239,23 @@ interface WizardStep {
               (change)="onFileSelected($event)"
             >
 
+            <!-- Actor style selection -->
+            <div class="style-selection-section">
+              <h3>Estilo de apresentacao</h3>
+              <p class="hint">Como o ator/atriz deve se comunicar no video</p>
+              <div class="styles-grid">
+                @for (style of actorStyles; track style.id) {
+                  <div class="style-chip"
+                       [class.selected]="selectedStyle === style.id"
+                       (click)="selectedStyle = style.id">
+                    <mat-icon>{{ style.icon }}</mat-icon>
+                    <span class="style-label">{{ style.label }}</span>
+                    <span class="style-desc">{{ style.desc }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
             <!-- Additional images section -->
             <div class="additional-images-section">
               <h3>Imagens adicionais para o enredo (opcional)</h3>
@@ -330,6 +347,34 @@ interface WizardStep {
                       <span>Cena {{ $index + 1 }}</span>
                     </div>
                   }
+                </div>
+              </div>
+
+              <!-- Mini-chat for script refinement -->
+              <div class="script-chat-section">
+                <h4>Peca alteracoes a IA</h4>
+                <div class="script-chat-messages">
+                  @for (msg of scriptChatMessages; track $index) {
+                    <div class="chat-msg" [class.user]="msg.role === 'user'" [class.ai]="msg.role === 'ai'">
+                      <span class="msg-label">{{ msg.role === 'user' ? 'Voce' : 'IA' }}:</span>
+                      <span class="msg-text">{{ msg.text }}</span>
+                    </div>
+                  }
+                  @if (scriptChatLoading) {
+                    <div class="chat-msg ai">
+                      <span class="msg-label">IA:</span>
+                      <span class="msg-text typing">Reescrevendo roteiro...</span>
+                    </div>
+                  }
+                </div>
+                <div class="script-chat-input-row">
+                  <input type="text" [(ngModel)]="scriptChatInput"
+                         placeholder="Ex: deixe mais engracado, adicione urgencia, encurte..."
+                         (keydown.enter)="sendScriptChat()"
+                         [disabled]="scriptChatLoading">
+                  <button class="btn-send" (click)="sendScriptChat()" [disabled]="scriptChatLoading || !scriptChatInput.trim()">
+                    <mat-icon>send</mat-icon>
+                  </button>
                 </div>
               </div>
 
@@ -1432,6 +1477,49 @@ interface WizardStep {
         height: 100px;
       }
     }
+
+    /* Style selection */
+    .style-selection-section { margin-top: 2rem; }
+    .style-selection-section h3 { color: #e2e8f0; font-size: 1rem; margin-bottom: .25rem; }
+    .styles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; margin-top: .75rem; }
+    .style-chip {
+        display: flex; flex-direction: column; align-items: center; gap: .25rem;
+        padding: .75rem; border-radius: 12px; cursor: pointer;
+        background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.08);
+        transition: all .2s;
+    }
+    .style-chip:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+    .style-chip.selected { border-color: #6366f1; background: rgba(99,102,241,0.12); }
+    .style-chip mat-icon { font-size: 24px; width: 24px; height: 24px; color: #a5b4fc; }
+    .style-chip.selected mat-icon { color: #818cf8; }
+    .style-chip .style-label { font-size: .85rem; font-weight: 600; color: #e2e8f0; }
+    .style-chip .style-desc { font-size: .7rem; color: #94a3b8; text-align: center; }
+
+    /* Script mini-chat */
+    .script-chat-section { margin-top: 1.5rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); }
+    .script-chat-section h4 { color: #a5b4fc; font-size: .85rem; margin: 0 0 .75rem 0; }
+    .script-chat-messages { max-height: 150px; overflow-y: auto; margin-bottom: .75rem; display: flex; flex-direction: column; gap: .5rem; }
+    .chat-msg { font-size: .8rem; padding: .4rem .6rem; border-radius: 8px; }
+    .chat-msg.user { background: rgba(99,102,241,0.15); color: #c7d2fe; align-self: flex-end; }
+    .chat-msg.ai { background: rgba(255,255,255,0.06); color: #cbd5e1; align-self: flex-start; }
+    .chat-msg .msg-label { font-weight: 600; margin-right: .4rem; }
+    .typing { animation: blink 1s infinite; }
+    @keyframes blink { 50% { opacity: .5; } }
+    .script-chat-input-row { display: flex; gap: .5rem; }
+    .script-chat-input-row input {
+        flex: 1; padding: .6rem .8rem; border-radius: 8px;
+        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+        color: #e2e8f0; font-size: .85rem; outline: none;
+    }
+    .script-chat-input-row input:focus { border-color: #6366f1; }
+    .script-chat-input-row input::placeholder { color: #64748b; }
+    .btn-send {
+        padding: .5rem .75rem; border-radius: 8px; border: none;
+        background: #6366f1; color: white; cursor: pointer;
+        display: flex; align-items: center;
+    }
+    .btn-send:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-send:hover:not(:disabled) { background: #4f46e5; }
   `],
 })
 export class VendaCreateComponent implements OnInit {
@@ -1513,6 +1601,22 @@ export class VendaCreateComponent implements OnInit {
     },
   ];
   selectedSaleType: SaleType | null = null;
+
+  // Style selection
+  actorStyles = [
+    { id: 'informal', label: 'Informal', icon: 'emoji_people', desc: 'Descontraido e proximo' },
+    { id: 'formal', label: 'Formal', icon: 'business_center', desc: 'Profissional e serio' },
+    { id: 'funny', label: 'Engracado', icon: 'sentiment_very_satisfied', desc: 'Humoristico e leve' },
+    { id: 'technical', label: 'Tecnico', icon: 'science', desc: 'Detalhado e especialista' },
+    { id: 'motivational', label: 'Motivacional', icon: 'local_fire_department', desc: 'Energico e inspirador' },
+    { id: 'young', label: 'Jovem/Descolado', icon: 'skateboarding', desc: 'Moderno e despojado' },
+  ];
+  selectedStyle: string = 'informal';
+
+  // Script mini-chat
+  scriptChatMessages: {role: string, text: string}[] = [];
+  scriptChatInput: string = '';
+  scriptChatLoading: boolean = false;
 
   // Step 3 - Additional images
   additionalImages: {file: File, previewUrl: string}[] = [];
@@ -1723,6 +1827,7 @@ export class VendaCreateComponent implements OnInit {
     this.http.post<any>(`${backendUrl}/api/creatives/script/generate`, {
       product_id: this.selectedProduct!.id,
       face_url: faceUrl || undefined,
+      style: this.selectedStyle,
     }).subscribe({
       next: (res) => {
         this.scriptLoading = false;
@@ -1739,6 +1844,33 @@ export class VendaCreateComponent implements OnInit {
   approveScript(): void {
     this.scriptApproved = true;
     this.generateVideo(); // auto-start video generation
+  }
+
+  sendScriptChat(): void {
+    if (!this.scriptChatInput.trim() || this.scriptChatLoading) return;
+    const instruction = this.scriptChatInput.trim();
+    this.scriptChatMessages.push({ role: 'user', text: instruction });
+    this.scriptChatInput = '';
+    this.scriptChatLoading = true;
+
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    this.http.post<any>(`${backendUrl}/api/creatives/script/refine`, {
+        product_id: this.selectedProduct!.id,
+        current_script: this.scriptText,
+        instruction: instruction,
+        style: this.selectedStyle,
+    }).subscribe({
+        next: (res) => {
+            this.scriptChatLoading = false;
+            this.scriptText = res.script;
+            this.scriptChatMessages.push({ role: 'ai', text: 'Roteiro atualizado!' });
+        },
+        error: (err) => {
+            this.scriptChatLoading = false;
+            const detail = err?.error?.detail || 'Erro ao refinar roteiro';
+            this.scriptChatMessages.push({ role: 'ai', text: 'Erro: ' + detail });
+        },
+    });
   }
 
   // Step 5 - Video generation

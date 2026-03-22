@@ -23,6 +23,7 @@ router = APIRouter(prefix="/creatives", tags=["video-generation"])
 class GenerateScriptRequest(BaseModel):
     product_id: int
     face_url: Optional[str] = None
+    style: Optional[str] = None  # Personality style: formal, funny, technical, motivational, young
 
 
 class GenerateScriptResponse(BaseModel):
@@ -137,17 +138,56 @@ async def generate_script(
         raise HTTPException(status_code=404, detail="Produto nao encontrado")
 
     seller = types.SimpleNamespace(
-        name='Apresentador', personality='informal',
+        name='Apresentador', personality=request.style or 'informal',
         language_style='', catchphrases='',
         face_url=request.face_url, thumbnail_url=request.face_url,
     )
 
     service = VideoGenerationService()
     try:
-        script = await service.generate_script(seller=seller, product=product)
+        script = await service.generate_script(seller=seller, product=product, style=request.style)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return GenerateScriptResponse(script=script)
+
+
+class RefineScriptRequest(BaseModel):
+    product_id: int
+    current_script: str
+    instruction: str
+    style: Optional[str] = None
+
+
+class RefineScriptResponse(BaseModel):
+    script: str
+
+
+@router.post("/script/refine", response_model=RefineScriptResponse)
+async def refine_script(
+    request: RefineScriptRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Refine an existing script based on user instructions."""
+    product = (
+        db.query(Product)
+        .filter(Product.id == request.product_id, Product.user_id == user_id)
+        .first()
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto nao encontrado")
+
+    service = VideoGenerationService()
+    try:
+        new_script = await service.refine_script(
+            current_script=request.current_script,
+            instruction=request.instruction,
+            product=product,
+            style=request.style,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return RefineScriptResponse(script=new_script)
 
 
 @router.post("/generate-video", response_model=GenerateVideoResponse)

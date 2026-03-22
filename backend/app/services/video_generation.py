@@ -35,6 +35,7 @@ class VideoGenerationService:
         seller,
         product,
         style_tags: Optional[list[str]] = None,
+        style: Optional[str] = None,
     ) -> str:
         """Use Together AI LLM to generate a short sales video script in PT-BR.
 
@@ -106,6 +107,42 @@ Retorne APENAS o texto do roteiro, sem marcacoes, sem titulos, sem instrucoes de
 
         # Fallback: generate a template-based script
         return self._fallback_script(seller_name, personality, product_name, product_desc, price_display, target_audience, differentials, catchphrases_raw)
+
+    async def refine_script(
+        self,
+        current_script: str,
+        instruction: str,
+        product,
+        style: Optional[str] = None,
+    ) -> str:
+        """Refine an existing script based on user instructions."""
+        product_name = getattr(product, "name", "") or ""
+        product_desc = getattr(product, "description", "") or ""
+        style_hint = f"\nESTILO/TOM DESEJADO: {style}" if style else ""
+
+        prompt = f"""Voce e um roteirista profissional de video ads para redes sociais.
+
+ROTEIRO ATUAL:
+{current_script}
+
+PRODUTO: {product_name} - {product_desc}
+{style_hint}
+
+INSTRUCAO DO USUARIO: {instruction}
+
+Aplique a instrucao do usuario ao roteiro atual. Mantenha o formato de roteiro para video ad (50-100 palavras, gancho forte, CTA).
+Retorne APENAS o texto do roteiro atualizado, sem explicacoes ou comentarios."""
+
+        api_key = settings.TOGETHER_API_KEY
+        if api_key:
+            try:
+                result = await self._call_together_llm(prompt, api_key)
+                if result:
+                    return result.strip()
+            except Exception as e:
+                print(f"Together AI refine error: {e}")
+
+        return current_script  # fallback: return unchanged
 
     async def _call_together_llm(self, prompt: str, api_key: str) -> Optional[str]:
         """Call Together AI chat completion endpoint."""
