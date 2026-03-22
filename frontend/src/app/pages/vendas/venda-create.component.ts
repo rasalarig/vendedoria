@@ -11,7 +11,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  image_url: string | null;
+  image_path: string | null;
 }
 
 interface SellerFace {
@@ -112,8 +112,8 @@ interface WizardStep {
                      [class.selected]="selectedProduct?.id === product.id"
                      (click)="selectProduct(product)">
                   <div class="product-img">
-                    @if (product.image_url) {
-                      <img [src]="product.image_url" [alt]="product.name">
+                    @if (product.image_path) {
+                      <img [src]="getProductImageUrl(product)" [alt]="product.name">
                     } @else {
                       <mat-icon>inventory_2</mat-icon>
                     }
@@ -1724,6 +1724,13 @@ export class VendaCreateComponent implements OnInit {
   // Step 1
   selectProduct(product: Product): void {
     this.selectedProduct = product;
+  }
+
+  getProductImageUrl(product: Product): string {
+    if (!product.image_path) return '';
+    if (product.image_path.startsWith('http')) return product.image_path;
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    return backendUrl + product.image_path;
   }
 
   goToProducts(): void {
