@@ -615,12 +615,18 @@ interface WizardStep {
             <div class="success-icon-wrap">
               <mat-icon>check_circle</mat-icon>
             </div>
-            <h2>Sua campanha foi criada!</h2>
-            <p>Acompanhe os resultados em tempo real.</p>
+            <h2>Venda criada com sucesso!</h2>
+            @if (createdSale) {
+              <p>Produto: <strong>{{ createdSale.product_name }}</strong></p>
+              <p>Plataforma: <strong>{{ createdSale.platform === 'meta' ? 'Meta Ads (Facebook + Instagram)' : createdSale.platform === 'tiktok' ? 'TikTok Ads' : 'WhatsApp' }}</strong></p>
+              <p>Status: <strong style="color: #22c55e;">{{ createdSale.status }}</strong></p>
+            } @else {
+              <p>Acompanhe os resultados na tela de Vendas.</p>
+            }
             <div class="success-actions">
-              <button class="btn-primary" (click)="goToMetrics()">
-                <mat-icon>monitoring</mat-icon>
-                Ver Metricas
+              <button class="btn-primary" (click)="goToVendas()">
+                <mat-icon>list</mat-icon>
+                Ver Minhas Vendas
               </button>
               <button class="btn-secondary" (click)="goToCampaigns()">
                 <mat-icon>campaign</mat-icon>
@@ -2041,6 +2047,7 @@ export class VendaCreateComponent implements OnInit {
 
   // Step 6 - Review & Generate
   generating = false;
+  createdSale: any = null;
 
   constructor(
     private http: HttpClient,
@@ -2421,12 +2428,30 @@ export class VendaCreateComponent implements OnInit {
     if (this.generating) return;
     this.generating = true;
 
-    // Simulate campaign publish delay, then go to step 7
-    setTimeout(() => {
-      this.generating = false;
-      this.currentStep = 7;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 2000);
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+
+    const payload = {
+      product_id: this.selectedProduct?.id,
+      video_id: this.selectedExistingVideo?.id || null,
+      platform: this.selectedPlatform?.id || 'meta',
+      sale_type: this.selectedSaleType?.id || 'campaign',
+      face_id: this.selectedFace?.id || null,
+      script: this.scriptText || null,
+      video_url: this.generatedVideoUrl || null,
+    };
+
+    this.http.post<any>(`${backendUrl}/api/sales`, payload).subscribe({
+      next: (sale) => {
+        this.generating = false;
+        this.createdSale = sale;
+        this.currentStep = 7;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      error: (err) => {
+        this.generating = false;
+        alert('Erro ao criar venda: ' + (err?.error?.detail || 'Erro desconhecido'));
+      }
+    });
   }
 
   // Format number with Brazilian decimal comma
@@ -2435,8 +2460,8 @@ export class VendaCreateComponent implements OnInit {
   }
 
   // Step 7
-  goToMetrics(): void {
-    this.router.navigate(['/dashboard']);
+  goToVendas(): void {
+    this.router.navigate(['/vendas']);
   }
 
   goToCampaigns(): void {

@@ -839,6 +839,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { path: 'campaigns', label: 'Campanhas', icon: 'campaign' },
     { path: 'dashboard', label: 'Metricas', icon: 'monitoring', divider: true },
     { path: 'settings', label: 'Configuracoes', icon: 'settings' },
+    { path: 'admin', label: 'Admin', icon: 'admin_panel_settings' },
   ];
 
   journeySteps: JourneyStep[] = [

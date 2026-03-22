@@ -23,4 +23,5 @@ export const routes: Routes = [
   { path: 'strategy', loadComponent: () => import('./pages/strategy/strategy.component').then(m => m.StrategyComponent), canActivate: [authGuard] },
   { path: 'analytics', loadComponent: () => import('./pages/analytics/analytics.component').then(m => m.AnalyticsComponent), canActivate: [authGuard] },
   { path: 'settings', loadComponent: () => import('./pages/settings/settings.component').then(m => m.SettingsComponent), canActivate: [authGuard] },
+  { path: 'admin', loadComponent: () => import('./pages/admin/admin.component').then(m => m.AdminComponent), canActivate: [authGuard] },
 ];

@@ -5,11 +5,14 @@ import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 
-interface Campaign {
+interface Sale {
   id: number;
-  name: string;
-  status: string;
+  product_name: string | null;
   platform: string;
+  sale_type: string | null;
+  status: string;
+  campaign_name: string | null;
+  video_url: string | null;
   created_at: string;
 }
 
@@ -41,7 +44,7 @@ interface Campaign {
           <mat-icon class="spin">hourglass_empty</mat-icon>
           <p>Carregando...</p>
         </div>
-      } @else if (campaigns.length === 0) {
+      } @else if (sales.length === 0) {
         <div class="empty-state">
           <div class="empty-icon">
             <mat-icon>rocket_launch</mat-icon>
@@ -54,22 +57,22 @@ interface Campaign {
           </button>
         </div>
       } @else {
-        <div class="section-label">Campanhas Recentes</div>
+        <div class="section-label">Vendas Recentes</div>
         <div class="campaigns-list">
-          @for (campaign of campaigns; track campaign.id) {
+          @for (sale of sales; track sale.id) {
             <div class="campaign-row">
               <div class="campaign-icon">
-                <mat-icon>campaign</mat-icon>
+                <mat-icon>{{ sale.platform === 'meta' ? 'campaign' : sale.platform === 'tiktok' ? 'smart_display' : 'chat' }}</mat-icon>
               </div>
               <div class="campaign-info">
-                <span class="campaign-name">{{ campaign.name }}</span>
-                <span class="campaign-date">{{ campaign.created_at | date:'dd/MM/yyyy' }}</span>
+                <span class="campaign-name">{{ sale.product_name || 'Venda #' + sale.id }}</span>
+                <span class="campaign-date">{{ sale.platform === 'meta' ? 'Meta Ads' : sale.platform === 'tiktok' ? 'TikTok' : 'WhatsApp' }} · {{ sale.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
               <span class="campaign-status"
-                    [class.active]="campaign.status === 'active'"
-                    [class.paused]="campaign.status === 'paused'"
-                    [class.draft]="campaign.status === 'draft'">
-                {{ campaign.status }}
+                    [class.active]="sale.status === 'completed' || sale.status === 'campaign_active'"
+                    [class.paused]="sale.status === 'campaign_pending'"
+                    [class.draft]="sale.status === 'created'">
+                {{ sale.status === 'created' ? 'Criada' : sale.status === 'campaign_active' ? 'Ativa' : sale.status === 'campaign_pending' ? 'Pendente' : sale.status === 'completed' ? 'Concluida' : sale.status }}
               </span>
             </div>
           }
@@ -321,7 +324,7 @@ export class VendasComponent implements OnInit {
     ? 'http://localhost:8000/api'
     : '/api';
 
-  campaigns: Campaign[] = [];
+  sales: Sale[] = [];
   loading = true;
 
   constructor(
@@ -330,17 +333,17 @@ export class VendasComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadCampaigns();
+    this.loadSales();
   }
 
-  private loadCampaigns(): void {
-    this.http.get<Campaign[]>(`${this.apiUrl}/campaigns`).subscribe({
-      next: (campaigns) => {
-        this.campaigns = campaigns;
+  private loadSales(): void {
+    this.http.get<Sale[]>(`${this.apiUrl}/sales`).subscribe({
+      next: (sales) => {
+        this.sales = sales;
         this.loading = false;
       },
       error: () => {
-        this.campaigns = [];
+        this.sales = [];
         this.loading = false;
       },
     });
