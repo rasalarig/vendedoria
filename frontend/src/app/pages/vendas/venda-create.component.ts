@@ -352,6 +352,9 @@ interface WizardStep {
                 <p style="color: #aaa; font-size: 13px; margin-bottom: 8px;">Escreva seu roteiro abaixo (gratis, sem custo de creditos):</p>
                 <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6" placeholder="Digite seu roteiro aqui..."></textarea>
               } @else {
+                @if (!scriptText && scriptMode === 'ai') {
+                  <p style="color: #aaa; font-size: 13px; margin-bottom: 12px;">Clique em "Gerar Novo Roteiro" abaixo para criar um roteiro com IA, ou mude para "Escrever meu roteiro" para digitar gratis.</p>
+                }
                 <label class="script-label">Roteiro (edite como quiser):</label>
                 <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6"></textarea>
               }
@@ -491,8 +494,8 @@ interface WizardStep {
                   <div (click)="selectExistingVideo(video)"
                     [style.border-color]="selectedExistingVideo?.id === video.id ? '#7c3aed' : '#444'"
                     style="width: 140px; border: 2px solid #444; border-radius: 10px; overflow: hidden; cursor: pointer; background: #2a2a3e;">
-                    <div style="height: 80px; background: #333; display: flex; align-items: center; justify-content: center;">
-                      <mat-icon style="font-size: 32px; color: #666;">videocam</mat-icon>
+                    <div style="height: 80px; background: #333; overflow: hidden;">
+                      <video [src]="getVideoUrl(video)" muted style="width: 100%; height: 100%; object-fit: cover;" preload="metadata"></video>
                     </div>
                     <div style="padding: 8px; font-size: 11px; color: #aaa;">
                       {{ video.provider === 'custom' ? 'Upload' : 'Veo 3' }}
@@ -502,6 +505,12 @@ interface WizardStep {
                   </div>
                 }
               </div>
+              @if (selectedExistingVideo) {
+                <button (click)="selectExistingVideo(selectedExistingVideo)" style="margin-top: 8px; padding: 8px 16px; border-radius: 8px; border: 1px solid #7c3aed; background: transparent; color: #7c3aed; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px;">close</mat-icon>
+                  Desselecionar video e voltar para geracao
+                </button>
+              }
             }
             <div style="display: flex; gap: 12px; margin-top: 12px;">
               <label style="flex: 1; padding: 10px; border-radius: 8px; border: 1px dashed #555; color: #aaa; cursor: pointer; text-align: center; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
@@ -2091,9 +2100,6 @@ export class VendaCreateComponent implements OnInit {
     }
     if (this.currentStep === 5) {
       this.loadExistingVideos();
-      if (!this.scriptText && this.scriptMode === 'ai') {
-        this.generateScript();
-      }
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -2457,7 +2463,24 @@ export class VendaCreateComponent implements OnInit {
     input.value = '';
   }
 
+  getVideoUrl(video: any): string {
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    if (video.filename) {
+      const path = video.filename.startsWith('/') ? video.filename : '/uploads/videos/' + (video.provider === 'custom' ? 'custom' : 'generated') + '/' + video.filename;
+      return backendUrl + path;
+    }
+    return '';
+  }
+
   selectExistingVideo(video: any): void {
+    // Toggle: clicking selected video deselects it
+    if (this.selectedExistingVideo?.id === video.id) {
+      this.selectedExistingVideo = null;
+      this.generatedVideoUrl = null;
+      this.videoApproved = false;
+      this.scriptApproved = false;
+      return;
+    }
     this.selectedExistingVideo = video;
     const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
     if (video.filename) {
