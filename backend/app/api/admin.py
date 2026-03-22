@@ -27,18 +27,26 @@ def get_platform_status(
     # 1. Together AI (LLM for scripts)
     together_key = settings.TOGETHER_API_KEY or os.environ.get("TOGETHER_API_KEY", "")
     together_configured = bool(together_key and together_key != "")
-    llm_spent = (
+    # Count scripts generated (each video has a script, plus standalone scripts)
+    # Use cost_logs if available, otherwise estimate from generated videos
+    llm_cost_logs = (
         db.query(func.coalesce(func.sum(CostLog.amount_usd), 0))
         .filter(CostLog.type.in_(["script_generation", "script_refine", "chat"]))
         .scalar()
         or 0
     )
-    llm_count = (
+    llm_log_count = (
         db.query(func.count(CostLog.id))
         .filter(CostLog.type.in_(["script_generation", "script_refine", "chat"]))
         .scalar()
         or 0
     )
+    # If cost_logs are empty, estimate from generated videos (each video had a script)
+    total_videos = (
+        db.query(func.count(GeneratedVideo.id)).scalar() or 0
+    )
+    llm_spent = float(llm_cost_logs) if float(llm_cost_logs) > 0 else total_videos * 0.01
+    llm_count = int(llm_log_count) if int(llm_log_count) > 0 else total_videos
     platforms.append(
         {
             "id": "together_ai",
@@ -47,8 +55,8 @@ def get_platform_status(
             "icon": "psychology",
             "configured": together_configured,
             "api_key_set": together_configured,
-            "total_spent_usd": round(float(llm_spent), 4),
-            "total_requests": int(llm_count),
+            "total_spent_usd": round(llm_spent, 4),
+            "total_requests": llm_count,
             "cost_per_request_usd": 0.01,
             "alert_level": "ok",
             "alert_message": None,
@@ -56,12 +64,21 @@ def get_platform_status(
     )
 
     # 2. Google Veo 3 (Video Generation)
-    veo_spent = (
+    # Use actual cost from generated_videos table (more reliable than cost_logs)
+    veo_spent_from_videos = (
+        db.query(func.coalesce(func.sum(GeneratedVideo.cost_usd), 0))
+        .filter(GeneratedVideo.provider == "veo3")
+        .scalar()
+        or 0
+    )
+    veo_spent_from_logs = (
         db.query(func.coalesce(func.sum(CostLog.amount_usd), 0))
         .filter(CostLog.type == "video_generation")
         .scalar()
         or 0
     )
+    # Use whichever source has data
+    veo_spent = max(float(veo_spent_from_videos), float(veo_spent_from_logs))
     veo_count = (
         db.query(func.count(GeneratedVideo.id))
         .filter(GeneratedVideo.provider == "veo3")
@@ -76,7 +93,7 @@ def get_platform_status(
             "icon": "movie_creation",
             "configured": True,
             "api_key_set": True,
-            "total_spent_usd": round(float(veo_spent), 4),
+            "total_spent_usd": round(veo_spent, 4),
             "total_requests": int(veo_count),
             "cost_per_request_usd": 0.50,
             "videos_generated": int(veo_count),
