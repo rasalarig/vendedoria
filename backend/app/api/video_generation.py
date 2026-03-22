@@ -25,6 +25,7 @@ class GenerateScriptRequest(BaseModel):
     product_id: int
     face_url: Optional[str] = None
     style: Optional[str] = None  # Personality style: formal, funny, technical, motivational, young
+    duration: float = Field(default=10, ge=5, le=60)  # Video duration in seconds
 
 
 class GenerateScriptResponse(BaseModel):
@@ -146,7 +147,7 @@ async def generate_script(
 
     service = VideoGenerationService()
     try:
-        script = await service.generate_script(seller=seller, product=product, style=request.style)
+        script = await service.generate_script(seller=seller, product=product, style=request.style, duration_seconds=request.duration)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return GenerateScriptResponse(script=script)
@@ -264,6 +265,7 @@ async def generate_video(
                 seller=seller,
                 product=product,
                 style_tags=request.style_tags,
+                duration_seconds=request.duration,
             )
 
         # Generate video

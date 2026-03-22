@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
@@ -34,6 +34,8 @@ interface JourneyStep {
     MatButtonModule,
     MatTooltipModule,
     ChatPanelComponent,
+    DatePipe,
+    DecimalPipe,
   ],
   template: `
     @if (isLoginPage) {
@@ -124,7 +126,7 @@ interface JourneyStep {
         <!-- Main content -->
         <main class="main-content">
           <div class="credit-bar">
-            <div class="credit-info">
+            <div class="credit-info" (click)="openWalletModal()" style="cursor: pointer;" title="Ver historico">
               <mat-icon class="credit-icon">account_balance_wallet</mat-icon>
               <span class="credit-amount">R$ {{ creditBalanceBrl | number:'1.2-2' }}</span>
             </div>
@@ -168,6 +170,61 @@ interface JourneyStep {
           }
         }
       </div>
+
+      @if (walletModalOpen) {
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;" (click)="closeWalletModal()">
+          <div style="background: #1e1e2e; border: 1px solid #444; border-radius: 16px; padding: 28px 32px; max-width: 520px; width: 95%; max-height: 80vh; color: #fff; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h2 style="margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px;">
+                <mat-icon>account_balance_wallet</mat-icon> Minha Carteira
+              </h2>
+              <button (click)="closeWalletModal()" style="background: none; border: none; color: #888; cursor: pointer; font-size: 24px;">&times;</button>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;">
+              <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">Saldo disponivel</div>
+              <div style="font-size: 32px; font-weight: 700;">R$ {{ creditBalanceBrl | number:'1.2-2' }}</div>
+              <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">(US$ {{ creditBalance | number:'1.2-2' }})</div>
+            </div>
+
+            <h3 style="margin: 0 0 12px; font-size: 15px; color: #aaa;">Extrato</h3>
+
+            <div style="overflow-y: auto; flex: 1; min-height: 100px;">
+              @if (walletLoading) {
+                <div style="text-align: center; padding: 30px; color: #888;">Carregando...</div>
+              } @else if (walletHistory.length === 0) {
+                <div style="text-align: center; padding: 30px; color: #888;">Nenhuma transacao encontrada</div>
+              } @else {
+                @for (entry of walletHistory; track entry.id) {
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333;">
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="entry.description">
+                        @if (entry.type === 'purchase') {
+                          <span style="color: #10b981; margin-right: 6px;">&#9650;</span>
+                        } @else {
+                          <span style="color: #ef4444; margin-right: 6px;">&#9660;</span>
+                        }
+                        {{ entry.description }}
+                      </div>
+                      <div style="font-size: 11px; color: #666; margin-top: 2px;">{{ entry.created_at | date:'dd/MM/yyyy HH:mm' }}</div>
+                    </div>
+                    <div style="text-align: right; margin-left: 12px; flex-shrink: 0;">
+                      <div style="font-size: 14px; font-weight: 600;" [style.color]="entry.type === 'purchase' ? '#10b981' : '#ef4444'">
+                        {{ entry.type === 'purchase' ? '+' : '-' }}R$ {{ entry.amount_brl | number:'1.2-2' }}
+                      </div>
+                      <div style="font-size: 11px; color: #666;">Saldo: R$ {{ entry.balance_after_brl | number:'1.2-2' }}</div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+
+            <button (click)="addCredits(); closeWalletModal()" style="margin-top: 16px; padding: 12px; border-radius: 10px; border: none; background: #7c3aed; color: #fff; cursor: pointer; font-size: 15px; font-weight: 600; width: 100%;">
+              + Adicionar Creditos
+            </button>
+          </div>
+        </div>
+      }
     }
   `,
   styles: [`
@@ -685,6 +742,9 @@ export class AppComponent implements OnInit, OnDestroy {
   mobileChatOpen = false;
   creditBalance: number = 0;
   creditBalanceBrl: number = 0;
+  walletModalOpen = false;
+  walletHistory: any[] = [];
+  walletLoading = false;
   private creditPollInterval: any;
 
   private routerSub!: Subscription;
@@ -799,6 +859,28 @@ export class AppComponent implements OnInit, OnDestroy {
       },
       error: () => {} // silently fail if not logged in
     });
+  }
+
+  openWalletModal(): void {
+    this.walletModalOpen = true;
+    this.walletLoading = true;
+    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+    this.http.get<any>(`${apiUrl}/credits/history`).subscribe({
+      next: (res) => {
+        this.walletLoading = false;
+        this.walletHistory = res.entries || [];
+        this.creditBalance = res.balance_usd;
+        this.creditBalanceBrl = res.balance_brl;
+      },
+      error: () => {
+        this.walletLoading = false;
+        this.walletHistory = [];
+      }
+    });
+  }
+
+  closeWalletModal(): void {
+    this.walletModalOpen = false;
   }
 
   addCredits(): void {

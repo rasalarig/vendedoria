@@ -1,4 +1,5 @@
 import stripe
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -8,6 +9,7 @@ from app.core.auth import get_current_user_id
 from app.core.config import settings
 from app.models.user import User
 from app.models.credit_transaction import CreditTransaction
+from app.models.cost_log import CostLog
 from app.services.cost_service import CostService
 
 router = APIRouter(prefix="/credits", tags=["credits"])
@@ -111,6 +113,84 @@ def get_balance(
         total_spent_usd=round(total_spent, 2),
         total_spent_brl=round(total_spent * USD_TO_BRL, 2),
     )
+
+
+class HistoryEntry(BaseModel):
+    id: int
+    type: str  # "purchase" or "consumption"
+    description: str
+    amount_usd: float
+    amount_brl: float
+    created_at: str
+    balance_after_brl: Optional[float] = None
+
+
+class HistoryResponse(BaseModel):
+    balance_usd: float
+    balance_brl: float
+    entries: List[HistoryEntry]
+
+
+@router.get("/history", response_model=HistoryResponse)
+def get_credit_history(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Return unified credit history: purchases (credit_transactions) + consumptions (cost_logs)."""
+    # Get purchases
+    purchases = db.query(CreditTransaction).filter(
+        CreditTransaction.user_id == user_id
+    ).all()
+
+    # Get consumptions
+    consumptions = db.query(CostLog).filter(
+        CostLog.user_id == user_id
+    ).all()
+
+    entries = []
+
+    for p in purchases:
+        entries.append({
+            "id": p.id,
+            "type": "purchase",
+            "description": p.description or "Compra de creditos",
+            "amount_usd": p.amount_usd,
+            "amount_brl": round(p.amount_usd * USD_TO_BRL, 2),
+            "created_at": str(p.created_at) if p.created_at else "",
+        })
+
+    for c in consumptions:
+        entries.append({
+            "id": c.id + 100000,  # offset to avoid ID collision
+            "type": "consumption",
+            "description": c.description or f"{c.type} via {c.provider}",
+            "amount_usd": c.amount_usd,
+            "amount_brl": round(c.amount_usd * USD_TO_BRL, 2),
+            "created_at": str(c.created_at) if c.created_at else "",
+        })
+
+    # Sort by created_at descending (newest first)
+    entries.sort(key=lambda x: x["created_at"], reverse=True)
+
+    # Calculate running balance (from oldest to newest, then reverse)
+    user = db.query(User).filter(User.id == user_id).first()
+    current_balance = user.credit_balance_usd if user else 0
+    current_balance_brl = round(current_balance * USD_TO_BRL, 2)
+
+    # Walk through entries newest-first, compute balance_after
+    running = current_balance_brl
+    for entry in entries:
+        entry["balance_after_brl"] = round(running, 2)
+        if entry["type"] == "purchase":
+            running -= entry["amount_brl"]  # going backwards, subtract purchases
+        else:
+            running += entry["amount_brl"]  # going backwards, add consumptions back
+
+    return {
+        "balance_usd": round(current_balance, 2),
+        "balance_brl": current_balance_brl,
+        "entries": entries,
+    }
 
 
 @router.post("/checkout", response_model=CheckoutResponse)

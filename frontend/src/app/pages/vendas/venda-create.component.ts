@@ -318,6 +318,10 @@ interface WizardStep {
           <div class="step-header">
             <h2>Roteiro do Video</h2>
             <p class="step-subtitle">Revise e edite o roteiro antes de gerar o video</p>
+            <p style="color: #aaa; margin-top: 4px; font-size: 14px;">
+              <mat-icon style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;">timer</mat-icon>
+              Duracao do video: <strong style="color: #fff;">10 segundos</strong>
+            </p>
           </div>
 
           @if (scriptLoading) {
@@ -1951,6 +1955,7 @@ export class VendaCreateComponent implements OnInit {
       product_id: this.selectedProduct!.id,
       face_url: faceUrl || undefined,
       style: this.selectedStyle,
+      duration: 10,
     }).subscribe({
       next: (res) => {
         this.scriptLoading = false;

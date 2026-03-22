@@ -36,11 +36,12 @@ class VideoGenerationService:
         product,
         style_tags: Optional[list[str]] = None,
         style: Optional[str] = None,
+        duration_seconds: float = 10,
     ) -> str:
         """Use Together AI LLM to generate a short sales video script in PT-BR.
 
-        The script targets 15-30 seconds when read aloud (~50-100 words).
-        Structure: hook (first 3s) -> product benefit -> CTA.
+        Word count is calibrated to ~3 words/second for the given duration.
+        Structure: hook (first 2-3s) -> product benefit -> CTA.
         """
         personality = getattr(seller, "personality", "informal") or "informal"
         catchphrases_raw = getattr(seller, "catchphrases", "") or ""
@@ -64,6 +65,10 @@ class VideoGenerationService:
         if style_tags:
             style_hint = f"\nESTILO DO VIDEO: {', '.join(style_tags)}"
 
+        # Calculate word limit based on duration (~3 words per second)
+        max_words = int(duration_seconds * 3)
+        min_words = max(10, max_words - 10)
+
         prompt = f"""Voce e um roteirista profissional de video ads para redes sociais (Instagram Reels, TikTok, YouTube Shorts).
 
 Crie um roteiro CURTO de video publicitario em portugues brasileiro para ser narrado por um vendedor virtual.
@@ -83,15 +88,18 @@ DADOS DO PRODUTO:
 - Diferenciais: {differentials}
 {style_hint}
 
+DURACAO DO VIDEO: {int(duration_seconds)} segundos
+LIMITE DE PALAVRAS: entre {min_words} e {max_words} palavras (MAXIMO {max_words} palavras, NUNCA ultrapasse!)
+
 REGRAS DO ROTEIRO:
-1. Deve ter entre 50 e 100 palavras (15-30 segundos de fala)
-2. Comecar com um GANCHO forte nos primeiros 3 segundos (pergunta provocativa, dado chocante, ou frase de impacto)
+1. MAXIMO {max_words} palavras - isso e CRITICO, o roteiro sera falado em {int(duration_seconds)} segundos
+2. Comecar com um GANCHO forte nos primeiros 2-3 segundos
 3. Apresentar o beneficio principal do produto (nao apenas features)
-4. Incluir prova social ou gatilho de urgencia/escassez
-5. Terminar com CTA claro e direto
-6. Usar o tom de voz do vendedor ({personality})
-7. Se o vendedor tem bordoes, use pelo menos um naturalmente
-8. Texto deve soar NATURAL quando falado, nao como texto escrito
+4. Terminar com CTA claro e direto
+5. Usar o tom de voz do vendedor ({personality})
+6. Se o vendedor tem bordoes, use pelo menos um naturalmente
+7. Texto deve soar NATURAL quando falado, nao como texto escrito
+8. Seja CONCISO - cada palavra deve ter peso
 
 Retorne APENAS o texto do roteiro, sem marcacoes, sem titulos, sem instrucoes de cena. Apenas o texto que sera falado."""
 
