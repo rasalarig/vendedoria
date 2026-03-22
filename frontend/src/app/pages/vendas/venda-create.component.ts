@@ -1728,9 +1728,10 @@ export class VendaCreateComponent implements OnInit {
         this.scriptLoading = false;
         this.scriptText = res.script;
       },
-      error: () => {
+      error: (err) => {
         this.scriptLoading = false;
-        this.scriptText = 'Erro ao gerar roteiro. Escreva seu proprio roteiro abaixo.';
+        const detail = err?.error?.detail || err?.message || 'Erro desconhecido';
+        this.scriptText = 'Erro ao gerar roteiro: ' + detail + '\n\nEscreva seu proprio roteiro abaixo ou clique "Gerar Novo Roteiro" para tentar novamente.';
       },
     });
   }
