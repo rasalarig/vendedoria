@@ -13,6 +13,7 @@ from app.models.product import Product
 from app.models.reference_video import ReferenceVideo
 from app.services.video_generation import VideoGenerationService
 from app.services.cost_service import CostService
+from app.models.user import User
 
 router = APIRouter(prefix="/creatives", tags=["video-generation"])
 
@@ -242,6 +243,14 @@ async def generate_video(
         if not ref_video:
             raise HTTPException(status_code=404, detail="Video de referencia nao encontrado")
         reference_video_path = ref_video.filename
+
+    # Check credit balance
+    user_obj = db.query(User).filter(User.id == user_id).first()
+    if user_obj and (user_obj.credit_balance_usd or 0) < 0.01:
+        raise HTTPException(
+            status_code=402,
+            detail="Creditos insuficientes. Adicione creditos para continuar gerando videos."
+        )
 
     # Initialize service
     service = VideoGenerationService()

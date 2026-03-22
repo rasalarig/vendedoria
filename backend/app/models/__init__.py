@@ -11,5 +11,6 @@ from app.models.seller import Seller
 from app.models.reference_video import ReferenceVideo
 from app.models.generated_video import GeneratedVideo
 from app.models.cost_log import CostLog
+from app.models.credit_transaction import CreditTransaction
 
-__all__ = ["Product", "Settings", "Creative", "Campaign", "Contact", "WhatsAppCampaign", "WhatsAppMessage", "Lead", "LeadInteraction", "MarketStrategy", "ChatMessage", "User", "Seller", "ReferenceVideo", "GeneratedVideo", "CostLog"]
+__all__ = ["Product", "Settings", "Creative", "Campaign", "Contact", "WhatsAppCampaign", "WhatsAppMessage", "Lead", "LeadInteraction", "MarketStrategy", "ChatMessage", "User", "Seller", "ReferenceVideo", "GeneratedVideo", "CostLog", "CreditTransaction"]

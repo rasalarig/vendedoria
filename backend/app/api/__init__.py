@@ -19,6 +19,7 @@ from app.api.sellers import router as sellers_router
 from app.api.reference_videos import router as reference_videos_router
 from app.api.costs import router as costs_router
 from app.api.video_generation import router as video_generation_router
+from app.api.credits import router as credits_router
 
 api_router = APIRouter()
 api_router.include_router(auth_router)
@@ -40,3 +41,4 @@ api_router.include_router(tiktok_router)
 api_router.include_router(sellers_router)
 api_router.include_router(reference_videos_router)
 api_router.include_router(costs_router)
+api_router.include_router(credits_router)

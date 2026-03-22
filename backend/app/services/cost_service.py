@@ -76,6 +76,14 @@ class CostService:
         db.add(entry)
         db.commit()
         db.refresh(entry)
+
+        # Deduct from user's credit balance
+        from app.models.user import User
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            user.credit_balance_usd = max(0, (user.credit_balance_usd or 0) - amount_usd)
+            db.commit()
+
         return entry
 
     @staticmethod

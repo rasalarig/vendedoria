@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -122,6 +123,16 @@ interface JourneyStep {
 
         <!-- Main content -->
         <main class="main-content">
+          <div class="credit-bar">
+            <div class="credit-info">
+              <mat-icon class="credit-icon">account_balance_wallet</mat-icon>
+              <span class="credit-amount">R$ {{ creditBalanceBrl | number:'1.2-2' }}</span>
+            </div>
+            <button class="credit-add-btn" (click)="addCredits()">
+              <mat-icon>add</mat-icon>
+              Adicionar Creditos
+            </button>
+          </div>
           <div class="main-content-inner">
             <router-outlet></router-outlet>
           </div>
@@ -484,6 +495,55 @@ interface JourneyStep {
       margin: 0 auto;
     }
 
+    /* Credit bar */
+    .credit-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 1rem;
+      padding: 0.5rem 1.5rem;
+      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .credit-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .credit-icon {
+      color: #a5b4fc;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+    .credit-amount {
+      color: #e2e8f0;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .credit-add-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid rgba(99,102,241,0.4);
+      background: rgba(99,102,241,0.2);
+      color: #c7d2fe;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .credit-add-btn:hover {
+      background: rgba(99,102,241,0.35);
+      border-color: #6366f1;
+    }
+    .credit-add-btn mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
     /* Right chat sidebar */
     .chat-sidebar {
       width: 380px;
@@ -623,6 +683,9 @@ export class AppComponent implements OnInit, OnDestroy {
   chatCollapsed = false;
   isMobileOverlay = false;
   mobileChatOpen = false;
+  creditBalance: number = 0;
+  creditBalanceBrl: number = 0;
+  private creditPollInterval: any;
 
   private routerSub!: Subscription;
   private userSub!: Subscription;
@@ -650,6 +713,7 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private http: HttpClient,
   ) {
     // Restore sidebar collapsed state
     const stored = localStorage.getItem('sidebar_collapsed');
@@ -678,11 +742,16 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // Check initial URL
     this.isLoginPage = this.router.url === '/login';
+
+    // Load credit balance and poll every 30s
+    this.loadCreditBalance();
+    this.creditPollInterval = setInterval(() => this.loadCreditBalance(), 30000);
   }
 
   ngOnDestroy(): void {
     this.routerSub?.unsubscribe();
     this.userSub?.unsubscribe();
+    if (this.creditPollInterval) clearInterval(this.creditPollInterval);
   }
 
   @HostListener('window:resize')
@@ -719,5 +788,31 @@ export class AppComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  loadCreditBalance(): void {
+    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+    this.http.get<any>(`${apiUrl}/credits/balance`).subscribe({
+      next: (res) => {
+        this.creditBalance = res.balance_usd;
+        this.creditBalanceBrl = res.balance_brl;
+      },
+      error: () => {} // silently fail if not logged in
+    });
+  }
+
+  addCredits(): void {
+    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+    this.http.post<any>(`${apiUrl}/credits/checkout`, { amount_usd: 5 }).subscribe({
+      next: (res) => {
+        if (res.checkout_url) {
+          window.open(res.checkout_url, '_blank');
+        }
+      },
+      error: (err) => {
+        const detail = err?.error?.detail || 'Stripe nao configurado';
+        alert('Erro: ' + detail);
+      }
+    });
   }
 }

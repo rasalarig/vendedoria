@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     META_APP_ID: str = ""
     META_APP_SECRET: str = ""
     GOOGLE_AI_KEY: str = "AIzaSyBbVj6ivyNcRzlug1NJBS2umrJxKWuQXp8"
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_5: str = ""   # Stripe Price ID for $5 credits
+    STRIPE_PRICE_20: str = ""  # Stripe Price ID for $20 credits
+    STRIPE_PRICE_50: str = ""  # Stripe Price ID for $50 credits
 
     class Config:
         env_file = ".env"

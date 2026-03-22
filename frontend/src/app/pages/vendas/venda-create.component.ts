@@ -1955,7 +1955,11 @@ export class VendaCreateComponent implements OnInit {
         } else if (err?.status) {
           detail = `Erro HTTP ${err.status} ao gerar video.`;
         }
-        this.videoError = detail;
+        if (err?.status === 402) {
+          this.videoError = 'Creditos insuficientes! Adicione creditos no topo da pagina para continuar gerando videos.';
+        } else {
+          this.videoError = detail;
+        }
       },
     });
   }
