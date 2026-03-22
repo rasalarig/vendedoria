@@ -383,10 +383,21 @@ interface WizardStep {
                   <mat-icon>refresh</mat-icon>
                   Gerar Novo Roteiro
                 </button>
-                <button class="btn-primary" (click)="approveScript()">
-                  <mat-icon>{{ generatedVideoUrl ? 'play_arrow' : 'check' }}</mat-icon>
-                  {{ generatedVideoUrl ? 'Ver Video Gerado' : 'Gerar Video com este Roteiro' }}
-                </button>
+                @if (generatedVideoUrl) {
+                  <button class="btn-secondary" (click)="approveScript()">
+                    <mat-icon>play_arrow</mat-icon>
+                    Ver Video Atual
+                  </button>
+                  <button class="btn-primary" (click)="regenerateVideo()">
+                    <mat-icon>movie_creation</mat-icon>
+                    Gerar Novo Video com este Roteiro
+                  </button>
+                } @else {
+                  <button class="btn-primary" (click)="approveScript()">
+                    <mat-icon>check</mat-icon>
+                    Gerar Video com este Roteiro
+                  </button>
+                }
               </div>
             </div>
           } @else {
@@ -1846,6 +1857,13 @@ export class VendaCreateComponent implements OnInit {
         this.scriptText = 'Erro ao gerar roteiro: ' + detail + '\n\nEscreva seu proprio roteiro abaixo ou clique "Gerar Novo Roteiro" para tentar novamente.';
       },
     });
+  }
+
+  regenerateVideo(): void {
+    this.generatedVideoUrl = null;
+    this.videoApproved = false;
+    this.scriptApproved = true;
+    this.generateVideo();
   }
 
   approveScript(): void {
