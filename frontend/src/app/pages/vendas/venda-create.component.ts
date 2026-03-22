@@ -352,11 +352,28 @@ interface WizardStep {
                 <p style="color: #aaa; font-size: 13px; margin-bottom: 8px;">Escreva seu roteiro abaixo (gratis, sem custo de creditos):</p>
                 <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6" placeholder="Digite seu roteiro aqui..."></textarea>
               } @else {
-                @if (!scriptText && scriptMode === 'ai') {
-                  <p style="color: #aaa; font-size: 13px; margin-bottom: 12px;">Clique em "Gerar Novo Roteiro" abaixo para criar um roteiro com IA, ou mude para "Escrever meu roteiro" para digitar gratis.</p>
+                @if (!scriptText.trim()) {
+                  <!-- No script yet - show prominent CTA -->
+                  <div style="text-align: center; padding: 48px 20px; border: 2px dashed #3f3f46; border-radius: 16px; background: #18181b;">
+                    <div style="width: 72px; height: 72px; margin: 0 auto 16px; border-radius: 50%; background: rgba(139, 92, 246, 0.15); display: flex; align-items: center; justify-content: center;">
+                      <mat-icon style="font-size: 36px; width: 36px; height: 36px; color: #8b5cf6;">auto_awesome</mat-icon>
+                    </div>
+                    <h3 style="color: #fafafa; font-size: 20px; font-weight: 700; margin: 0 0 8px;">Gerar Roteiro com IA</h3>
+                    <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 24px; max-width: 360px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+                      A IA vai criar um roteiro otimizado para vender seu produto em um video de 10 segundos
+                    </p>
+                    <button class="btn-primary" (click)="generateScript()" style="padding: 16px 32px; font-size: 16px; border-radius: 12px; min-height: 52px;">
+                      <mat-icon>smart_toy</mat-icon>
+                      Gerar Roteiro com IA
+                    </button>
+                    <p style="color: #71717a; font-size: 12px; margin-top: 12px;">
+                      Custo estimado: ~$0,01 USD
+                    </p>
+                  </div>
+                } @else {
+                  <label class="script-label">Roteiro (edite como quiser):</label>
+                  <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6"></textarea>
                 }
-                <label class="script-label">Roteiro (edite como quiser):</label>
-                <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6"></textarea>
               }
 
               <!-- Storyboard preview -->
@@ -378,7 +395,7 @@ interface WizardStep {
                 </div>
               </div>
 
-              @if (scriptMode === 'ai') {
+              @if (scriptMode === 'ai' && scriptText.trim()) {
                 <!-- Mini-chat for script refinement -->
                 <div class="script-chat-section">
                   <h4>Peca alteracoes a IA</h4>
@@ -409,7 +426,7 @@ interface WizardStep {
               }
 
               <div class="script-actions">
-                @if (scriptMode === 'ai') {
+                @if (scriptMode === 'ai' && scriptText.trim()) {
                   <button class="btn-secondary" (click)="generateScript()">
                     <mat-icon>refresh</mat-icon>
                     Gerar Novo Roteiro
