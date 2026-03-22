@@ -9,7 +9,7 @@ import { catchError } from 'rxjs/operators';
 
 interface DashboardData {
   products: any[];
-  campaigns: any[];
+  sales: any[];
 }
 
 @Component({
@@ -76,37 +76,24 @@ interface DashboardData {
             </div>
           </div>
 
-          <!-- Criativos -->
+          <!-- Vendas -->
           <div class="summary-card" [style.border-left-color]="cardConfig[1].color">
             <div class="card-header">
               <div class="card-icon" [style.background]="cardConfig[1].color + '20'" [style.color]="cardConfig[1].color">
-                <mat-icon>auto_awesome</mat-icon>
+                <mat-icon>rocket_launch</mat-icon>
               </div>
-              <span class="card-count">{{ creativesCount }}</span>
+              <span class="card-count">{{ salesCount }}</span>
             </div>
-            <h3 class="card-label">Criativos Gerados</h3>
+            <h3 class="card-label">Vendas</h3>
             <div class="card-actions">
-              <a routerLink="/creatives" class="card-link">Ver criativos</a>
-            </div>
-          </div>
-
-          <!-- Campanhas -->
-          <div class="summary-card" [style.border-left-color]="cardConfig[2].color">
-            <div class="card-header">
-              <div class="card-icon" [style.background]="cardConfig[2].color + '20'" [style.color]="cardConfig[2].color">
-                <mat-icon>campaign</mat-icon>
-              </div>
-              <span class="card-count">{{ activeCampaigns }}</span>
-            </div>
-            <h3 class="card-label">Campanhas Ativas</h3>
-            <div class="card-actions">
-              <a routerLink="/campaigns" class="card-link">Ver campanhas</a>
+              <a routerLink="/vendas" class="card-link">Ver vendas</a>
+              <a routerLink="/vendas/nova" class="card-link primary">Nova venda</a>
             </div>
           </div>
         </div>
 
         <!-- Quick Stats Bar -->
-        <div class="stats-bar" *ngIf="activeCampaigns > 0">
+        <div class="stats-bar" *ngIf="salesCount > 0">
           <div class="stat-item">
             <span class="stat-value">R$ {{ totalSpent | number:'1.2-2' }}</span>
             <span class="stat-label">Total Gasto</span>
@@ -408,9 +395,8 @@ export class HomeComponent implements OnInit {
   isEmpty = true;
   userName = '';
 
-  data: DashboardData = { products: [], campaigns: [] };
-  creativesCount = 0;
-  activeCampaigns = 0;
+  data: DashboardData = { products: [], sales: [] };
+  salesCount = 0;
 
   // Placeholder stats
   totalSpent = 1250.00;
@@ -430,8 +416,7 @@ export class HomeComponent implements OnInit {
 
   cardConfig = [
     { color: '#8b5cf6' },
-    { color: '#f59e0b' },
-    { color: '#ef4444' },
+    { color: '#3b82f6' },
   ];
 
   ngOnInit(): void {
@@ -440,13 +425,12 @@ export class HomeComponent implements OnInit {
 
     forkJoin({
       products: this.http.get<any[]>(`${this.backendUrl}/api/products`).pipe(catchError(() => of([]))),
-      campaigns: this.http.get<any[]>(`${this.backendUrl}/api/campaigns`).pipe(catchError(() => of([]))),
+      sales: this.http.get<any[]>(`${this.backendUrl}/api/sales`).pipe(catchError(() => of([]))),
     }).subscribe(result => {
       this.data = result;
-      this.activeCampaigns = result.campaigns.filter((c: any) => c.status === 'active' || c.status === 'ACTIVE').length;
-      this.creativesCount = 0; // Will be computed when creatives endpoint exists
+      this.salesCount = result.sales.length;
 
-      this.isEmpty = (result.products.length + result.campaigns.length) === 0;
+      this.isEmpty = (result.products.length + result.sales.length) === 0;
       this.loading = false;
     });
   }

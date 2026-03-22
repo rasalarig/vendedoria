@@ -835,8 +835,6 @@ export class AppComponent implements OnInit, OnDestroy {
     { path: 'home', label: 'Inicio', icon: 'home' },
     { path: 'vendas', label: 'Vendas', icon: 'rocket_launch' },
     { path: 'products', label: 'Produtos', icon: 'inventory_2' },
-    { path: 'creatives', label: 'Criativos', icon: 'movie_creation' },
-    { path: 'campaigns', label: 'Campanhas', icon: 'campaign' },
     { path: 'dashboard', label: 'Metricas', icon: 'monitoring', divider: true },
     { path: 'settings', label: 'Configuracoes', icon: 'settings' },
     { path: 'admin', label: 'Admin', icon: 'admin_panel_settings' },
@@ -845,8 +843,6 @@ export class AppComponent implements OnInit, OnDestroy {
   journeySteps: JourneyStep[] = [
     { label: 'Produto', icon: 'inventory_2', path: 'products' },
     { label: 'Venda', icon: 'rocket_launch', path: 'vendas' },
-    { label: 'Criativo', icon: 'movie_creation', path: 'creatives' },
-    { label: 'Campanha', icon: 'campaign', path: 'campaigns' },
     { label: 'Metricas', icon: 'monitoring', path: 'dashboard' },
   ];
 

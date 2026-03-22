@@ -52,6 +52,7 @@ async def google_login(data: GoogleLoginRequest, db: Session = Depends(get_db)):
             data.credential,
             google_requests.Request(),
             data.client_id,
+            clock_skew_in_seconds=10,
         )
         email = idinfo.get("email")
         name = idinfo.get("name", email)

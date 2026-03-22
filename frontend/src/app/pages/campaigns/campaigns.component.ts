@@ -1001,7 +1001,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
   }
 
   goToCreatives(): void {
-    this.router.navigate(['/creatives']);
+    this.router.navigate(['/vendas']);
   }
 
   // ---- Step 3: Budget ----

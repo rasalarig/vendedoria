@@ -60,7 +60,7 @@ interface Sale {
         <div class="section-label">Vendas Recentes</div>
         <div class="campaigns-list">
           @for (sale of sales; track sale.id) {
-            <div class="campaign-row">
+            <div class="campaign-row" (click)="openSale(sale.id)" style="cursor: pointer;">
               <div class="campaign-icon">
                 <mat-icon>{{ sale.platform === 'meta' ? 'campaign' : sale.platform === 'tiktok' ? 'smart_display' : 'chat' }}</mat-icon>
               </div>
@@ -351,5 +351,9 @@ export class VendasComponent implements OnInit {
 
   novaVenda(): void {
     this.router.navigate(['/vendas/nova']);
+  }
+
+  openSale(id: number): void {
+    this.router.navigate(['/vendas', id]);
   }
 }

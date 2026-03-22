@@ -619,18 +619,39 @@ interface WizardStep {
             @if (createdSale) {
               <p>Produto: <strong>{{ createdSale.product_name }}</strong></p>
               <p>Plataforma: <strong>{{ createdSale.platform === 'meta' ? 'Meta Ads (Facebook + Instagram)' : createdSale.platform === 'tiktok' ? 'TikTok Ads' : 'WhatsApp' }}</strong></p>
-              <p>Status: <strong style="color: #22c55e;">{{ createdSale.status }}</strong></p>
+              @if (createdSale.campaign_id) {
+                <div class="campaign-badge campaign-badge--success">
+                  <mat-icon>campaign</mat-icon>
+                  <span>Campanha criada</span>
+                  @if (createdSale.campaign_name) {
+                    <span class="campaign-name">{{ createdSale.campaign_name }}</span>
+                  }
+                </div>
+              } @else if (createdSale.status === 'campaign_error') {
+                <div class="campaign-badge campaign-badge--error">
+                  <mat-icon>error</mat-icon>
+                  <span>Erro ao criar campanha</span>
+                  @if (createdSale.error_message) {
+                    <p class="campaign-error-detail">{{ createdSale.error_message }}</p>
+                  }
+                </div>
+              } @else {
+                <div class="campaign-badge campaign-badge--pending">
+                  <mat-icon>info</mat-icon>
+                  <span>Configuracao Meta pendente</span>
+                </div>
+              }
             } @else {
               <p>Acompanhe os resultados na tela de Vendas.</p>
             }
             <div class="success-actions">
-              <button class="btn-primary" (click)="goToVendas()">
+              <button class="btn-primary" (click)="goToSaleDetail()">
+                <mat-icon>visibility</mat-icon>
+                Ver Detalhes da Venda
+              </button>
+              <button class="btn-secondary" (click)="goToVendas()">
                 <mat-icon>list</mat-icon>
                 Ver Minhas Vendas
-              </button>
-              <button class="btn-secondary" (click)="goToCampaigns()">
-                <mat-icon>campaign</mat-icon>
-                Ver Campanhas
               </button>
             </div>
           </div>
@@ -1372,6 +1393,49 @@ interface WizardStep {
         color: #71717a;
         margin: 0 0 32px;
       }
+    }
+
+    .campaign-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      margin: 12px 0 20px;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .campaign-name {
+        font-weight: 400;
+        opacity: 0.85;
+      }
+    }
+
+    .campaign-badge--success {
+      background: rgba(34, 197, 94, 0.12);
+      color: #16a34a;
+    }
+
+    .campaign-badge--error {
+      background: rgba(239, 68, 68, 0.12);
+      color: #dc2626;
+
+      .campaign-error-detail {
+        font-size: 12px;
+        margin: 6px 0 0;
+        opacity: 0.85;
+      }
+    }
+
+    .campaign-badge--pending {
+      background: rgba(234, 179, 8, 0.12);
+      color: #b45309;
     }
 
     .success-actions {
@@ -2464,8 +2528,16 @@ export class VendaCreateComponent implements OnInit {
     this.router.navigate(['/vendas']);
   }
 
+  goToSaleDetail(): void {
+    if (this.createdSale?.id) {
+      this.router.navigate(['/vendas', this.createdSale.id]);
+    } else {
+      this.router.navigate(['/vendas']);
+    }
+  }
+
   goToCampaigns(): void {
-    this.router.navigate(['/campaigns']);
+    this.router.navigate(['/vendas']);
   }
 
   // Step 5 - Existing videos

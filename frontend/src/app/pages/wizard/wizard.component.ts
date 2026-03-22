@@ -461,7 +461,7 @@ export class WizardComponent implements OnInit {
       icon: 'movie_creation',
       color: '#10b981',
       cta: 'Gerar Criativo',
-      route: '/creatives'
+      route: '/vendas'
     },
     {
       title: 'Campanha',
@@ -469,7 +469,7 @@ export class WizardComponent implements OnInit {
       icon: 'rocket_launch',
       color: '#3b82f6',
       cta: 'Criar Campanha',
-      route: '/campaigns'
+      route: '/vendas'
     }
   ];
 

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.product import Product
 from app.models.creative import Creative
 from app.models.campaign import Campaign
+from app.models.sale import Sale
 from app.models.settings import Settings
 from app.models.lead import Lead
 from app.core.config import settings as app_settings
@@ -889,6 +890,18 @@ class ChatAIService:
                     db.commit()
                     db.refresh(campaign)
 
+                    # Link campaign to the most recent sale for this product
+                    pending_sale = db.query(Sale).filter(
+                        Sale.product_id == product.id,
+                        Sale.user_id == user_id,
+                        Sale.campaign_id == None
+                    ).order_by(Sale.created_at.desc()).first()
+                    if pending_sale:
+                        pending_sale.campaign_id = campaign.id
+                        pending_sale.campaign_name = campaign.name
+                        pending_sale.status = "campaign_error"
+                        db.commit()
+
                     partial_msg = ""
                     if full_result.get("campaign_id"):
                         partial_msg = f"\n\nA campanha foi criada parcialmente (ID: {full_result['campaign_id']}), mas alguns componentes falharam. Voce pode tentar reparar na aba Campanhas."
@@ -919,6 +932,19 @@ class ChatAIService:
                 db.add(campaign)
                 db.commit()
                 db.refresh(campaign)
+
+                # Link campaign to the most recent sale for this product
+                pending_sale = db.query(Sale).filter(
+                    Sale.product_id == product.id,
+                    Sale.user_id == user_id,
+                    Sale.campaign_id == None
+                ).order_by(Sale.created_at.desc()).first()
+                if pending_sale:
+                    pending_sale.campaign_id = campaign.id
+                    pending_sale.campaign_name = campaign.name
+                    pending_sale.status = "active" if campaign.status == "active" else campaign.status
+                    db.commit()
+
                 if not clean_response.strip():
                     if not is_mock and full_result.get("campaign_id"):
                         account_num = (settings.meta_ad_account_id or "").replace("act_", "")
@@ -1056,6 +1082,19 @@ class ChatAIService:
                 db.add(campaign)
                 db.commit()
                 db.refresh(campaign)
+
+                # Link campaign to the most recent sale for this product
+                pending_sale = db.query(Sale).filter(
+                    Sale.product_id == product.id,
+                    Sale.user_id == user_id,
+                    Sale.campaign_id == None
+                ).order_by(Sale.created_at.desc()).first()
+                if pending_sale:
+                    pending_sale.campaign_id = campaign.id
+                    pending_sale.campaign_name = campaign.name
+                    pending_sale.status = campaign.status
+                    db.commit()
+
                 if not clean_response.strip():
                     clean_response = (
                         f"**Campanha TikTok '{campaign.name}' criada em modo demonstracao!**\n\n"
