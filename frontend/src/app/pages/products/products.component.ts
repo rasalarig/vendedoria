@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ProductService, Product } from '../../services/product.service';
-import { ProductDialogComponent, ProductDialogData } from './product-dialog.component';
 
 @Component({
   selector: 'app-products',
@@ -15,7 +14,6 @@ import { ProductDialogComponent, ProductDialogData } from './product-dialog.comp
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatDialogModule,
   ],
   template: `
     <div class="products-page">
@@ -24,7 +22,7 @@ import { ProductDialogComponent, ProductDialogData } from './product-dialog.comp
           <h1>Seus Produtos</h1>
           <p class="subtitle">Gerencie os produtos e servicos do seu negocio</p>
         </div>
-        <button mat-flat-button color="primary" (click)="openDialog()" class="new-btn">
+        <button mat-flat-button color="primary" (click)="navigateToNew()" class="new-btn">
           <mat-icon>add</mat-icon>
           Novo Produto
         </button>
@@ -37,7 +35,7 @@ import { ProductDialogComponent, ProductDialogData } from './product-dialog.comp
           </div>
           <h2>Nenhum produto cadastrado</h2>
           <p class="empty-hint">Adicione seus produtos para que a IA possa criar criativos incriveis para voce.</p>
-          <button mat-flat-button color="primary" (click)="openDialog()" class="cta-btn">
+          <button mat-flat-button color="primary" (click)="navigateToNew()" class="cta-btn">
             <mat-icon>add</mat-icon>
             Cadastrar primeiro produto
           </button>
@@ -46,7 +44,7 @@ import { ProductDialogComponent, ProductDialogData } from './product-dialog.comp
 
       <div class="products-grid">
         @for (product of products; track product.id) {
-          <div class="product-card" (click)="openDialog(product)">
+          <div class="product-card" (click)="navigateToProduct(product)">
             <div class="product-image">
               @if (product.image_path) {
                 <img [src]="getImageUrl(product.image_path)" [alt]="product.name">
@@ -348,7 +346,7 @@ export class ProductsComponent implements OnInit {
 
   constructor(
     private productService: ProductService,
-    private dialog: MatDialog,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -387,30 +385,12 @@ export class ProductsComponent implements OnInit {
     }
   }
 
-  openDialog(product?: Product): void {
-    const dialogData: ProductDialogData = { product };
-    const isMobile = window.innerWidth <= 480;
-    const dialogRef = this.dialog.open(ProductDialogComponent, {
-      width: isMobile ? '100vw' : '480px',
-      maxWidth: isMobile ? '100vw' : '80vw',
-      height: isMobile ? '100vh' : 'auto',
-      data: dialogData,
-      panelClass: isMobile ? ['dark-dialog', 'mobile-fullscreen-dialog'] : 'dark-dialog',
-    });
+  navigateToNew(): void {
+    this.router.navigate(['/products/new']);
+  }
 
-    dialogRef.afterClosed().subscribe((formData: FormData | null) => {
-      if (!formData) return;
-
-      if (product) {
-        this.productService.update(product.id, formData).subscribe({
-          next: () => this.loadProducts(),
-        });
-      } else {
-        this.productService.create(formData).subscribe({
-          next: () => this.loadProducts(),
-        });
-      }
-    });
+  navigateToProduct(product: Product): void {
+    this.router.navigate(['/products', product.id]);
   }
 
   confirmDelete(event: MouseEvent, product: Product): void {

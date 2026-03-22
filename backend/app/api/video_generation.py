@@ -403,6 +403,34 @@ async def upload_video(
     return _video_to_response(video_record, db)
 
 
+@router.delete("/generated-videos/{video_id}")
+async def delete_generated_video(
+    video_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Delete a generated video."""
+    video = (
+        db.query(GeneratedVideo)
+        .filter(GeneratedVideo.id == video_id, GeneratedVideo.user_id == user_id)
+        .first()
+    )
+    if not video:
+        raise HTTPException(status_code=404, detail="Video nao encontrado")
+
+    # Try to delete the file
+    if video.filename:
+        for dir_prefix in ["uploads/videos/generated", "uploads/videos/custom"]:
+            filepath = os.path.join(dir_prefix, video.filename)
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                break
+
+    db.delete(video)
+    db.commit()
+    return {"status": "ok", "deleted_id": video_id}
+
+
 @router.get("/generated-videos/{video_id}", response_model=GeneratedVideoResponse)
 async def get_generated_video(
     video_id: int,
