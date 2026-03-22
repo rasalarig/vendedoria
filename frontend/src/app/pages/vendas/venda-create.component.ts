@@ -1538,6 +1538,16 @@ export class VendaCreateComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
+
+    const defaultPlatform = this.platforms.find(p => p.available);
+    if (defaultPlatform) {
+      this.selectedPlatform = defaultPlatform;
+    }
+
+    const defaultSaleType = this.saleTypes.find(t => t.available);
+    if (defaultSaleType) {
+      this.selectedSaleType = defaultSaleType;
+    }
   }
 
   private loadProducts(): void {
@@ -1545,6 +1555,9 @@ export class VendaCreateComponent implements OnInit {
     this.http.get<Product[]>(`${this.apiUrl}/products`).subscribe({
       next: (products) => {
         this.products = products;
+        if (this.products.length === 1 && !this.selectedProduct) {
+          this.selectProduct(this.products[0]);
+        }
         this.loadingProducts = false;
       },
       error: () => {
@@ -1560,6 +1573,10 @@ export class VendaCreateComponent implements OnInit {
     this.http.get<SellerFace[]>(`${this.apiUrl}/sellers/faces`).subscribe({
       next: (faces) => {
         this.faces = faces;
+        if (!this.selectedFace && this.faces.length > 0) {
+          const nonCustom = this.faces.find(f => !f.is_custom);
+          if (nonCustom) this.selectFace(nonCustom);
+        }
         this.loadingFaces = false;
       },
       error: () => {
