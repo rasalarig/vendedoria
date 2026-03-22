@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
@@ -35,7 +35,6 @@ interface JourneyStep {
     MatTooltipModule,
     ChatPanelComponent,
     DatePipe,
-    DecimalPipe,
   ],
   template: `
     @if (isLoginPage) {
@@ -128,7 +127,7 @@ interface JourneyStep {
           <div class="credit-bar">
             <div class="credit-info" (click)="openWalletModal()" style="cursor: pointer;" title="Ver historico">
               <mat-icon class="credit-icon">account_balance_wallet</mat-icon>
-              <span class="credit-amount">R$ {{ creditBalanceBrl | number:'1.2-2' }}</span>
+              <span class="credit-amount">R$ {{ formatBrl(creditBalanceBrl) }}</span>
             </div>
             <button class="credit-add-btn" (click)="addCredits()">
               <mat-icon>add</mat-icon>
@@ -183,8 +182,8 @@ interface JourneyStep {
 
             <div style="background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;">
               <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">Saldo disponivel</div>
-              <div style="font-size: 32px; font-weight: 700;">R$ {{ creditBalanceBrl | number:'1.2-2' }}</div>
-              <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">(US$ {{ creditBalance | number:'1.2-2' }})</div>
+              <div style="font-size: 32px; font-weight: 700;">R$ {{ formatBrl(creditBalanceBrl) }}</div>
+              <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">(US$ {{ formatBrl(creditBalance) }})</div>
             </div>
 
             <h3 style="margin: 0 0 12px; font-size: 15px; color: #aaa;">Extrato</h3>
@@ -210,9 +209,9 @@ interface JourneyStep {
                     </div>
                     <div style="text-align: right; margin-left: 12px; flex-shrink: 0;">
                       <div style="font-size: 14px; font-weight: 600;" [style.color]="entry.type === 'purchase' ? '#10b981' : '#ef4444'">
-                        {{ entry.type === 'purchase' ? '+' : '-' }}R$ {{ entry.amount_brl | number:'1.2-2' }}
+                        {{ entry.type === 'purchase' ? '+' : '-' }}R$ {{ formatBrl(entry.amount_brl) }}
                       </div>
-                      <div style="font-size: 11px; color: #666;">Saldo: R$ {{ entry.balance_after_brl | number:'1.2-2' }}</div>
+                      <div style="font-size: 11px; color: #666;">Saldo: R$ {{ formatBrl(entry.balance_after_brl) }}</div>
                     </div>
                   </div>
                 }
@@ -978,6 +977,10 @@ export class AppComponent implements OnInit, OnDestroy {
         alert('Erro: ' + detail);
       }
     });
+  }
+
+  formatBrl(value: number): string {
+    return value.toFixed(2).replace('.', ',');
   }
 
   resetCredits(): void {

@@ -1,6 +1,9 @@
 import types
+import os
+import shutil
+import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File as FastAPIFile
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -347,17 +350,57 @@ async def estimate_cost(
 
 @router.get("/generated-videos", response_model=List[GeneratedVideoResponse])
 async def list_generated_videos(
+    product_id: Optional[int] = Query(default=None),
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
-    """List all generated videos for the current user."""
-    videos = (
-        db.query(GeneratedVideo)
-        .filter(GeneratedVideo.user_id == user_id)
-        .order_by(GeneratedVideo.created_at.desc())
-        .all()
-    )
+    """List all generated videos for the current user, optionally filtered by product."""
+    query = db.query(GeneratedVideo).filter(GeneratedVideo.user_id == user_id)
+    if product_id:
+        query = query.filter(GeneratedVideo.product_id == product_id)
+    videos = query.order_by(GeneratedVideo.created_at.desc()).all()
     return [_video_to_response(v, db) for v in videos]
+
+
+@router.post("/upload-video", response_model=GeneratedVideoResponse)
+async def upload_video(
+    product_id: int = Query(...),
+    file: UploadFile = FastAPIFile(...),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Upload a custom video file for a product."""
+    # Validate product
+    product = db.query(Product).filter(Product.id == product_id, Product.user_id == user_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto nao encontrado")
+
+    # Save file
+    upload_dir = os.path.join("uploads", "videos", "custom")
+    os.makedirs(upload_dir, exist_ok=True)
+    filename = f"custom_{uuid.uuid4().hex[:12]}_{file.filename}"
+    filepath = os.path.join(upload_dir, filename)
+
+    with open(filepath, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    file_size = os.path.getsize(filepath)
+
+    video_record = GeneratedVideo(
+        user_id=user_id,
+        product_id=product_id,
+        filename=filename,
+        file_size=file_size,
+        status="uploaded",
+        provider="custom",
+        cost_usd=0,
+        script="Video enviado pelo usuario",
+    )
+    db.add(video_record)
+    db.commit()
+    db.refresh(video_record)
+
+    return _video_to_response(video_record, db)
 
 
 @router.get("/generated-videos/{video_id}", response_model=GeneratedVideoResponse)

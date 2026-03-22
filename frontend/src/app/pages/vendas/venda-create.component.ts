@@ -121,7 +121,7 @@ interface WizardStep {
                   <div class="product-info">
                     <span class="product-name">{{ product.name }}</span>
                     @if (product.price) {
-                      <span class="product-price">R$ {{ product.price | number:'1.2-2' }}</span>
+                      <span class="product-price">R$ {{ formatBrl(product.price) }}</span>
                     }
                   </div>
                   @if (selectedProduct?.id === product.id) {
@@ -324,6 +324,22 @@ interface WizardStep {
             </p>
           </div>
 
+          <!-- Script source toggle -->
+          <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+            <button (click)="scriptMode = 'manual'"
+              [style.background]="scriptMode === 'manual' ? '#7c3aed' : '#2a2a3e'"
+              style="flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #444; color: #fff; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <mat-icon style="font-size: 18px; width: 18px; height: 18px;">edit</mat-icon>
+              Escrever meu roteiro
+            </button>
+            <button (click)="scriptMode = 'ai'"
+              [style.background]="scriptMode === 'ai' ? '#7c3aed' : '#2a2a3e'"
+              style="flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #444; color: #fff; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <mat-icon style="font-size: 18px; width: 18px; height: 18px;">smart_toy</mat-icon>
+              Gerar com IA
+            </button>
+          </div>
+
           @if (scriptLoading) {
             <div class="loading-state">
               <mat-icon class="spin">hourglass_empty</mat-icon>
@@ -332,8 +348,13 @@ interface WizardStep {
           } @else if (!scriptApproved) {
             <!-- Script editing phase -->
             <div class="script-edit-section">
-              <label class="script-label">Roteiro (edite como quiser):</label>
-              <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6"></textarea>
+              @if (scriptMode === 'manual') {
+                <p style="color: #aaa; font-size: 13px; margin-bottom: 8px;">Escreva seu roteiro abaixo (gratis, sem custo de creditos):</p>
+                <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6" placeholder="Digite seu roteiro aqui..."></textarea>
+              } @else {
+                <label class="script-label">Roteiro (edite como quiser):</label>
+                <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6"></textarea>
+              }
 
               <!-- Storyboard preview -->
               <div class="storyboard-section">
@@ -354,39 +375,43 @@ interface WizardStep {
                 </div>
               </div>
 
-              <!-- Mini-chat for script refinement -->
-              <div class="script-chat-section">
-                <h4>Peca alteracoes a IA</h4>
-                <div class="script-chat-messages">
-                  @for (msg of scriptChatMessages; track $index) {
-                    <div class="chat-msg" [class.user]="msg.role === 'user'" [class.ai]="msg.role === 'ai'">
-                      <span class="msg-label">{{ msg.role === 'user' ? 'Voce' : 'IA' }}:</span>
-                      <span class="msg-text">{{ msg.text }}</span>
-                    </div>
-                  }
-                  @if (scriptChatLoading) {
-                    <div class="chat-msg ai">
-                      <span class="msg-label">IA:</span>
-                      <span class="msg-text typing">Reescrevendo roteiro...</span>
-                    </div>
-                  }
+              @if (scriptMode === 'ai') {
+                <!-- Mini-chat for script refinement -->
+                <div class="script-chat-section">
+                  <h4>Peca alteracoes a IA</h4>
+                  <div class="script-chat-messages">
+                    @for (msg of scriptChatMessages; track $index) {
+                      <div class="chat-msg" [class.user]="msg.role === 'user'" [class.ai]="msg.role === 'ai'">
+                        <span class="msg-label">{{ msg.role === 'user' ? 'Voce' : 'IA' }}:</span>
+                        <span class="msg-text">{{ msg.text }}</span>
+                      </div>
+                    }
+                    @if (scriptChatLoading) {
+                      <div class="chat-msg ai">
+                        <span class="msg-label">IA:</span>
+                        <span class="msg-text typing">Reescrevendo roteiro...</span>
+                      </div>
+                    }
+                  </div>
+                  <div class="script-chat-input-row">
+                    <input type="text" [(ngModel)]="scriptChatInput"
+                           placeholder="Ex: deixe mais engracado, adicione urgencia, encurte..."
+                           (keydown.enter)="sendScriptChat()"
+                           [disabled]="scriptChatLoading">
+                    <button class="btn-send" (click)="sendScriptChat()" [disabled]="scriptChatLoading || !scriptChatInput.trim()">
+                      <mat-icon>send</mat-icon>
+                    </button>
+                  </div>
                 </div>
-                <div class="script-chat-input-row">
-                  <input type="text" [(ngModel)]="scriptChatInput"
-                         placeholder="Ex: deixe mais engracado, adicione urgencia, encurte..."
-                         (keydown.enter)="sendScriptChat()"
-                         [disabled]="scriptChatLoading">
-                  <button class="btn-send" (click)="sendScriptChat()" [disabled]="scriptChatLoading || !scriptChatInput.trim()">
-                    <mat-icon>send</mat-icon>
-                  </button>
-                </div>
-              </div>
+              }
 
               <div class="script-actions">
-                <button class="btn-secondary" (click)="generateScript()">
-                  <mat-icon>refresh</mat-icon>
-                  Gerar Novo Roteiro
-                </button>
+                @if (scriptMode === 'ai') {
+                  <button class="btn-secondary" (click)="generateScript()">
+                    <mat-icon>refresh</mat-icon>
+                    Gerar Novo Roteiro
+                  </button>
+                }
                 @if (generatedVideoUrl) {
                   <button class="btn-secondary" (click)="approveScript()">
                     <mat-icon>play_arrow</mat-icon>
@@ -397,7 +422,7 @@ interface WizardStep {
                     Gerar Novo Video com este Roteiro
                   </button>
                 } @else {
-                  <button class="btn-primary" (click)="approveScript()">
+                  <button class="btn-primary" (click)="approveScript()" [disabled]="!scriptText.trim()">
                     <mat-icon>check</mat-icon>
                     Gerar Video com este Roteiro
                   </button>
@@ -440,7 +465,7 @@ interface WizardStep {
                       Aprovar Video
                     </button>
                   }
-                  <button class="btn-secondary" (click)="generateVideo()">
+                  <button class="btn-secondary" (click)="regenerateVideo()">
                     <mat-icon>refresh</mat-icon>
                     Gerar Novamente
                   </button>
@@ -452,6 +477,40 @@ interface WizardStep {
               </div>
             }
           }
+
+          <!-- Existing videos section -->
+          <div style="margin-top: 24px; padding: 16px; background: #1a1a2e; border-radius: 12px; border: 1px solid #333;">
+            <h4 style="margin: 0 0 12px; font-size: 15px; color: #ccc;">Videos deste produto</h4>
+            @if (existingVideosLoading) {
+              <p style="color: #888;">Carregando...</p>
+            } @else if (existingVideos.length === 0) {
+              <p style="color: #666; font-size: 13px;">Nenhum video gerado ainda.</p>
+            } @else {
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                @for (video of existingVideos; track video.id) {
+                  <div (click)="selectExistingVideo(video)"
+                    [style.border-color]="selectedExistingVideo?.id === video.id ? '#7c3aed' : '#444'"
+                    style="width: 140px; border: 2px solid #444; border-radius: 10px; overflow: hidden; cursor: pointer; background: #2a2a3e;">
+                    <div style="height: 80px; background: #333; display: flex; align-items: center; justify-content: center;">
+                      <mat-icon style="font-size: 32px; color: #666;">videocam</mat-icon>
+                    </div>
+                    <div style="padding: 8px; font-size: 11px; color: #aaa;">
+                      {{ video.provider === 'custom' ? 'Upload' : 'Veo 3' }}
+                      <br>
+                      <span style="color: #666;">{{ video.created_at | slice:0:10 }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+            <div style="display: flex; gap: 12px; margin-top: 12px;">
+              <label style="flex: 1; padding: 10px; border-radius: 8px; border: 1px dashed #555; color: #aaa; cursor: pointer; text-align: center; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <mat-icon style="font-size: 16px; width: 16px; height: 16px;">upload</mat-icon>
+                Fazer upload de video
+                <input type="file" accept="video/*" (change)="uploadVideo($event)" style="display: none;">
+              </label>
+            </div>
+          </div>
         }
 
         <!-- Step 6: Revisar e Publicar -->
@@ -468,7 +527,7 @@ interface WizardStep {
                 <mat-icon>inventory_2</mat-icon>
                 <span>{{ selectedProduct?.name }}</span>
                 @if (selectedProduct?.price) {
-                  <span class="review-price">R$ {{ selectedProduct!.price | number:'1.2-2' }}</span>
+                  <span class="review-price">R$ {{ formatBrl(selectedProduct!.price) }}</span>
                 }
               </div>
             </div>
@@ -584,15 +643,15 @@ interface WizardStep {
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                 <span style="color: #aaa;">Custo estimado:</span>
-                <span style="font-weight: 600; color: #f59e0b;">R$ {{ costConfirmData.estimated_cost_brl | number:'1.2-2' }}</span>
+                <span style="font-weight: 600; color: #f59e0b;">R$ {{ formatBrl(costConfirmData.estimated_cost_brl) }}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                 <span style="color: #aaa;">Seu saldo atual:</span>
-                <span style="font-weight: 600;" [style.color]="costConfirmData.sufficient ? '#10b981' : '#ef4444'">R$ {{ costConfirmData.balance_brl | number:'1.2-2' }}</span>
+                <span style="font-weight: 600;" [style.color]="costConfirmData.sufficient ? '#10b981' : '#ef4444'">R$ {{ formatBrl(costConfirmData.balance_brl) }}</span>
               </div>
               <div style="display: flex; justify-content: space-between;">
                 <span style="color: #aaa;">Saldo apos:</span>
-                <span style="font-weight: 600;" [style.color]="costConfirmData.sufficient ? '#10b981' : '#ef4444'">R$ {{ (costConfirmData.balance_brl - costConfirmData.estimated_cost_brl) | number:'1.2-2' }}</span>
+                <span style="font-weight: 600;" [style.color]="costConfirmData.sufficient ? '#10b981' : '#ef4444'">R$ {{ formatBrl(costConfirmData.balance_brl - costConfirmData.estimated_cost_brl) }}</span>
               </div>
             </div>
             @if (!costConfirmData.sufficient) {
@@ -1932,9 +1991,15 @@ export class VendaCreateComponent implements OnInit {
   additionalImages: {file: File, previewUrl: string}[] = [];
 
   // Step 5 - Script
+  scriptMode: 'ai' | 'manual' = 'ai';
   scriptText = '';
   scriptLoading = false;
   scriptApproved = false;
+
+  // Step 5 - Existing videos
+  existingVideos: any[] = [];
+  existingVideosLoading = false;
+  selectedExistingVideo: any = null;
 
   // Step 5 - Video
   generatingVideo = false;
@@ -2024,8 +2089,11 @@ export class VendaCreateComponent implements OnInit {
     if (this.currentStep === 3) {
       this.loadFaces();
     }
-    if (this.currentStep === 5 && !this.scriptText) {
-      this.generateScript();
+    if (this.currentStep === 5) {
+      this.loadExistingVideos();
+      if (!this.scriptText && this.scriptMode === 'ai') {
+        this.generateScript();
+      }
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -2338,6 +2406,11 @@ export class VendaCreateComponent implements OnInit {
     }, 2000);
   }
 
+  // Format number with Brazilian decimal comma
+  formatBrl(value: number): string {
+    return value.toFixed(2).replace('.', ',');
+  }
+
   // Step 7
   goToMetrics(): void {
     this.router.navigate(['/dashboard']);
@@ -2345,5 +2418,54 @@ export class VendaCreateComponent implements OnInit {
 
   goToCampaigns(): void {
     this.router.navigate(['/campaigns']);
+  }
+
+  // Step 5 - Existing videos
+  loadExistingVideos(): void {
+    if (!this.selectedProduct) return;
+    this.existingVideosLoading = true;
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    this.http.get<any[]>(`${backendUrl}/api/creatives/generated-videos`, {
+      params: { product_id: this.selectedProduct.id.toString() }
+    }).subscribe({
+      next: (videos) => {
+        this.existingVideosLoading = false;
+        this.existingVideos = videos.filter(v => v.status !== 'failed');
+      },
+      error: () => {
+        this.existingVideosLoading = false;
+        this.existingVideos = [];
+      }
+    });
+  }
+
+  uploadVideo(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length || !this.selectedProduct) return;
+    const file = input.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    this.http.post<any>(`${backendUrl}/api/creatives/upload-video?product_id=${this.selectedProduct.id}`, formData).subscribe({
+      next: (video) => {
+        this.existingVideos.unshift(video);
+        this.selectExistingVideo(video);
+      },
+      error: () => alert('Erro ao enviar video')
+    });
+    input.value = '';
+  }
+
+  selectExistingVideo(video: any): void {
+    this.selectedExistingVideo = video;
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    if (video.filename) {
+      const path = video.filename.startsWith('/') ? video.filename : `/uploads/videos/${video.provider === 'custom' ? 'custom' : 'generated'}/${video.filename}`;
+      this.generatedVideoUrl = `${backendUrl}${path}`;
+    }
+    this.videoApproved = false;
+    this.scriptApproved = true;
+    this.scriptText = video.script || '';
   }
 }
