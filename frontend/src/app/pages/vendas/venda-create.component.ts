@@ -1560,9 +1560,13 @@ export class VendaCreateComponent implements OnInit {
       next: (response) => {
         this.generatingVideo = false;
         if (response.video_url) {
-          this.generatedVideoUrl = response.video_url;
-        } else if (response.status === 'completed' && response.url) {
-          this.generatedVideoUrl = response.url;
+          // video_url is a path like /uploads/videos/generated/veo3_xxx.mp4
+          // Prefix with backend URL if it's a relative path
+          if (response.video_url.startsWith('/')) {
+            this.generatedVideoUrl = `${backendUrl}${response.video_url}`;
+          } else {
+            this.generatedVideoUrl = response.video_url;
+          }
         } else {
           this.videoError = 'Video gerado mas nenhuma URL retornada. Tente novamente.';
         }

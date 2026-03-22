@@ -39,6 +39,7 @@ class GenerateVideoResponse(BaseModel):
     duration_seconds: float
     estimated_cost_usd: float
     estimated_cost_brl: float
+    video_url: Optional[str] = None
     mock: bool = True
 
     class Config:
@@ -215,6 +216,11 @@ async def generate_video(
         # Cost estimate for response
         cost_estimate = await service.estimate_cost(request.duration)
 
+        # Build video URL for the frontend
+        video_url = None
+        if result.get("file_path"):
+            video_url = result["file_path"]  # e.g. /uploads/videos/generated/veo3_xxx.mp4
+
         return GenerateVideoResponse(
             video_id=video_record.id,
             script=script,
@@ -224,6 +230,7 @@ async def generate_video(
             duration_seconds=request.duration,
             estimated_cost_usd=cost_estimate["estimated_cost_usd"],
             estimated_cost_brl=cost_estimate["estimated_cost_brl"],
+            video_url=video_url,
             mock=result.get("mock", False),
         )
     except HTTPException:
