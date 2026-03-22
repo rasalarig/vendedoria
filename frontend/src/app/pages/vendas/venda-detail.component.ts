@@ -622,18 +622,18 @@ export class VendaDetailComponent implements OnInit {
 
   formatNumber(n: number): string {
     if (!n) return '0';
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-    return n.toString();
+    if (n >= 1000000) return (n / 1000000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M';
+    if (n >= 1000) return (n / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'k';
+    return n.toLocaleString('pt-BR');
   }
 
   formatCurrency(n: number): string {
     if (!n) return 'R$ 0,00';
-    return 'R$ ' + n.toFixed(2).replace('.', ',');
+    return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   formatPercent(n: number): string {
     if (!n) return '0,00%';
-    return n.toFixed(2).replace('.', ',') + '%';
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
   }
 }

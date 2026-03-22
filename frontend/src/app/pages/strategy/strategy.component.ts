@@ -43,7 +43,7 @@ import { ProductService, Product } from '../../services/product.service';
             <mat-label>Selecione um produto</mat-label>
             <mat-select [(value)]="selectedProductId">
               @for (product of products; track product.id) {
-                <mat-option [value]="product.id">{{ product.name }} - R$ {{ product.price.toFixed(2) }}</mat-option>
+                <mat-option [value]="product.id">{{ product.name }} - R$ {{ product.price | number:'1.2-2' }}</mat-option>
               }
             </mat-select>
           </mat-form-field>

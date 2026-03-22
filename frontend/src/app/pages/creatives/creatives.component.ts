@@ -108,7 +108,7 @@ interface ProductVideoGroup {
 
           <div class="cost-display">
             <div class="cost-label">Custo estimado</div>
-            <div class="cost-value">R$ {{ estimatedCost.toFixed(2) }}</div>
+            <div class="cost-value">R$ {{ estimatedCost | number:'1.2-2' }}</div>
           </div>
 
           <button mat-flat-button class="generate-video-btn"
@@ -119,7 +119,7 @@ interface ProductVideoGroup {
               <span>Gerando...</span>
             } @else {
               <mat-icon>auto_fix_high</mat-icon>
-              <span>Gerar Video (R$ {{ estimatedCost.toFixed(2) }})</span>
+              <span>Gerar Video (R$ {{ estimatedCost | number:'1.2-2' }})</span>
             }
           </button>
         </div>
@@ -211,7 +211,7 @@ interface ProductVideoGroup {
                     </div>
                     <div class="video-badges">
                       <span class="badge badge-provider">{{ getProviderName(video.provider) }}</span>
-                      <span class="badge badge-cost">R$ {{ video.cost.toFixed(2) }}</span>
+                      <span class="badge badge-cost">R$ {{ video.cost | number:'1.2-2' }}</span>
                       <span class="badge badge-duration">{{ video.duration }}s</span>
                     </div>
                     <div class="video-date">{{ formatDate(video.created_at) }}</div>
@@ -258,7 +258,7 @@ interface ProductVideoGroup {
 
                 <div class="modal-meta">
                   <span><mat-icon>timer</mat-icon> {{ previewVideo.duration }}s</span>
-                  <span><mat-icon>paid</mat-icon> R$ {{ previewVideo.cost.toFixed(2) }}</span>
+                  <span><mat-icon>paid</mat-icon> R$ {{ previewVideo.cost | number:'1.2-2' }}</span>
                   <span><mat-icon>smart_toy</mat-icon> {{ getProviderName(previewVideo.provider) }}</span>
                 </div>
 
@@ -285,7 +285,7 @@ interface ProductVideoGroup {
                 </div>
 
                 <div class="modal-cost-info">
-                  Este video custou <strong>R$ {{ previewVideo.cost.toFixed(2) }}</strong>
+                  Este video custou <strong>R$ {{ previewVideo.cost | number:'1.2-2' }}</strong>
                 </div>
 
                 <!-- Actions -->
@@ -308,7 +308,7 @@ interface ProductVideoGroup {
                 @if (showRegenerateConfirm) {
                   <div class="regenerate-confirm">
                     <p>Regenerar este video ira gerar um novo custo estimado de
-                      <strong>R$ {{ estimatedCost.toFixed(2) }}</strong>. Deseja continuar?</p>
+                      <strong>R$ {{ estimatedCost | number:'1.2-2' }}</strong>. Deseja continuar?</p>
                     <div class="confirm-actions">
                       <button mat-button (click)="showRegenerateConfirm = false">Cancelar</button>
                       <button mat-flat-button class="confirm-regenerate-btn" (click)="regenerateVideo()">

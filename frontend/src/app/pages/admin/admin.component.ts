@@ -1068,7 +1068,7 @@ export class AdminComponent implements OnInit {
   }
 
   formatBrl(value: number): string {
-    return value.toFixed(2).replace('.', ',');
+    return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   formatValue(usd: number, brl: number): string {

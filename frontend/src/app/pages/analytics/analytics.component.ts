@@ -193,8 +193,8 @@ export class AnalyticsComponent implements OnInit {
         case 2: return this.formatNumber(row.clicks);
         case 3: return this.formatNumber(row.leads);
         case 4: return this.formatNumber(row.conversions);
-        case 5: return 'R$ ' + (row.spent || 0).toFixed(2);
-        case 6: return (row.ctr || 0).toFixed(2) + '%';
+        case 5: return 'R$ ' + (row.spent || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        case 6: return (row.ctr || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
         default: return '-';
       }
     } else {
@@ -203,7 +203,7 @@ export class AnalyticsComponent implements OnInit {
         case 2: return this.formatNumber(row.delivered);
         case 3: return this.formatNumber(row.read);
         case 4: return this.formatNumber(row.replied);
-        case 5: return (row.response_rate || 0).toFixed(2) + '%';
+        case 5: return (row.response_rate || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
         case 6: return '-';
         default: return '-';
       }

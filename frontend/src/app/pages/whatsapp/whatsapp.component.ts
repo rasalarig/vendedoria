@@ -1081,7 +1081,7 @@ export class WhatsappComponent implements OnInit {
     text = text.replace(
       /\{preco\}/g,
       this.selectedProduct
-        ? `R$ ${this.selectedProduct.price.toFixed(2)}`
+        ? `R$ ${this.selectedProduct.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         : 'R$ 99,90'
     );
     return text;
