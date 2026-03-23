@@ -3,7 +3,8 @@ import { authGuard } from './services/auth.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) },
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
+  { path: 'landing', loadComponent: () => import('./pages/landing/landing.component').then(m => m.LandingComponent) },
+  { path: '', redirectTo: 'landing', pathMatch: 'full' },
   { path: 'home', loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent), canActivate: [authGuard] },
   { path: 'sellers', loadComponent: () => import('./pages/sellers/sellers.component').then(m => m.SellersComponent), canActivate: [authGuard] },
   { path: 'sellers/create', loadComponent: () => import('./pages/sellers/seller-create.component').then(m => m.SellerCreateComponent), canActivate: [authGuard] },
