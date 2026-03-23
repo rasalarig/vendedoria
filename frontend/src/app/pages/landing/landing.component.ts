@@ -85,7 +85,7 @@ import { MatButtonModule } from '@angular/material/button';
       <div class="lp-container">
         <span class="section-badge">Como Funciona</span>
         <h2 class="section-title">Tres pilares para<br/><span class="gradient-text">vender mais</span></h2>
-        <p class="section-subtitle">Conhega o fluxo completo da plataforma — do cadastro ao resultado.</p>
+        <p class="section-subtitle">Conheca o fluxo completo da plataforma — do cadastro ao resultado.</p>
 
         <div class="mindmap">
           <!-- Central hub -->
