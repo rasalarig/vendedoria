@@ -80,68 +80,81 @@ import { MatButtonModule } from '@angular/material/button';
       </div>
     </section>
 
-    <!-- How It Works - Mind Map -->
+    <!-- How It Works - Tree View -->
     <section class="how-it-works section-animate" id="como-funciona">
       <div class="lp-container">
         <span class="section-badge">Como Funciona</span>
-        <h2 class="section-title">Três pilares para<br/><span class="gradient-text">vender mais</span></h2>
-        <p class="section-subtitle">Conheça o fluxo completo da plataforma — do cadastro ao resultado.</p>
+        <h2 class="section-title">Do cadastro ao resultado,<br/><span class="gradient-text">em poucos passos</span></h2>
+        <p class="section-subtitle">Veja como a plataforma organiza todo o fluxo de vendas para você.</p>
 
-        <div class="mindmap">
-          <!-- Central hub -->
-          <div class="mindmap-hub section-animate">
-            <span class="hub-icon">&#x1F916;</span>
-            <span class="hub-label">VendedorIA</span>
+        <div class="tree-view">
+          <!-- Root node -->
+          <div class="tree-root section-animate">
+            <span class="tree-root-icon">&#x1F916;</span>
+            <span class="tree-root-label">VendedorIA</span>
           </div>
 
-          <div class="mindmap-branches">
-            <!-- Branch 1: Produtos -->
-            <div class="branch section-animate" style="--branch-color: #8b5cf6">
-              <div class="branch-header">
-                <div class="branch-icon-wrap"><mat-icon>inventory_2</mat-icon></div>
-                <h3>Produtos</h3>
+          <!-- Trunk line -->
+          <div class="tree-trunk"></div>
+
+          <!-- Branches -->
+          <div class="tree-branches">
+            <!-- Branch 1: Cadastrar Produto -->
+            <div class="tree-branch section-animate">
+              <div class="tree-parent">
+                <mat-icon>inventory_2</mat-icon>
+                <span>Cadastrar Produto</span>
               </div>
-              <div class="branch-items">
-                <div class="branch-item">Cadastrar via Chat</div>
-                <div class="branch-item">Editar e Remover</div>
-                <div class="branch-item">Upload de Imagens</div>
-                <div class="branch-item">URL do Site/Landing</div>
-              </div>
+              <ul class="tree-children">
+                <li class="tree-child">
+                  <mat-icon>chat</mat-icon>
+                  <span>Via Chat com IA</span>
+                </li>
+                <li class="tree-child tree-child--last">
+                  <mat-icon>image</mat-icon>
+                  <span>Upload de Imagens</span>
+                </li>
+              </ul>
             </div>
 
-            <!-- Branch 2: Vendas & Campanhas -->
-            <div class="branch branch-main section-animate" style="--branch-color: #ec4899">
-              <div class="branch-header">
-                <div class="branch-icon-wrap"><mat-icon>rocket_launch</mat-icon></div>
-                <h3>Vendas &amp; Campanhas</h3>
+            <!-- Branch 2: Cadastrar Venda -->
+            <div class="tree-branch section-animate">
+              <div class="tree-parent">
+                <mat-icon>rocket_launch</mat-icon>
+                <span>Cadastrar Venda</span>
               </div>
-              <div class="branch-items">
-                <div class="sub-group">
-                  <span class="sub-label">Funil de Vendas</span>
-                  <div class="branch-item"><span class="item-badge" style="background: #3b82f622; color: #3b82f6">Meta Ads</span> Facebook + Instagram</div>
-                  <div class="branch-item"><span class="item-badge" style="background: #ec489922; color: #ec4899">TikTok</span> Anúncios em Vídeo</div>
-                  <div class="branch-item"><span class="item-badge" style="background: #22c55e22; color: #22c55e">WhatsApp</span> Mensagens Diretas</div>
-                </div>
-                <div class="sub-group">
-                  <span class="sub-label">Venda Direta</span>
-                  <div class="branch-item">Criação Rápida de Campanha</div>
-                  <div class="branch-item">Criativos Gerados por IA</div>
-                </div>
-              </div>
+              <ul class="tree-children">
+                <li class="tree-child">
+                  <mat-icon>devices</mat-icon>
+                  <span>Escolher Plataforma</span>
+                </li>
+                <li class="tree-child">
+                  <mat-icon>auto_awesome</mat-icon>
+                  <span>Gerar Criativos com IA</span>
+                </li>
+                <li class="tree-child tree-child--last">
+                  <mat-icon>campaign</mat-icon>
+                  <span>Lançar Campanha</span>
+                </li>
+              </ul>
             </div>
 
-            <!-- Branch 3: Acompanhamento -->
-            <div class="branch section-animate" style="--branch-color: #3b82f6">
-              <div class="branch-header">
-                <div class="branch-icon-wrap"><mat-icon>monitoring</mat-icon></div>
-                <h3>Acompanhamento</h3>
+            <!-- Branch 3: Acompanhar Resultados -->
+            <div class="tree-branch section-animate">
+              <div class="tree-parent">
+                <mat-icon>monitoring</mat-icon>
+                <span>Acompanhar Resultados</span>
               </div>
-              <div class="branch-items">
-                <div class="branch-item">Dashboard de Métricas</div>
-                <div class="branch-item">Impressões, Cliques, CTR</div>
-                <div class="branch-item">ROI em Tempo Real</div>
-                <div class="branch-item">Status de Campanhas</div>
-              </div>
+              <ul class="tree-children">
+                <li class="tree-child">
+                  <mat-icon>speed</mat-icon>
+                  <span>Métricas em Tempo Real</span>
+                </li>
+                <li class="tree-child tree-child--last">
+                  <mat-icon>trending_up</mat-icon>
+                  <span>ROI e Conversões</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -538,34 +551,38 @@ import { MatButtonModule } from '@angular/material/button';
       margin: 0;
     }
 
-    /* ===== Mind Map ===== */
+    /* ===== Tree View ===== */
     .how-it-works {
       padding: 120px 0;
       text-align: center;
       background: rgba(24, 24, 27, 0.3);
     }
 
-    .mindmap {
+    .tree-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       margin-top: 20px;
     }
 
-    .mindmap-hub {
+    /* Root node */
+    .tree-root {
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      padding: 16px 32px;
+      padding: 18px 36px;
       border-radius: 100px;
       background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2));
-      border: 1px solid rgba(139,92,246,0.3);
-      margin-bottom: 48px;
+      border: 2px solid rgba(139,92,246,0.4);
+      box-shadow: 0 0 40px rgba(139,92,246,0.15);
     }
 
-    .hub-icon {
+    .tree-root-icon {
       font-size: 28px;
     }
 
-    .hub-label {
-      font-size: 20px;
+    .tree-root-label {
+      font-size: 22px;
       font-weight: 800;
       background: linear-gradient(135deg, #8b5cf6, #ec4899);
       -webkit-background-clip: text;
@@ -573,139 +590,166 @@ import { MatButtonModule } from '@angular/material/button';
       background-clip: text;
     }
 
-    .mindmap-branches {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
+    /* Trunk line from root to branches */
+    .tree-trunk {
+      width: 2px;
+      height: 40px;
+      background: linear-gradient(180deg, rgba(139,92,246,0.5), rgba(139,92,246,0.2));
+    }
+
+    /* Branches container */
+    .tree-branches {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      width: 100%;
+      max-width: 520px;
       position: relative;
     }
 
-    /* Connector line from hub to branches */
-    .mindmap-branches::before {
-      content: '';
-      position: absolute;
-      top: -24px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 70%;
-      height: 2px;
-      background: linear-gradient(90deg, #8b5cf6, #ec4899, #3b82f6);
-      opacity: 0.3;
-    }
-
-    .branch {
-      text-align: left;
-      border-radius: 16px;
-      background: rgba(24, 24, 27, 0.6);
-      border: 1px solid #27272a;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(8px);
-      position: relative;
-    }
-
-    .branch::before {
+    /* Vertical line connecting all branches */
+    .tree-branches::before {
       content: '';
       position: absolute;
       top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: var(--branch-color);
-      opacity: 0.7;
+      left: 28px;
+      width: 2px;
+      height: calc(100% - 40px);
+      background: linear-gradient(180deg, rgba(139,92,246,0.4), rgba(139,92,246,0.15));
     }
 
-    .branch:hover {
-      border-color: var(--branch-color);
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px -12px rgba(0,0,0,0.4);
+    /* Single branch */
+    .tree-branch {
+      position: relative;
+      padding-left: 28px;
     }
 
-    .branch-header {
-      padding: 28px 24px 16px;
-      display: flex;
+    .tree-branch + .tree-branch {
+      margin-top: 8px;
+    }
+
+    /* Parent node */
+    .tree-parent {
+      position: relative;
+      display: inline-flex;
       align-items: center;
-      gap: 14px;
-    }
-
-    .branch-icon-wrap {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 44px;
-      height: 44px;
+      gap: 12px;
+      padding: 12px 24px;
       border-radius: 12px;
-      background: color-mix(in srgb, var(--branch-color) 15%, transparent);
-      flex-shrink: 0;
-    }
-
-    .branch-icon-wrap mat-icon {
-      color: var(--branch-color);
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-    }
-
-    .branch-header h3 {
-      font-size: 18px;
+      background: rgba(24, 24, 27, 0.8);
+      border: 1px solid #27272a;
+      margin-left: 28px;
+      font-size: 16px;
       font-weight: 700;
-      margin: 0;
       color: #fafafa;
+      transition: all 0.25s ease;
     }
 
-    .branch-items {
-      padding: 0 24px 24px;
+    /* Horizontal connector from vertical line to parent node */
+    .tree-parent::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: -28px;
+      width: 28px;
+      height: 2px;
+      background: rgba(139,92,246,0.35);
+    }
+
+    .tree-parent:hover {
+      border-color: rgba(139,92,246,0.5);
+      background: rgba(24, 24, 27, 1);
+      box-shadow: 0 8px 24px -8px rgba(0,0,0,0.4);
+      transform: translateX(4px);
+    }
+
+    .tree-parent mat-icon {
+      color: #8b5cf6;
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+
+    /* Children list */
+    .tree-children {
+      list-style: none;
+      margin: 0;
+      padding: 4px 0 8px 76px;
+      position: relative;
+    }
+
+    /* Vertical line for children */
+    .tree-children::before {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 62px;
+      width: 2px;
+      height: calc(100% - 28px);
+      background: rgba(139,92,246,0.2);
+    }
+
+    /* Child node */
+    .tree-child {
+      position: relative;
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .branch-item {
-      padding: 10px 14px;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      margin-left: 20px;
       border-radius: 10px;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.05);
       font-size: 14px;
       color: #a1a1aa;
       transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      margin-bottom: 6px;
     }
 
-    .branch-item:hover {
+    /* Horizontal connector from vertical line to child node */
+    .tree-child::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: -20px;
+      width: 20px;
+      height: 2px;
+      background: rgba(139,92,246,0.2);
+    }
+
+    /* L-shaped corner for non-last children */
+    .tree-child::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -22px;
+      width: 2px;
+      height: calc(50% + 1px);
+      background: transparent;
+    }
+
+    .tree-child:hover {
       background: rgba(255,255,255,0.06);
       color: #e4e4e7;
+      border-color: rgba(139,92,246,0.2);
+      transform: translateX(4px);
     }
 
-    .item-badge {
-      padding: 2px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      flex-shrink: 0;
-      letter-spacing: 0.3px;
-    }
-
-    .sub-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .sub-group + .sub-group {
-      margin-top: 8px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255,255,255,0.05);
-    }
-
-    .sub-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+    .tree-child mat-icon {
       color: #71717a;
-      padding-left: 4px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .tree-child:hover mat-icon {
+      color: #8b5cf6;
+    }
+
+    /* Last child -- round the connector corner */
+    .tree-child--last {
+      margin-bottom: 0;
     }
 
     /* ===== Platforms ===== */
@@ -904,13 +948,18 @@ import { MatButtonModule } from '@angular/material/button';
         gap: 16px;
       }
 
-      .mindmap-branches {
-        grid-template-columns: 1fr;
-        gap: 16px;
+      .tree-branches {
+        max-width: 100%;
       }
 
-      .mindmap-branches::before {
-        display: none;
+      .tree-parent {
+        font-size: 14px;
+        padding: 10px 18px;
+      }
+
+      .tree-child {
+        font-size: 13px;
+        padding: 7px 12px;
       }
 
       .benefits, .how-it-works, .platforms, .final-cta {
