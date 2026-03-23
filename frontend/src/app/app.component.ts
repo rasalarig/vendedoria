@@ -37,7 +37,7 @@ interface JourneyStep {
     DatePipe,
   ],
   template: `
-    @if (isLoginPage) {
+    @if (isLoginPage || !user) {
       <router-outlet></router-outlet>
     } @else {
       <div class="app-layout">
@@ -815,7 +815,7 @@ interface JourneyStep {
   `],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  isLoginPage = false;
+  isLoginPage = true;
   user: AuthUser | null = null;
   sidebarCollapsed = false;
   chatCollapsed = false;
