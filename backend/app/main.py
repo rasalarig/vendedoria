@@ -206,6 +206,14 @@ if os.path.exists(_static_dir):
     if os.path.exists(_assets_dir):
         app.mount("/assets", StaticFiles(directory=_assets_dir), name="frontend-assets")
 
+    # Explicit root route so `/` always serves index.html (Angular handles redirect)
+    @app.get("/", include_in_schema=False)
+    async def serve_root():
+        index_path = os.path.join(_static_dir, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        return {"detail": "Not found"}
+
     # SPA fallback: serve index.html for all non-API routes
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
