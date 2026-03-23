@@ -80,83 +80,140 @@ import { MatButtonModule } from '@angular/material/button';
       </div>
     </section>
 
-    <!-- How It Works - Tree View -->
-    <section class="how-it-works section-animate" id="como-funciona">
+    <!-- How It Works - Journey Timeline -->
+    <section class="journey-section section-animate" id="como-funciona">
       <div class="lp-container">
         <span class="section-badge">Como Funciona</span>
-        <h2 class="section-title">Do cadastro ao resultado,<br/><span class="gradient-text">em poucos passos</span></h2>
-        <p class="section-subtitle">Veja como a plataforma organiza todo o fluxo de vendas para você.</p>
+        <h2 class="section-title">Sua jornada de vendas,<br/><span class="gradient-text">do produto ao resultado</span></h2>
+        <p class="section-subtitle">Em 4 passos, a IA cuida de tudo — do criativo ao anúncio otimizado.</p>
 
-        <div class="tree-view">
-          <!-- Root node -->
-          <div class="tree-root section-animate">
-            <span class="tree-root-icon">&#x1F916;</span>
-            <span class="tree-root-label">VendedorIA</span>
-          </div>
+        <div class="journey-timeline">
+          <!-- Timeline vertical line -->
+          <div class="journey-line"></div>
 
-          <!-- Trunk line -->
-          <div class="tree-trunk"></div>
-
-          <!-- Branches -->
-          <div class="tree-branches">
-            <!-- Branch 1: Cadastrar Produto -->
-            <div class="tree-branch section-animate">
-              <div class="tree-parent">
+          <!-- Step 1 -->
+          <div class="journey-step section-animate" style="--step-color: #8b5cf6">
+            <div class="journey-marker">
+              <span class="journey-number">1</span>
+            </div>
+            <div class="journey-card">
+              <div class="journey-card-header">
                 <mat-icon>inventory_2</mat-icon>
-                <span>Cadastrar Produto</span>
+                <h3>Cadastre seu Produto</h3>
               </div>
-              <ul class="tree-children">
-                <li class="tree-child">
-                  <mat-icon>chat</mat-icon>
-                  <span>Via Chat com IA</span>
+              <p class="journey-card-desc">Registre tudo sobre seu produto conversando naturalmente com a IA.</p>
+              <ul class="journey-subitems">
+                <li class="journey-subitem section-animate">
+                  <mat-icon>smart_toy</mat-icon>
+                  <span>Converse com a IA</span>
+                  <span class="journey-badge" style="--badge-color: #8b5cf6">Chat Inteligente</span>
                 </li>
-                <li class="tree-child tree-child--last">
-                  <mat-icon>image</mat-icon>
-                  <span>Upload de Imagens</span>
+                <li class="journey-subitem section-animate">
+                  <mat-icon>photo_library</mat-icon>
+                  <span>Upload de fotos e vídeos</span>
                 </li>
-              </ul>
-            </div>
-
-            <!-- Branch 2: Cadastrar Venda -->
-            <div class="tree-branch section-animate">
-              <div class="tree-parent">
-                <mat-icon>rocket_launch</mat-icon>
-                <span>Cadastrar Venda</span>
-              </div>
-              <ul class="tree-children">
-                <li class="tree-child">
-                  <mat-icon>devices</mat-icon>
-                  <span>Escolher Plataforma</span>
-                </li>
-                <li class="tree-child">
-                  <mat-icon>auto_awesome</mat-icon>
-                  <span>Gerar Criativos com IA</span>
-                </li>
-                <li class="tree-child tree-child--last">
-                  <mat-icon>campaign</mat-icon>
-                  <span>Lançar Campanha</span>
-                </li>
-              </ul>
-            </div>
-
-            <!-- Branch 3: Acompanhar Resultados -->
-            <div class="tree-branch section-animate">
-              <div class="tree-parent">
-                <mat-icon>monitoring</mat-icon>
-                <span>Acompanhar Resultados</span>
-              </div>
-              <ul class="tree-children">
-                <li class="tree-child">
-                  <mat-icon>speed</mat-icon>
-                  <span>Métricas em Tempo Real</span>
-                </li>
-                <li class="tree-child tree-child--last">
-                  <mat-icon>trending_up</mat-icon>
-                  <span>ROI e Conversões</span>
+                <li class="journey-subitem section-animate">
+                  <mat-icon>link</mat-icon>
+                  <span>URL do site ou landing page</span>
                 </li>
               </ul>
             </div>
           </div>
+
+          <!-- Step 2 -->
+          <div class="journey-step section-animate" style="--step-color: #3b82f6">
+            <div class="journey-marker">
+              <span class="journey-number">2</span>
+            </div>
+            <div class="journey-card">
+              <div class="journey-card-header">
+                <mat-icon>hub</mat-icon>
+                <h3>Escolha Onde Anunciar</h3>
+              </div>
+              <p class="journey-card-desc">Selecione as plataformas e a IA configura tudo automaticamente.</p>
+              <ul class="journey-subitems">
+                <li class="journey-subitem section-animate">
+                  <mat-icon>campaign</mat-icon>
+                  <span>Facebook + Instagram</span>
+                  <span class="journey-badge" style="--badge-color: #3b82f6">Meta Ads</span>
+                </li>
+                <li class="journey-subitem section-animate">
+                  <mat-icon>play_circle</mat-icon>
+                  <span>TikTok</span>
+                  <span class="journey-badge" style="--badge-color: #ec4899">Em breve</span>
+                </li>
+                <li class="journey-subitem section-animate">
+                  <mat-icon>forum</mat-icon>
+                  <span>WhatsApp</span>
+                  <span class="journey-badge" style="--badge-color: #22c55e">Em breve</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="journey-step section-animate" style="--step-color: #ec4899">
+            <div class="journey-marker">
+              <span class="journey-number">3</span>
+            </div>
+            <div class="journey-card">
+              <div class="journey-card-header">
+                <mat-icon>auto_awesome</mat-icon>
+                <h3>IA Cria Tudo pra Você</h3>
+              </div>
+              <p class="journey-card-desc">Criativos, textos e segmentação gerados automaticamente pela inteligência artificial.</p>
+              <ul class="journey-subitems">
+                <li class="journey-subitem section-animate">
+                  <mat-icon>palette</mat-icon>
+                  <span>Imagens com IA Generativa</span>
+                  <span class="journey-badge" style="--badge-color: #ec4899">Automático</span>
+                </li>
+                <li class="journey-subitem section-animate">
+                  <mat-icon>videocam</mat-icon>
+                  <span>Vídeos com Google Veo 3</span>
+                  <span class="journey-badge" style="--badge-color: #8b5cf6">IA de Vídeo</span>
+                </li>
+                <li class="journey-subitem section-animate">
+                  <mat-icon>edit_note</mat-icon>
+                  <span>Textos e headlines otimizados</span>
+                </li>
+                <li class="journey-subitem section-animate">
+                  <mat-icon>groups</mat-icon>
+                  <span>Público-alvo recomendado</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="journey-step section-animate" style="--step-color: #10b981">
+            <div class="journey-marker">
+              <span class="journey-number">4</span>
+            </div>
+            <div class="journey-card">
+              <div class="journey-card-header">
+                <mat-icon>monitoring</mat-icon>
+                <h3>Acompanhe os Resultados</h3>
+              </div>
+              <p class="journey-card-desc">Monitore o desempenho das suas campanhas em tempo real.</p>
+              <ul class="journey-subitems">
+                <li class="journey-subitem section-animate">
+                  <mat-icon>visibility</mat-icon>
+                  <span>Impressões, cliques e CTR</span>
+                </li>
+                <li class="journey-subitem section-animate">
+                  <mat-icon>trending_up</mat-icon>
+                  <span>Conversões e ROI em tempo real</span>
+                  <span class="journey-badge" style="--badge-color: #10b981">Tempo Real</span>
+                </li>
+                <li class="journey-subitem section-animate">
+                  <mat-icon>radio_button_checked</mat-icon>
+                  <span>Status da campanha ao vivo</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -551,205 +608,169 @@ import { MatButtonModule } from '@angular/material/button';
       margin: 0;
     }
 
-    /* ===== Tree View ===== */
-    .how-it-works {
+    /* ===== Journey Timeline ===== */
+    .journey-section {
       padding: 120px 0;
       text-align: center;
       background: rgba(24, 24, 27, 0.3);
     }
 
-    .tree-view {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
-    }
-
-    /* Root node */
-    .tree-root {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      padding: 18px 36px;
-      border-radius: 100px;
-      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2));
-      border: 2px solid rgba(139,92,246,0.4);
-      box-shadow: 0 0 40px rgba(139,92,246,0.15);
-    }
-
-    .tree-root-icon {
-      font-size: 28px;
-    }
-
-    .tree-root-label {
-      font-size: 22px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #8b5cf6, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    /* Trunk line from root to branches */
-    .tree-trunk {
-      width: 2px;
-      height: 40px;
-      background: linear-gradient(180deg, rgba(139,92,246,0.5), rgba(139,92,246,0.2));
-    }
-
-    /* Branches container */
-    .tree-branches {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      width: 100%;
-      max-width: 520px;
+    .journey-timeline {
       position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      margin-top: 20px;
+      padding-left: 80px;
+      text-align: left;
     }
 
-    /* Vertical line connecting all branches */
-    .tree-branches::before {
-      content: '';
+    /* Vertical gradient line */
+    .journey-line {
       position: absolute;
       top: 0;
-      left: 28px;
+      left: 23px;
       width: 2px;
-      height: calc(100% - 40px);
-      background: linear-gradient(180deg, rgba(139,92,246,0.4), rgba(139,92,246,0.15));
+      height: 100%;
+      background: linear-gradient(180deg, #8b5cf6 0%, #3b82f6 33%, #ec4899 66%, #10b981 100%);
+      opacity: 0.5;
     }
 
-    /* Single branch */
-    .tree-branch {
-      position: relative;
-      padding-left: 28px;
-    }
-
-    .tree-branch + .tree-branch {
-      margin-top: 8px;
-    }
-
-    /* Parent node */
-    .tree-parent {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 24px;
-      border-radius: 12px;
-      background: rgba(24, 24, 27, 0.8);
-      border: 1px solid #27272a;
-      margin-left: 28px;
-      font-size: 16px;
-      font-weight: 700;
-      color: #fafafa;
-      transition: all 0.25s ease;
-    }
-
-    /* Horizontal connector from vertical line to parent node */
-    .tree-parent::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: -28px;
-      width: 28px;
-      height: 2px;
-      background: rgba(139,92,246,0.35);
-    }
-
-    .tree-parent:hover {
-      border-color: rgba(139,92,246,0.5);
-      background: rgba(24, 24, 27, 1);
-      box-shadow: 0 8px 24px -8px rgba(0,0,0,0.4);
-      transform: translateX(4px);
-    }
-
-    .tree-parent mat-icon {
-      color: #8b5cf6;
-      font-size: 22px;
-      width: 22px;
-      height: 22px;
-    }
-
-    /* Children list */
-    .tree-children {
-      list-style: none;
-      margin: 0;
-      padding: 4px 0 8px 76px;
-      position: relative;
-    }
-
-    /* Vertical line for children */
-    .tree-children::before {
-      content: '';
-      position: absolute;
-      top: 4px;
-      left: 62px;
-      width: 2px;
-      height: calc(100% - 28px);
-      background: rgba(139,92,246,0.2);
-    }
-
-    /* Child node */
-    .tree-child {
+    /* Step row */
+    .journey-step {
       position: relative;
       display: flex;
+      align-items: flex-start;
+    }
+
+    /* Numbered circle on the timeline */
+    .journey-marker {
+      position: absolute;
+      left: -56px;
+      top: 24px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--step-color);
+      display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 16px;
-      margin-left: 20px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.05);
-      font-size: 14px;
-      color: #a1a1aa;
-      transition: all 0.2s ease;
+      justify-content: center;
+      box-shadow: 0 0 24px color-mix(in srgb, var(--step-color) 40%, transparent);
+      z-index: 2;
+      flex-shrink: 0;
+    }
+
+    .journey-number {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    /* Card */
+    .journey-card {
+      flex: 1;
+      padding: 28px 32px;
+      border-radius: 16px;
+      background: rgba(24, 24, 27, 0.6);
+      border: 1px solid #27272a;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.35s ease;
+    }
+
+    .journey-card:hover {
+      transform: translateY(-4px);
+      border-color: color-mix(in srgb, var(--step-color) 50%, transparent);
+      box-shadow: 0 20px 48px -12px rgba(0,0,0,0.5), 0 0 32px color-mix(in srgb, var(--step-color) 12%, transparent);
+    }
+
+    .journey-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       margin-bottom: 6px;
     }
 
-    /* Horizontal connector from vertical line to child node */
-    .tree-child::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: -20px;
-      width: 20px;
-      height: 2px;
-      background: rgba(139,92,246,0.2);
+    .journey-card-header mat-icon {
+      color: var(--step-color);
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
     }
 
-    /* L-shaped corner for non-last children */
-    .tree-child::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -22px;
-      width: 2px;
-      height: calc(50% + 1px);
-      background: transparent;
+    .journey-card-header h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
     }
 
-    .tree-child:hover {
-      background: rgba(255,255,255,0.06);
-      color: #e4e4e7;
-      border-color: rgba(139,92,246,0.2);
+    .journey-card-desc {
+      font-size: 14px;
+      color: #a1a1aa;
+      line-height: 1.6;
+      margin: 0 0 18px;
+    }
+
+    /* Sub-items list */
+    .journey-subitems {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .journey-subitem {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border-left: 3px solid color-mix(in srgb, var(--step-color) 40%, transparent);
+      background: rgba(255,255,255,0.02);
+      transition: all 0.25s ease;
+    }
+
+    .journey-subitem:hover {
+      background: rgba(255,255,255,0.05);
+      border-left-color: var(--step-color);
       transform: translateX(4px);
     }
 
-    .tree-child mat-icon {
+    .journey-subitem mat-icon {
       color: #71717a;
       font-size: 18px;
       width: 18px;
       height: 18px;
       flex-shrink: 0;
+      transition: color 0.25s ease;
     }
 
-    .tree-child:hover mat-icon {
-      color: #8b5cf6;
+    .journey-subitem:hover mat-icon {
+      color: var(--step-color);
     }
 
-    /* Last child -- round the connector corner */
-    .tree-child--last {
-      margin-bottom: 0;
+    .journey-subitem span {
+      font-size: 14px;
+      color: #d4d4d8;
+      line-height: 1.4;
+    }
+
+    /* Badge / pill */
+    .journey-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 100px;
+      font-size: 11px !important;
+      font-weight: 600;
+      color: var(--badge-color) !important;
+      background: color-mix(in srgb, var(--badge-color) 15%, transparent);
+      margin-left: auto;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     /* ===== Platforms ===== */
@@ -948,21 +969,58 @@ import { MatButtonModule } from '@angular/material/button';
         gap: 16px;
       }
 
-      .tree-branches {
-        max-width: 100%;
+      .journey-timeline {
+        padding-left: 60px;
+        gap: 28px;
       }
 
-      .tree-parent {
-        font-size: 14px;
-        padding: 10px 18px;
+      .journey-marker {
+        left: -48px;
+        width: 36px;
+        height: 36px;
+        top: 18px;
       }
 
-      .tree-child {
+      .journey-number {
+        font-size: 16px;
+      }
+
+      .journey-line {
+        left: 14px;
+      }
+
+      .journey-card {
+        padding: 20px 18px;
+      }
+
+      .journey-card-header h3 {
+        font-size: 17px;
+      }
+
+      .journey-card-header mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+
+      .journey-card-desc {
         font-size: 13px;
-        padding: 7px 12px;
       }
 
-      .benefits, .how-it-works, .platforms, .final-cta {
+      .journey-subitem {
+        padding: 8px 10px;
+      }
+
+      .journey-subitem span {
+        font-size: 13px;
+      }
+
+      .journey-badge {
+        font-size: 10px !important;
+        padding: 2px 8px;
+      }
+
+      .benefits, .journey-section, .platforms, .final-cta {
         padding: 80px 0;
       }
 
