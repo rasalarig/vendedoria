@@ -210,3 +210,60 @@ async def get_connections(db: Session = Depends(get_db), user_id: int = Depends(
         "tiktok": tiktok,
         "has_platform_credentials": has_platform_creds,
     }
+
+
+@router.get("/meta-diagnostics")
+async def meta_diagnostics(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Full diagnostic of Meta Ads integration — tests account, payment, and campaign creation."""
+    settings = db.query(Settings).filter(Settings.user_id == user_id).first()
+    if not settings or not settings.meta_access_token:
+        return {"error": "Meta credentials not configured"}
+
+    meta = MetaAdsService(
+        access_token=settings.meta_access_token,
+        ad_account_id=settings.meta_ad_account_id or "",
+        page_id=settings.facebook_page_id or "",
+    )
+
+    results = {}
+
+    # 1. Check account status
+    try:
+        account = await meta.check_account_status()
+        results["account"] = account
+    except Exception as e:
+        results["account"] = {"error": str(e)}
+
+    # 2. Check payment
+    try:
+        payment = await meta.check_payment()
+        results["payment"] = payment
+    except Exception as e:
+        results["payment"] = {"error": str(e)}
+
+    # 3. Try creating a test campaign (will be deleted immediately)
+    try:
+        test_campaign = await meta.create_campaign("__DIAGNOSTIC_TEST__", objective="OUTCOME_TRAFFIC")
+        results["test_campaign_create"] = test_campaign
+
+        # If campaign was created, delete it immediately
+        if test_campaign.get("id") and not test_campaign.get("is_mock"):
+            delete_resp = await meta._request_with_retry(
+                "DELETE",
+                f"{meta.base_url}/{test_campaign['id']}",
+                params={"access_token": meta.access_token},
+            )
+            results["test_campaign_deleted"] = delete_resp.status_code == 200
+    except Exception as e:
+        results["test_campaign_create"] = {"error": str(e)}
+
+    # 4. Check app mode
+    try:
+        results["meta_app_mode"] = settings.meta_app_mode or "unknown"
+    except Exception:
+        pass
+
+    return results
