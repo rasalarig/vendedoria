@@ -36,7 +36,7 @@ import { MatButtonModule } from '@angular/material/button';
             Comecar Gratis
             <mat-icon>arrow_forward</mat-icon>
           </a>
-          <a href="#como-funciona" class="btn-ghost btn-lg">
+          <a (click)="scrollTo('como-funciona')" class="btn-ghost btn-lg" style="cursor:pointer">
             Como Funciona
             <mat-icon>expand_more</mat-icon>
           </a>
@@ -80,26 +80,70 @@ import { MatButtonModule } from '@angular/material/button';
       </div>
     </section>
 
-    <!-- How It Works -->
+    <!-- How It Works - Mind Map -->
     <section class="how-it-works section-animate" id="como-funciona">
       <div class="lp-container">
-        <span class="section-badge">Simples e Rapido</span>
-        <h2 class="section-title">Como Funciona</h2>
-        <p class="section-subtitle">Tres passos para transformar suas vendas com inteligencia artificial.</p>
-        <div class="steps-grid">
-          @for (step of steps; track step.number; let i = $index) {
-            <div class="step-card section-animate">
-              <div class="step-number">{{ step.number }}</div>
-              <div class="step-icon-wrap">
-                <mat-icon>{{ step.icon }}</mat-icon>
+        <span class="section-badge">Como Funciona</span>
+        <h2 class="section-title">Tres pilares para<br/><span class="gradient-text">vender mais</span></h2>
+        <p class="section-subtitle">Conhega o fluxo completo da plataforma — do cadastro ao resultado.</p>
+
+        <div class="mindmap">
+          <!-- Central hub -->
+          <div class="mindmap-hub section-animate">
+            <span class="hub-icon">&#x1F916;</span>
+            <span class="hub-label">VendedorIA</span>
+          </div>
+
+          <div class="mindmap-branches">
+            <!-- Branch 1: Produtos -->
+            <div class="branch section-animate" style="--branch-color: #8b5cf6">
+              <div class="branch-header">
+                <div class="branch-icon-wrap"><mat-icon>inventory_2</mat-icon></div>
+                <h3>Produtos</h3>
               </div>
-              <h3>{{ step.title }}</h3>
-              <p>{{ step.description }}</p>
-              @if (i < steps.length - 1) {
-                <div class="step-connector"></div>
-              }
+              <div class="branch-items">
+                <div class="branch-item">Cadastrar via Chat</div>
+                <div class="branch-item">Editar e Remover</div>
+                <div class="branch-item">Upload de Imagens</div>
+                <div class="branch-item">URL do Site/Landing</div>
+              </div>
             </div>
-          }
+
+            <!-- Branch 2: Vendas & Campanhas -->
+            <div class="branch branch-main section-animate" style="--branch-color: #ec4899">
+              <div class="branch-header">
+                <div class="branch-icon-wrap"><mat-icon>rocket_launch</mat-icon></div>
+                <h3>Vendas &amp; Campanhas</h3>
+              </div>
+              <div class="branch-items">
+                <div class="sub-group">
+                  <span class="sub-label">Funil de Vendas</span>
+                  <div class="branch-item"><span class="item-badge" style="background: #3b82f622; color: #3b82f6">Meta Ads</span> Facebook + Instagram</div>
+                  <div class="branch-item"><span class="item-badge" style="background: #ec489922; color: #ec4899">TikTok</span> Anuncios em Video</div>
+                  <div class="branch-item"><span class="item-badge" style="background: #22c55e22; color: #22c55e">WhatsApp</span> Mensagens Diretas</div>
+                </div>
+                <div class="sub-group">
+                  <span class="sub-label">Venda Direta</span>
+                  <div class="branch-item">Criacao Rapida de Campanha</div>
+                  <div class="branch-item">Criativos Gerados por IA</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Branch 3: Acompanhamento -->
+            <div class="branch section-animate" style="--branch-color: #3b82f6">
+              <div class="branch-header">
+                <div class="branch-icon-wrap"><mat-icon>monitoring</mat-icon></div>
+                <h3>Acompanhamento</h3>
+              </div>
+              <div class="branch-items">
+                <div class="branch-item">Dashboard de Metricas</div>
+                <div class="branch-item">Impressoes, Cliques, CTR</div>
+                <div class="branch-item">ROI em Tempo Real</div>
+                <div class="branch-item">Status de Campanhas</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -494,87 +538,174 @@ import { MatButtonModule } from '@angular/material/button';
       margin: 0;
     }
 
-    /* ===== How It Works ===== */
+    /* ===== Mind Map ===== */
     .how-it-works {
       padding: 120px 0;
       text-align: center;
       background: rgba(24, 24, 27, 0.3);
     }
 
-    .steps-grid {
+    .mindmap {
+      margin-top: 20px;
+    }
+
+    .mindmap-hub {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 32px;
+      border-radius: 100px;
+      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2));
+      border: 1px solid rgba(139,92,246,0.3);
+      margin-bottom: 48px;
+    }
+
+    .hub-icon {
+      font-size: 28px;
+    }
+
+    .hub-label {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .mindmap-branches {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 40px;
+      gap: 24px;
       position: relative;
     }
 
-    .step-card {
-      position: relative;
-      text-align: center;
-      padding: 40px 24px;
+    /* Connector line from hub to branches */
+    .mindmap-branches::before {
+      content: '';
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      height: 2px;
+      background: linear-gradient(90deg, #8b5cf6, #ec4899, #3b82f6);
+      opacity: 0.3;
     }
 
-    .step-number {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      font-size: 14px;
-      font-weight: 800;
-      color: #fff;
-      background: linear-gradient(135deg, #8b5cf6, #ec4899);
-      margin-bottom: 20px;
-    }
-
-    .step-icon-wrap {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 64px;
-      height: 64px;
+    .branch {
+      text-align: left;
       border-radius: 16px;
-      background: rgba(139, 92, 246, 0.1);
-      border: 1px solid rgba(139, 92, 246, 0.15);
-      margin-bottom: 24px;
+      background: rgba(24, 24, 27, 0.6);
+      border: 1px solid #27272a;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(8px);
+      position: relative;
     }
 
-    .step-icon-wrap mat-icon {
-      color: #c4b5fd;
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
+    .branch::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--branch-color);
+      opacity: 0.7;
     }
 
-    .step-card h3 {
+    .branch:hover {
+      border-color: var(--branch-color);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -12px rgba(0,0,0,0.4);
+    }
+
+    .branch-header {
+      padding: 28px 24px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .branch-icon-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--branch-color) 15%, transparent);
+      flex-shrink: 0;
+    }
+
+    .branch-icon-wrap mat-icon {
+      color: var(--branch-color);
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .branch-header h3 {
       font-size: 18px;
       font-weight: 700;
-      margin: 0 0 8px;
-    }
-
-    .step-card p {
-      font-size: 15px;
-      color: #a1a1aa;
-      line-height: 1.6;
       margin: 0;
+      color: #fafafa;
     }
 
-    .step-connector {
-      display: none;
+    .branch-items {
+      padding: 0 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    /* connector line between steps on desktop */
-    @media (min-width: 769px) {
-      .step-connector {
-        display: block;
-        position: absolute;
-        top: 58px;
-        right: -24px;
-        width: 48px;
-        height: 2px;
-        background: linear-gradient(90deg, rgba(139,92,246,0.4), rgba(236,72,153,0.4));
-      }
+    .branch-item {
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      font-size: 14px;
+      color: #a1a1aa;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .branch-item:hover {
+      background: rgba(255,255,255,0.06);
+      color: #e4e4e7;
+    }
+
+    .item-badge {
+      padding: 2px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+      letter-spacing: 0.3px;
+    }
+
+    .sub-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sub-group + .sub-group {
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .sub-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #71717a;
+      padding-left: 4px;
     }
 
     /* ===== Platforms ===== */
@@ -768,10 +899,18 @@ import { MatButtonModule } from '@angular/material/button';
       }
 
       .benefits-grid,
-      .steps-grid,
       .platforms-grid {
         grid-template-columns: 1fr;
         gap: 16px;
+      }
+
+      .mindmap-branches {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .mindmap-branches::before {
+        display: none;
       }
 
       .benefits, .how-it-works, .platforms, .final-cta {
@@ -847,27 +986,6 @@ export class LandingComponent implements OnInit, OnDestroy {
     },
   ];
 
-  steps = [
-    {
-      number: '1',
-      icon: 'add_shopping_cart',
-      title: 'Cadastre seu Produto',
-      description: 'Descreva seu produto ou servico no chat e a IA organiza tudo.',
-    },
-    {
-      number: '2',
-      icon: 'smart_toy',
-      title: 'IA Cria sua Campanha',
-      description: 'Escolha a plataforma e a IA gera criativos, define publico e orcamento.',
-    },
-    {
-      number: '3',
-      icon: 'trending_up',
-      title: 'Acompanhe e Venda',
-      description: 'Monitore metricas em tempo real e a IA otimiza seus resultados.',
-    },
-  ];
-
   platforms = [
     {
       name: 'Meta Ads',
@@ -920,6 +1038,10 @@ export class LandingComponent implements OnInit, OnDestroy {
         this.observer.observe(el);
       });
     });
+  }
+
+  scrollTo(id: string): void {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   ngOnDestroy(): void {

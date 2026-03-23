@@ -876,11 +876,11 @@ export class AppComponent implements OnInit, OnDestroy {
       .pipe(filter(e => e instanceof NavigationEnd))
       .subscribe((e) => {
         const url = (e as NavigationEnd).urlAfterRedirects;
-        this.isLoginPage = url === '/login' || url === '/landing';
+        this.isLoginPage = url === '/login' || url.startsWith('/landing');
       });
 
     // Check initial URL
-    this.isLoginPage = this.router.url === '/login' || this.router.url === '/landing';
+    this.isLoginPage = this.router.url === '/login' || this.router.url.startsWith('/landing');
 
     // Load credit balance and poll every 30s
     this.loadCreditBalance();
