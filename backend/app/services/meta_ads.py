@@ -73,24 +73,23 @@ def parse_meta_error(response_data: dict, status_code: int = 0) -> dict:
             user_msg = dev_mode_info["message"]
             error_info = dev_mode_info
 
-    # Detect payment/billing errors by code, subcode, or message text
-    PAYMENT_ERROR_MESSAGE = (
-        "Erro de pagamento Meta Ads: Verifique se: (1) Sua conta de anuncios esta vinculada a um portfolio "
-        "com forma de pagamento ativa, (2) Seu app Meta esta no modo LIVE (nao Development), (3) A forma de "
-        "pagamento tem saldo suficiente. Acesse business.facebook.com > Configuracoes > Pagamentos para verificar."
-    )
+    # Detect payment/billing errors by code and subcode ONLY (not keyword matching)
     payment_error_codes = {2635}
     payment_error_subcodes = {1885717}
-    payment_keywords = ["payment", "billing", "pagamento", "forma de pagamento", "funding source", "insufficient funds"]
 
     is_payment_error = (
         error_code in payment_error_codes
         or error_subcode in payment_error_subcodes
-        or any(kw in combined_text for kw in payment_keywords)
     )
     if is_payment_error:
-        user_msg = PAYMENT_ERROR_MESSAGE
-        error_info = {"message": PAYMENT_ERROR_MESSAGE, "action": "check_payment", "retryable": False}
+        user_msg = (
+            f"Erro de pagamento Meta Ads: {technical_msg}\n\n"
+            "Verifique se: (1) Sua conta de anuncios esta vinculada a um portfolio com forma de pagamento ativa, "
+            "(2) Seu app Meta esta no modo LIVE (nao Development), "
+            "(3) A forma de pagamento tem saldo suficiente. "
+            "Acesse business.facebook.com > Configuracoes > Pagamentos para verificar."
+        )
+        error_info = {"message": user_msg, "action": "check_payment", "retryable": False}
 
     # Token expiry subcodes
     is_token_expired = error_code == 190 or error_code == 102
@@ -413,6 +412,7 @@ class MetaAdsService:
                 return data
             else:
                 error_data = response.json() if response.text else {}
+                logger.error("Meta API error creating adset: %s", error_data)
                 parsed = parse_meta_error(error_data, response.status_code)
                 return {"id": None, "status": "ERROR", "is_mock": False, "error": parsed["user_message"], "error_code": parsed["error_code"], "is_token_expired": parsed.get("is_token_expired", False)}
         except Exception as e:
@@ -530,6 +530,7 @@ class MetaAdsService:
                 return data
             else:
                 error_data = response.json() if response.text else {}
+                logger.error("Meta API error creating ad: %s", error_data)
                 parsed = parse_meta_error(error_data, response.status_code)
                 return {"id": None, "status": "ERROR", "is_mock": False, "error": parsed["user_message"], "error_code": parsed["error_code"], "is_token_expired": parsed.get("is_token_expired", False)}
         except Exception as e:
