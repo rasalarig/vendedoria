@@ -1,9 +1,13 @@
 import asyncio
 import httpx
 import json
+import logging
+import os
 import random
 import time
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 # Meta API error codes → PT-BR messages + suggested actions
 META_ERROR_MAP = {
@@ -19,6 +23,11 @@ META_ERROR_MAP = {
     1885272: {"message": "Orcamento diario abaixo do minimo permitido. Aumente para pelo menos R$20/dia.", "action": "increase_budget", "retryable": False},
     1885621: {"message": "Orcamento definido no nivel errado. Verifique as configuracoes da campanha.", "action": "check_budget", "retryable": False},
     2606: {"message": "Nao foi possivel visualizar o anuncio. Verifique o criativo.", "action": "check_creative", "retryable": False},
+    2635: {
+        "message": "Erro de pagamento Meta Ads: Verifique se: (1) Sua conta de anuncios esta vinculada a um portfolio com forma de pagamento ativa, (2) Seu app Meta esta no modo LIVE (nao Development), (3) A forma de pagamento tem saldo suficiente. Acesse business.facebook.com > Configuracoes > Pagamentos para verificar.",
+        "action": "check_payment",
+        "retryable": False,
+    },
     1487930: {
         "message": "Seu app Meta precisa ser ativado para criar anuncios. Acesse developers.facebook.com/apps, selecione seu app e ative o modo Live no topo da pagina.",
         "action": "app_mode",
@@ -64,6 +73,25 @@ def parse_meta_error(response_data: dict, status_code: int = 0) -> dict:
             user_msg = dev_mode_info["message"]
             error_info = dev_mode_info
 
+    # Detect payment/billing errors by code, subcode, or message text
+    PAYMENT_ERROR_MESSAGE = (
+        "Erro de pagamento Meta Ads: Verifique se: (1) Sua conta de anuncios esta vinculada a um portfolio "
+        "com forma de pagamento ativa, (2) Seu app Meta esta no modo LIVE (nao Development), (3) A forma de "
+        "pagamento tem saldo suficiente. Acesse business.facebook.com > Configuracoes > Pagamentos para verificar."
+    )
+    payment_error_codes = {2635}
+    payment_error_subcodes = {1885717}
+    payment_keywords = ["payment", "billing", "pagamento", "forma de pagamento", "funding source", "insufficient funds"]
+
+    is_payment_error = (
+        error_code in payment_error_codes
+        or error_subcode in payment_error_subcodes
+        or any(kw in combined_text for kw in payment_keywords)
+    )
+    if is_payment_error:
+        user_msg = PAYMENT_ERROR_MESSAGE
+        error_info = {"message": PAYMENT_ERROR_MESSAGE, "action": "check_payment", "retryable": False}
+
     # Token expiry subcodes
     is_token_expired = error_code == 190 or error_code == 102
 
@@ -75,6 +103,7 @@ def parse_meta_error(response_data: dict, status_code: int = 0) -> dict:
         "action": error_info["action"],
         "retryable": error_info["retryable"],
         "is_token_expired": is_token_expired,
+        "is_payment_error": is_payment_error,
     }
 
 
@@ -401,8 +430,9 @@ class MetaAdsService:
         if not self.page_id:
             return {"id": None, "error": "Facebook Page ID nao configurado. Reconecte sua conta Meta nas Configuracoes."}
 
+        # Allow creation without image — Meta will use text-only creative
         if not image_url and not image_hash:
-            return {"id": None, "error": "Imagem do anuncio nao disponivel. Gere um criativo com imagem antes de criar a campanha."}
+            logger.info("Creating ad creative without image (text-only)")
 
         try:
             # Map CTA text to Meta API CTA type
@@ -577,14 +607,41 @@ class MetaAdsService:
                 else:
                     result["errors"].append(upload_result.get("error", "Falha no upload da imagem para o Meta"))
             else:
-                result["errors"].append(f"Arquivo de imagem nao encontrado: {ad_image_url}")
+                # Local file not found (e.g. Render ephemeral filesystem) — try downloading via public URL
+                logger.warning("Local image file not found: %s — attempting download via public URL", ad_image_url)
+                backend_url = os.environ.get("BACKEND_URL") or os.environ.get("RENDER_EXTERNAL_URL", "http://localhost:8000")
+                public_image_url = f"{backend_url.rstrip('/')}{ad_image_url}"
+                try:
+                    async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+                        dl_resp = await client.get(public_image_url)
+                        if dl_resp.status_code == 200 and len(dl_resp.content) > 1000:
+                            filename = ad_image_url.split("/")[-1] or "ad_image.jpg"
+                            upload_result = await self.upload_image(dl_resp.content, filename)
+                            if upload_result.get("image_hash"):
+                                image_hash = upload_result["image_hash"]
+                            else:
+                                logger.warning("Image downloaded but Meta upload failed: %s", upload_result.get("error"))
+                                result.setdefault("warnings", []).append(
+                                    f"Imagem encontrada mas falhou upload para Meta: {upload_result.get('error', 'erro desconhecido')}. Campanha criada sem imagem."
+                                )
+                        else:
+                            logger.warning("Failed to download image from %s (status=%s, size=%s)", public_image_url, dl_resp.status_code, len(dl_resp.content) if dl_resp.status_code == 200 else "N/A")
+                            result.setdefault("warnings", []).append(
+                                f"Imagem nao disponivel ({ad_image_url}). Campanha criada sem imagem."
+                            )
+                except Exception as e:
+                    logger.warning("Exception downloading image from %s: %s", public_image_url, e)
+                    result.setdefault("warnings", []).append(
+                        f"Erro ao baixar imagem ({ad_image_url}): {e}. Campanha criada sem imagem."
+                    )
 
-        # Step 4: Create Ad Creative
+        # Step 4: Create Ad Creative (proceeds even without image)
+        creative_image_url = ad_image_url if (not image_hash and ad_image_url and ad_image_url.startswith("http")) else ""
         creative = await self.create_ad_creative(
             name=f"Creative - {campaign_name}",
             message=ad_message,
             headline=ad_headline,
-            image_url=ad_image_url if not image_hash else "",
+            image_url=creative_image_url,
             link=ad_link,
             cta_type=ad_cta,
             image_hash=image_hash,

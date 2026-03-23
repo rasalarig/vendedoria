@@ -263,6 +263,9 @@ async def _create_meta_campaign(
         elif full_result.get("is_mock"):
             campaign_status = "mock"
 
+        # Collect warnings (non-blocking issues like missing images)
+        warnings = full_result.get("warnings", [])
+
         campaign = Campaign(
             product_id=product.id,
             name=f"Campanha - {product.name}",
@@ -276,8 +279,10 @@ async def _create_meta_campaign(
             daily_budget=50,
             user_id=sale.user_id,
         )
-        if full_result.get("errors"):
-            campaign.meta_errors = json.dumps(full_result["errors"])
+        # Store errors and warnings in meta_errors for debugging
+        all_messages = full_result.get("errors", []) + warnings
+        if all_messages:
+            campaign.meta_errors = json.dumps(all_messages)
         db.add(campaign)
         db.commit()
         db.refresh(campaign)
@@ -287,6 +292,9 @@ async def _create_meta_campaign(
         sale.status = campaign_status
         if campaign_status == "error":
             sale.error_message = "; ".join(full_result["errors"])
+        elif warnings:
+            # Store warnings so frontend can display them (campaign still active)
+            sale.error_message = "Avisos: " + "; ".join(warnings)
         db.commit()
         db.refresh(sale)
     except Exception as e:

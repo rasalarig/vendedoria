@@ -117,8 +117,27 @@ import { MatIconModule } from '@angular/material/icon';
                       Tentar Novamente
                     }
                   </button>
-                  @if (retryError) {
-                    <p class="retry-error">{{ retryError }}</p>
+                  @if (retryError || sale.error_message) {
+                    <div class="error-card">
+                      <div class="error-card-header">
+                        <mat-icon>warning_amber</mat-icon>
+                        <strong>Problema ao criar campanha</strong>
+                      </div>
+                      <div class="error-card-body">
+                        @for (msg of getErrorMessages(); track msg) {
+                          <div class="error-item">
+                            <mat-icon>chevron_right</mat-icon>
+                            <span>{{ msg }}</span>
+                          </div>
+                        }
+                      </div>
+                      @if (getErrorTip()) {
+                        <div class="error-tip">
+                          <mat-icon>lightbulb</mat-icon>
+                          <span>{{ getErrorTip() }}</span>
+                        </div>
+                      }
+                    </div>
                   }
                 </div>
               }
@@ -137,8 +156,27 @@ import { MatIconModule } from '@angular/material/icon';
                     }
                   </button>
                 }
-                @if (retryError) {
-                  <p class="retry-error">{{ retryError }}</p>
+                @if (retryError || sale.error_message) {
+                  <div class="error-card">
+                    <div class="error-card-header">
+                      <mat-icon>warning_amber</mat-icon>
+                      <strong>Problema ao criar campanha</strong>
+                    </div>
+                    <div class="error-card-body">
+                      @for (msg of getErrorMessages(); track msg) {
+                        <div class="error-item">
+                          <mat-icon>chevron_right</mat-icon>
+                          <span>{{ msg }}</span>
+                        </div>
+                      }
+                    </div>
+                    @if (getErrorTip()) {
+                      <div class="error-tip">
+                        <mat-icon>lightbulb</mat-icon>
+                        <span>{{ getErrorTip() }}</span>
+                      </div>
+                    }
+                  </div>
                 }
               </div>
             }
@@ -189,13 +227,6 @@ import { MatIconModule } from '@angular/material/icon';
           </div>
         }
 
-        <!-- Error message if any -->
-        @if (sale.error_message) {
-          <div class="error-banner">
-            <mat-icon>warning</mat-icon>
-            <span>{{ sale.error_message }}</span>
-          </div>
-        }
       }
     </div>
   `,
@@ -381,11 +412,6 @@ import { MatIconModule } from '@angular/material/icon';
         }
       }
 
-      .retry-error {
-        color: #ef4444;
-        font-size: 13px;
-        margin-top: 8px;
-      }
     }
 
     .empty-campaign {
@@ -436,11 +462,6 @@ import { MatIconModule } from '@angular/material/icon';
         }
       }
 
-      .retry-error {
-        color: #ef4444;
-        font-size: 13px;
-        margin-top: 8px;
-      }
     }
 
     .metrics-section {
@@ -502,23 +523,73 @@ import { MatIconModule } from '@angular/material/icon';
       }
     }
 
-    .error-banner {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      color: #ef4444;
-      padding: 12px 16px;
-      border-radius: 10px;
+    .error-card {
+      margin-top: 16px;
+      background: rgba(251, 146, 60, 0.08);
+      border: 1px solid rgba(251, 146, 60, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .error-card-header {
       display: flex;
-      gap: 8px;
       align-items: center;
-      margin-top: 24px;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(251, 146, 60, 0.06);
+      border-bottom: 1px solid rgba(251, 146, 60, 0.12);
+      color: #fb923c;
       font-size: 14px;
 
       mat-icon {
         font-size: 20px;
         width: 20px;
         height: 20px;
+      }
+    }
+
+    .error-card-body {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .error-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      color: #d4d4d8;
+      font-size: 13px;
+      line-height: 1.5;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        color: #fb923c;
         flex-shrink: 0;
+        margin-top: 2px;
+      }
+    }
+
+    .error-tip {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 16px;
+      background: rgba(139, 92, 246, 0.08);
+      border-top: 1px solid rgba(139, 92, 246, 0.15);
+      color: #a78bfa;
+      font-size: 13px;
+      line-height: 1.5;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        margin-top: 1px;
       }
     }
 
@@ -683,6 +754,29 @@ export class VendaDetailComponent implements OnInit {
       'error': 'Erro',
     };
     return map[status] || status;
+  }
+
+  getErrorMessages(): string[] {
+    const raw = this.retryError || this.sale?.error_message || '';
+    if (!raw) return [];
+    return raw.split('; ').map((m: string) => m.trim()).filter((m: string) => m.length > 0);
+  }
+
+  getErrorTip(): string {
+    const raw = (this.retryError || this.sale?.error_message || '').toLowerCase();
+    if (raw.includes('imagem') || raw.includes('image')) {
+      return 'Dica: Tente reenviar a imagem do produto nas configuracoes do produto antes de tentar novamente.';
+    }
+    if (raw.includes('pagamento') || raw.includes('payment') || raw.includes('billing') || raw.includes('forma de pagamento')) {
+      return 'Dica: Verifique se sua conta de anuncios esta vinculada ao portfolio correto com forma de pagamento ativa em business.facebook.com > Configuracoes > Pagamentos.';
+    }
+    if (raw.includes('token') || raw.includes('expirad')) {
+      return 'Dica: Seu token de acesso pode ter expirado. Va em Configuracoes e reconecte sua conta Meta.';
+    }
+    if (raw.includes('development') || raw.includes('desenvolvimento')) {
+      return 'Dica: Seu app Meta ainda esta em modo de desenvolvimento. Publique o app em developers.facebook.com para criar anuncios reais.';
+    }
+    return '';
   }
 
   formatNumber(n: number): string {
