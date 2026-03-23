@@ -2,7 +2,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
@@ -206,13 +206,10 @@ if os.path.exists(_static_dir):
     if os.path.exists(_assets_dir):
         app.mount("/assets", StaticFiles(directory=_assets_dir), name="frontend-assets")
 
-    # Explicit root route so `/` always serves index.html (Angular handles redirect)
+    # Server-side redirect: / → /landing (avoids browser cache issues with client-side redirects)
     @app.get("/", include_in_schema=False)
     async def serve_root():
-        index_path = os.path.join(_static_dir, "index.html")
-        if os.path.exists(index_path):
-            return FileResponse(index_path)
-        return {"detail": "Not found"}
+        return RedirectResponse(url="/landing", status_code=302)
 
     # SPA fallback: serve index.html for all non-API routes
     @app.get("/{full_path:path}")
