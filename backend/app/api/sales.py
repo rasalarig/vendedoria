@@ -112,9 +112,10 @@ async def retry_campaign(
         raise HTTPException(status_code=404, detail="Venda nao encontrada")
 
     if sale.campaign_id:
-        # Allow retry if existing campaign has error status
+        # Allow retry if existing campaign has error/non-active status
         existing_campaign = db.query(Campaign).filter(Campaign.id == sale.campaign_id).first()
-        if existing_campaign and existing_campaign.status == 'error':
+        non_retryable = {'active', 'mock'}
+        if existing_campaign and existing_campaign.status not in non_retryable:
             # Delete the failed campaign to retry fresh
             db.delete(existing_campaign)
             sale.campaign_id = None
@@ -122,8 +123,15 @@ async def retry_campaign(
             sale.status = 'created'
             sale.error_message = None
             db.commit()
+        elif not existing_campaign:
+            # Campaign record missing, allow retry
+            sale.campaign_id = None
+            sale.campaign_name = None
+            sale.status = 'created'
+            sale.error_message = None
+            db.commit()
         else:
-            raise HTTPException(status_code=400, detail="Esta venda ja possui uma campanha vinculada")
+            raise HTTPException(status_code=400, detail="Esta venda ja possui uma campanha ativa vinculada")
 
     product = db.query(Product).filter(Product.id == sale.product_id).first()
     if not product:
