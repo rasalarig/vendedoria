@@ -106,6 +106,22 @@ import { MatIconModule } from '@angular/material/icon';
                   </div>
                 }
               </div>
+              @if (canRetryCampaign()) {
+                <div class="retry-section">
+                  <button class="btn-retry" (click)="retryCampaign()" [disabled]="retryLoading">
+                    @if (retryLoading) {
+                      <mat-icon class="spin">hourglass_empty</mat-icon>
+                      Recriando campanha...
+                    } @else {
+                      <mat-icon>refresh</mat-icon>
+                      Tentar Novamente
+                    }
+                  </button>
+                  @if (retryError) {
+                    <p class="retry-error">{{ retryError }}</p>
+                  }
+                </div>
+              }
             } @else {
               <div class="empty-campaign">
                 <mat-icon>link_off</mat-icon>
@@ -328,6 +344,48 @@ import { MatIconModule } from '@angular/material/icon';
       max-height: 120px;
       overflow-y: auto;
       margin: 0;
+    }
+
+    .retry-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #27272a;
+
+      .btn-retry {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #8b5cf6;
+        color: #fafafa;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s, opacity 0.15s;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+
+        &:hover:not(:disabled) {
+          background: #7c3aed;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+
+      .retry-error {
+        color: #ef4444;
+        font-size: 13px;
+        margin-top: 8px;
+      }
     }
 
     .empty-campaign {
@@ -569,8 +627,15 @@ export class VendaDetailComponent implements OnInit {
 
   canRetryCampaign(): boolean {
     if (!this.sale) return false;
-    const eligibleStatus = this.sale.status === 'created' || this.sale.status === 'campaign_error';
-    return eligibleStatus && !this.sale.campaign_id;
+    // Show retry when no campaign exists
+    if (!this.sale.campaign_id) {
+      return this.sale.status === 'created' || this.sale.status === 'campaign_error';
+    }
+    // Also show retry when campaign exists but has error status
+    if (this.sale.campaign && this.sale.campaign.status === 'error') {
+      return true;
+    }
+    return false;
   }
 
   retryCampaign(): void {
