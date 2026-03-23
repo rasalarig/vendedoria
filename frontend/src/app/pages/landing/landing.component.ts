@@ -25,7 +25,7 @@ import { MatButtonModule } from '@angular/material/button';
         <span class="hero-badge">Plataforma de Marketing com IA</span>
         <h1 class="hero-title">
           Venda Mais com o<br/>
-          <span class="gradient-text">Poder da Inteligencia Artificial</span>
+          <span class="gradient-text">Poder da Inteligência Artificial</span>
         </h1>
         <p class="hero-subtitle">
           Cadastre produtos, crie campanhas no Meta Ads, TikTok e WhatsApp,
@@ -33,7 +33,7 @@ import { MatButtonModule } from '@angular/material/button';
         </p>
         <div class="hero-actions">
           <a routerLink="/login" class="btn-primary btn-lg">
-            Comecar Gratis
+            Começar Grátis
             <mat-icon>arrow_forward</mat-icon>
           </a>
           <a (click)="scrollTo('como-funciona')" class="btn-ghost btn-lg" style="cursor:pointer">
@@ -64,8 +64,8 @@ import { MatButtonModule } from '@angular/material/button';
     <section class="benefits section-animate" id="beneficios">
       <div class="lp-container">
         <span class="section-badge">Recursos</span>
-        <h2 class="section-title">Tudo que voce precisa para<br/><span class="gradient-text">vender mais online</span></h2>
-        <p class="section-subtitle">Uma plataforma completa de marketing com inteligencia artificial que trabalha para voce 24 horas por dia.</p>
+        <h2 class="section-title">Tudo que você precisa para<br/><span class="gradient-text">vender mais online</span></h2>
+        <p class="section-subtitle">Uma plataforma completa de marketing com inteligência artificial que trabalha para você 24 horas por dia.</p>
         <div class="benefits-grid">
           @for (benefit of benefits; track benefit.title) {
             <div class="benefit-card section-animate">
@@ -84,8 +84,8 @@ import { MatButtonModule } from '@angular/material/button';
     <section class="how-it-works section-animate" id="como-funciona">
       <div class="lp-container">
         <span class="section-badge">Como Funciona</span>
-        <h2 class="section-title">Tres pilares para<br/><span class="gradient-text">vender mais</span></h2>
-        <p class="section-subtitle">Conheca o fluxo completo da plataforma — do cadastro ao resultado.</p>
+        <h2 class="section-title">Três pilares para<br/><span class="gradient-text">vender mais</span></h2>
+        <p class="section-subtitle">Conheça o fluxo completo da plataforma — do cadastro ao resultado.</p>
 
         <div class="mindmap">
           <!-- Central hub -->
@@ -119,12 +119,12 @@ import { MatButtonModule } from '@angular/material/button';
                 <div class="sub-group">
                   <span class="sub-label">Funil de Vendas</span>
                   <div class="branch-item"><span class="item-badge" style="background: #3b82f622; color: #3b82f6">Meta Ads</span> Facebook + Instagram</div>
-                  <div class="branch-item"><span class="item-badge" style="background: #ec489922; color: #ec4899">TikTok</span> Anuncios em Video</div>
+                  <div class="branch-item"><span class="item-badge" style="background: #ec489922; color: #ec4899">TikTok</span> Anúncios em Vídeo</div>
                   <div class="branch-item"><span class="item-badge" style="background: #22c55e22; color: #22c55e">WhatsApp</span> Mensagens Diretas</div>
                 </div>
                 <div class="sub-group">
                   <span class="sub-label">Venda Direta</span>
-                  <div class="branch-item">Criacao Rapida de Campanha</div>
+                  <div class="branch-item">Criação Rápida de Campanha</div>
                   <div class="branch-item">Criativos Gerados por IA</div>
                 </div>
               </div>
@@ -137,8 +137,8 @@ import { MatButtonModule } from '@angular/material/button';
                 <h3>Acompanhamento</h3>
               </div>
               <div class="branch-items">
-                <div class="branch-item">Dashboard de Metricas</div>
-                <div class="branch-item">Impressoes, Cliques, CTR</div>
+                <div class="branch-item">Dashboard de Métricas</div>
+                <div class="branch-item">Impressões, Cliques, CTR</div>
                 <div class="branch-item">ROI em Tempo Real</div>
                 <div class="branch-item">Status de Campanhas</div>
               </div>
@@ -151,9 +151,9 @@ import { MatButtonModule } from '@angular/material/button';
     <!-- Platforms Section -->
     <section class="platforms section-animate" id="plataformas">
       <div class="lp-container">
-        <span class="section-badge">Integracoes</span>
-        <h2 class="section-title">Multi-Plataforma,<br/><span class="gradient-text">um so lugar</span></h2>
-        <p class="section-subtitle">Gerencie todas as suas campanhas publicitarias em um unico painel.</p>
+        <span class="section-badge">Integrações</span>
+        <h2 class="section-title">Multi-Plataforma,<br/><span class="gradient-text">um só lugar</span></h2>
+        <p class="section-subtitle">Gerencie todas as suas campanhas publicitárias em um único painel.</p>
         <div class="platforms-grid">
           @for (platform of platforms; track platform.name) {
             <div class="platform-card section-animate" [style.--accent]="platform.color">
@@ -174,9 +174,9 @@ import { MatButtonModule } from '@angular/material/button';
       <div class="lp-container final-cta-inner">
         <div class="cta-glow"></div>
         <h2>Pronto para Revolucionar<br/><span class="gradient-text">suas Vendas?</span></h2>
-        <p>Comece agora mesmo a usar inteligencia artificial para criar campanhas, gerar criativos e vender mais.</p>
+        <p>Comece agora mesmo a usar inteligência artificial para criar campanhas, gerar criativos e vender mais.</p>
         <a routerLink="/login" class="btn-primary btn-lg">
-          Comecar Agora
+          Começar Agora
           <mat-icon>arrow_forward</mat-icon>
         </a>
       </div>
@@ -187,7 +187,7 @@ import { MatButtonModule } from '@angular/material/button';
       <div class="lp-container footer-inner">
         <div class="footer-brand">
           <span class="brand-logo">VendedorIA</span>
-          <p>Plataforma de Marketing com Inteligencia Artificial</p>
+          <p>Plataforma de Marketing com Inteligência Artificial</p>
         </div>
         <p class="copyright">&copy; 2026 VendedorIA. Todos os direitos reservados.</p>
       </div>
@@ -962,27 +962,27 @@ export class LandingComponent implements OnInit, OnDestroy {
     {
       icon: 'campaign',
       title: 'Campanhas Meta Ads com IA',
-      description: 'Crie campanhas no Facebook e Instagram otimizadas por inteligencia artificial.',
+      description: 'Crie campanhas no Facebook e Instagram otimizadas por inteligência artificial.',
     },
     {
       icon: 'auto_awesome',
       title: 'Criativos Gerados por IA',
-      description: 'Imagens e textos publicitarios criados automaticamente para seus anuncios.',
+      description: 'Imagens e textos publicitários criados automaticamente para seus anúncios.',
     },
     {
       icon: 'analytics',
-      title: 'Metricas em Tempo Real',
-      description: 'Acompanhe impressoes, cliques, conversoes e ROI das suas campanhas ao vivo.',
+      title: 'Métricas em Tempo Real',
+      description: 'Acompanhe impressões, cliques, conversões e ROI das suas campanhas ao vivo.',
     },
     {
       icon: 'hub',
       title: 'Multi-Plataforma',
-      description: 'Meta Ads, TikTok Ads e WhatsApp Business integrados em um so lugar.',
+      description: 'Meta Ads, TikTok Ads e WhatsApp Business integrados em um só lugar.',
     },
     {
       icon: 'psychology',
       title: 'Assistente de Marketing',
-      description: 'A IA recomenda estrategias, publico-alvo e orcamento ideal para seu negocio.',
+      description: 'A IA recomenda estratégias, público-alvo e orçamento ideal para seu negócio.',
     },
   ];
 
@@ -996,7 +996,7 @@ export class LandingComponent implements OnInit, OnDestroy {
     {
       name: 'TikTok Ads',
       emoji: '\uD83C\uDFB5',
-      description: 'Alcance novos publicos com anuncios no TikTok gerados automaticamente.',
+      description: 'Alcance novos públicos com anúncios no TikTok gerados automaticamente.',
       color: '#ec4899',
     },
     {
