@@ -27,7 +27,7 @@ class VideoGenerationService:
         self.api_key = settings.GOOGLE_AI_KEY
 
     # ------------------------------------------------------------------
-    # Script generation via Together AI LLM
+    # Script generation via OpenAI (primary) / Together AI (fallback)
     # ------------------------------------------------------------------
 
     async def generate_script(
@@ -38,7 +38,7 @@ class VideoGenerationService:
         style: Optional[str] = None,
         duration_seconds: float = 10,
     ) -> str:
-        """Use Together AI LLM to generate a short sales video script in PT-BR.
+        """Use OpenAI (primary) or Together AI (fallback) LLM to generate a short sales video script in PT-BR.
 
         Word count is calibrated to ~3 words/second for the given duration.
         Structure: hook (first 2-3s) -> product benefit -> CTA.
@@ -103,11 +103,20 @@ REGRAS DO ROTEIRO:
 
 Retorne APENAS o texto do roteiro, sem marcacoes, sem titulos, sem instrucoes de cena. Apenas o texto que sera falado."""
 
-        # Try Together AI LLM
-        api_key = settings.TOGETHER_API_KEY
-        if api_key:
+        # Try OpenAI first, then Together AI as fallback
+        openai_key = settings.OPENAI_API_KEY
+        if openai_key:
             try:
-                script = await self._call_together_llm(prompt, api_key)
+                script = await self._call_openai_llm(prompt, openai_key)
+                if script:
+                    return script.strip()
+            except Exception as e:
+                print(f"OpenAI LLM error: {e}")
+
+        together_key = settings.TOGETHER_API_KEY
+        if together_key:
+            try:
+                script = await self._call_together_llm(prompt, together_key)
                 if script:
                     return script.strip()
             except Exception as e:
@@ -141,16 +150,54 @@ INSTRUCAO DO USUARIO: {instruction}
 Aplique a instrucao do usuario ao roteiro atual. Mantenha o formato de roteiro para video ad (50-100 palavras, gancho forte, CTA).
 Retorne APENAS o texto do roteiro atualizado, sem explicacoes ou comentarios."""
 
-        api_key = settings.TOGETHER_API_KEY
-        if api_key:
+        openai_key = settings.OPENAI_API_KEY
+        if openai_key:
             try:
-                result = await self._call_together_llm(prompt, api_key)
+                result = await self._call_openai_llm(prompt, openai_key)
+                if result:
+                    return result.strip()
+            except Exception as e:
+                print(f"OpenAI refine error: {e}")
+
+        together_key = settings.TOGETHER_API_KEY
+        if together_key:
+            try:
+                result = await self._call_together_llm(prompt, together_key)
                 if result:
                     return result.strip()
             except Exception as e:
                 print(f"Together AI refine error: {e}")
 
         return current_script  # fallback: return unchanged
+
+    async def _call_openai_llm(self, prompt: str, api_key: str) -> Optional[str]:
+        """Call OpenAI GPT-4o-mini chat completion endpoint."""
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "Voce e um roteirista brasileiro especialista em video ads curtos para redes sociais. Responda apenas com o roteiro solicitado, sem formatacao extra.",
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    "max_tokens": 500,
+                    "temperature": 0.8,
+                },
+            )
+            if response.status_code == 200:
+                data = response.json()
+                return data["choices"][0]["message"]["content"]
+            else:
+                print(f"OpenAI LLM error {response.status_code}: {response.text[:300]}")
+                return None
 
     async def _call_together_llm(self, prompt: str, api_key: str) -> Optional[str]:
         """Call Together AI chat completion endpoint."""

@@ -311,8 +311,8 @@ PRIMEIRA MENSAGEM: Apresente-se brevemente como VendedorIA e pergunte o que o us
 
 class ChatAIService:
     def __init__(self, ai_api_key: str = "", ai_provider: str = "claude", meta_configured: bool = True, whatsapp_configured: bool = True, meta_readiness: dict = None):
-        self.ai_api_key = app_settings.TOGETHER_API_KEY
-        self.ai_provider = "together"
+        self.ai_api_key = app_settings.OPENAI_API_KEY or app_settings.TOGETHER_API_KEY
+        self.ai_provider = "openai" if app_settings.OPENAI_API_KEY else "together"
         self.meta_configured = meta_configured
         self.whatsapp_configured = whatsapp_configured
         self.meta_readiness = meta_readiness or {}
@@ -513,100 +513,136 @@ class ChatAIService:
 
         return base_msg
 
+    async def _try_openai(self, messages: List[Dict], system_prompt: str, api_key: str) -> Optional[Tuple[str, bool, Optional[str]]]:
+        """Try OpenAI GPT-4o-mini. Returns result tuple on success, None on failure."""
+        try:
+            openai_messages = [{"role": "system", "content": system_prompt}]
+            openai_messages.extend(messages)
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": "gpt-4o-mini",
+                        "max_tokens": 2000,
+                        "messages": openai_messages,
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    return (data["choices"][0]["message"]["content"], False, None)
+                else:
+                    print(f"OpenAI API error {response.status_code}: {response.text[:300]}")
+                    return None
+        except Exception as e:
+            print(f"OpenAI connection error: {e}")
+            return None
+
+    async def _try_together(self, messages: List[Dict], system_prompt: str, api_key: str) -> Optional[Tuple[str, bool, Optional[str]]]:
+        """Try Together AI Llama. Returns result tuple on success, None on failure."""
+        try:
+            together_messages = [{"role": "system", "content": system_prompt}]
+            together_messages.extend(messages)
+
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    "https://api.together.xyz/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+                        "max_tokens": 2000,
+                        "messages": together_messages,
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    return (data["choices"][0]["message"]["content"], False, None)
+                else:
+                    print(f"Together AI API error {response.status_code}: {response.text[:300]}")
+                    return None
+        except Exception as e:
+            print(f"Together AI connection error: {e}")
+            return None
+
+    async def _try_claude(self, messages: List[Dict], system_prompt: str, api_key: str) -> Optional[Tuple[str, bool, Optional[str]]]:
+        """Try Claude API. Returns result tuple on success, None on failure."""
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={
+                        "x-api-key": api_key,
+                        "anthropic-version": "2023-06-01",
+                        "content-type": "application/json",
+                    },
+                    json={
+                        "model": "claude-sonnet-4-20250514",
+                        "max_tokens": 2000,
+                        "system": system_prompt,
+                        "messages": messages,
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    return (data["content"][0]["text"], False, None)
+                else:
+                    print(f"Claude API error {response.status_code}: {response.text[:300]}")
+                    return None
+        except Exception as e:
+            print(f"Claude connection error: {e}")
+            return None
+
     async def _call_ai(self, messages: List[Dict], db: Session = None) -> Tuple[str, bool, Optional[str]]:
-        """Call Claude/OpenAI API. Returns (text, is_fallback, error_detail)."""
+        """Call AI API with fallback. OpenAI is primary, Together AI is fallback.
+        Returns (text, is_fallback, error_detail)."""
         system_prompt = self._build_system_prompt(db)
-        if self.ai_api_key and self.ai_provider == "together":
-            try:
-                together_messages = [{"role": "system", "content": system_prompt}]
-                together_messages.extend(messages)
 
-                async with httpx.AsyncClient(timeout=60.0) as client:
-                    response = await client.post(
-                        "https://api.together.xyz/v1/chat/completions",
-                        headers={
-                            "Authorization": f"Bearer {self.ai_api_key}",
-                            "Content-Type": "application/json",
-                        },
-                        json={
-                            "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-                            "max_tokens": 2000,
-                            "messages": together_messages,
-                        },
-                    )
-                    if response.status_code == 200:
-                        data = response.json()
-                        return (data["choices"][0]["message"]["content"], False, None)
-                    else:
-                        error_msg = self._parse_api_error("Together AI", response.status_code, response.text)
-                        return (error_msg, False, error_msg)
-            except Exception as e:
-                error_msg = f"Erro de conexao com a API Together AI: {str(e)}"
-                return (error_msg, False, error_msg)
+        # Try primary provider
+        result = None
+        if self.ai_api_key:
+            if self.ai_provider == "openai":
+                result = await self._try_openai(messages, system_prompt, self.ai_api_key)
+            elif self.ai_provider == "together":
+                result = await self._try_together(messages, system_prompt, self.ai_api_key)
+            elif self.ai_provider == "claude":
+                result = await self._try_claude(messages, system_prompt, self.ai_api_key)
 
-        elif self.ai_api_key and self.ai_provider == "claude":
-            try:
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    response = await client.post(
-                        "https://api.anthropic.com/v1/messages",
-                        headers={
-                            "x-api-key": self.ai_api_key,
-                            "anthropic-version": "2023-06-01",
-                            "content-type": "application/json",
-                        },
-                        json={
-                            "model": "claude-sonnet-4-20250514",
-                            "max_tokens": 2000,
-                            "system": system_prompt,
-                            "messages": messages,
-                        },
-                    )
-                    if response.status_code == 200:
-                        data = response.json()
-                        return (data["content"][0]["text"], False, None)
-                    else:
-                        error_msg = self._parse_api_error("Claude", response.status_code, response.text)
-                        return (error_msg, False, error_msg)
-            except Exception as e:
-                error_msg = f"Erro de conexao com a API Claude: {str(e)}"
-                return (error_msg, False, error_msg)
+        if result:
+            return result
 
-        elif self.ai_api_key and self.ai_provider == "openai":
-            try:
-                # Build OpenAI messages format (system message + conversation)
-                openai_messages = [{"role": "system", "content": system_prompt}]
-                openai_messages.extend(messages)
+        # Primary failed — try fallback provider
+        if self.ai_provider == "openai":
+            fallback_key = app_settings.TOGETHER_API_KEY
+            if fallback_key:
+                print(f"Primary AI (OpenAI) failed, trying Together AI fallback")
+                result = await self._try_together(messages, system_prompt, fallback_key)
+        elif self.ai_provider == "together":
+            fallback_key = app_settings.OPENAI_API_KEY
+            if fallback_key:
+                print(f"Primary AI (Together) failed, trying OpenAI fallback")
+                result = await self._try_openai(messages, system_prompt, fallback_key)
 
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    response = await client.post(
-                        "https://api.openai.com/v1/chat/completions",
-                        headers={
-                            "Authorization": f"Bearer {self.ai_api_key}",
-                            "Content-Type": "application/json",
-                        },
-                        json={
-                            "model": "gpt-4o-mini",
-                            "max_tokens": 2000,
-                            "messages": openai_messages,
-                        },
-                    )
-                    if response.status_code == 200:
-                        data = response.json()
-                        return (data["choices"][0]["message"]["content"], False, None)
-                    else:
-                        error_msg = self._parse_api_error("OpenAI", response.status_code, response.text)
-                        return (error_msg, False, error_msg)
-            except Exception as e:
-                error_msg = f"Erro de conexao com a API OpenAI: {str(e)}"
-                return (error_msg, False, error_msg)
+        if result:
+            return result
 
-        # No API key at all - this is the only case where is_fallback=True
-        return (
-            "A inteligencia artificial nao esta configurada. "
-            "Por favor, va em Configuracoes e preencha sua chave de API.",
-            True,
-            None,
-        )
+        # Both failed or no API keys configured
+        if not self.ai_api_key:
+            return (
+                "A inteligencia artificial nao esta configurada. "
+                "Por favor, va em Configuracoes e preencha sua chave de API.",
+                True,
+                None,
+            )
+
+        error_msg = "Todos os provedores de IA falharam. Tente novamente em alguns instantes."
+        return (error_msg, False, error_msg)
 
     async def _execute_action(
         self, response: str, action_type: str, db: Session, attachment_path: str = None, user_id: int = 0
