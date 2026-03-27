@@ -2,6 +2,7 @@ import { Component, OnInit, NgZone, ElementRef, ViewChild, AfterViewInit, Change
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { I18nService } from '../../services/i18n.service';
 
 declare const google: any;
 
@@ -26,6 +27,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     private router: Router,
     private ngZone: NgZone,
     private cdr: ChangeDetectorRef,
+    private i18n: I18nService,
   ) {}
 
   ngOnInit(): void {
@@ -40,11 +42,11 @@ export class LoginComponent implements OnInit, AfterViewInit {
         if (this.clientId) {
           this.loadGoogleScript();
         } else {
-          this.error = 'Google Client ID nao configurado no servidor.';
+          this.error = this.i18n.t('login.googleNotConfigured');
         }
       },
       error: () => {
-        this.error = 'Erro ao conectar com o servidor.';
+        this.error = this.i18n.t('login.serverError');
       },
     });
   }
@@ -76,7 +78,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
       }
     };
     script.onerror = () => {
-      this.error = 'Erro ao carregar Google Sign-In.';
+      this.error = this.i18n.t('login.googleLoadError');
     };
     document.head.appendChild(script);
   }
@@ -114,7 +116,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
         },
         error: (err) => {
           this.loading = false;
-          this.error = err.error?.detail || 'Erro ao fazer login. Tente novamente.';
+          this.error = err.error?.detail || this.i18n.t('login.loginError');
         },
       });
     });

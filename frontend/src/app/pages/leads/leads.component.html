@@ -3,57 +3,57 @@
   <div class="funnel-bar">
     <div class="funnel-card card-novo" (click)="filterByStatus('novo')" [class.active]="activeStatusFilter === 'novo'">
       <span class="funnel-count">{{ stats.novo }}</span>
-      <span class="funnel-label">Novo</span>
+      <span class="funnel-label">{{ i18n.t('leads.novo') }}</span>
     </div>
     <div class="funnel-card card-contatado" (click)="filterByStatus('contatado')" [class.active]="activeStatusFilter === 'contatado'">
       <span class="funnel-count">{{ stats.contatado }}</span>
-      <span class="funnel-label">Contatado</span>
+      <span class="funnel-label">{{ i18n.t('leads.contatado') }}</span>
     </div>
     <div class="funnel-card card-interessado" (click)="filterByStatus('interessado')" [class.active]="activeStatusFilter === 'interessado'">
       <span class="funnel-count">{{ stats.interessado }}</span>
-      <span class="funnel-label">Interessado</span>
+      <span class="funnel-label">{{ i18n.t('leads.interessado') }}</span>
     </div>
     <div class="funnel-card card-convertido" (click)="filterByStatus('convertido')" [class.active]="activeStatusFilter === 'convertido'">
       <span class="funnel-count">{{ stats.convertido }}</span>
-      <span class="funnel-label">Convertido</span>
+      <span class="funnel-label">{{ i18n.t('leads.convertido') }}</span>
     </div>
     <div class="funnel-card card-perdido" (click)="filterByStatus('perdido')" [class.active]="activeStatusFilter === 'perdido'">
       <span class="funnel-count">{{ stats.perdido }}</span>
-      <span class="funnel-label">Perdido</span>
+      <span class="funnel-label">{{ i18n.t('leads.perdido') }}</span>
     </div>
   </div>
 
   <!-- Actions Bar -->
   <div class="actions-bar">
     <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Buscar leads</mat-label>
+      <mat-label>{{ i18n.t('leads.searchLeads') }}</mat-label>
       <mat-icon matPrefix>search</mat-icon>
-      <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" placeholder="Nome, email ou telefone">
+      <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" [placeholder]="i18n.t('leads.searchPlaceholder')">
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>Status</mat-label>
+      <mat-label>{{ i18n.t('leads.status') }}</mat-label>
       <mat-select [(ngModel)]="activeStatusFilter" (selectionChange)="loadLeads()">
-        <mat-option [value]="''">Todos</mat-option>
-        <mat-option value="novo">Novo</mat-option>
-        <mat-option value="contatado">Contatado</mat-option>
-        <mat-option value="interessado">Interessado</mat-option>
-        <mat-option value="convertido">Convertido</mat-option>
-        <mat-option value="perdido">Perdido</mat-option>
+        <mat-option [value]="''">{{ i18n.t('leads.all') }}</mat-option>
+        <mat-option value="novo">{{ i18n.t('leads.novo') }}</mat-option>
+        <mat-option value="contatado">{{ i18n.t('leads.contatado') }}</mat-option>
+        <mat-option value="interessado">{{ i18n.t('leads.interessado') }}</mat-option>
+        <mat-option value="convertido">{{ i18n.t('leads.convertido') }}</mat-option>
+        <mat-option value="perdido">{{ i18n.t('leads.perdido') }}</mat-option>
       </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>Tag</mat-label>
+      <mat-label>{{ i18n.t('leads.tag') }}</mat-label>
       <input matInput [(ngModel)]="tagFilter" (ngModelChange)="onSearchChange()">
     </mat-form-field>
 
     <div class="action-buttons">
       <button mat-flat-button color="primary" (click)="openLeadDialog()">
-        <mat-icon>add</mat-icon> Novo Lead
+        <mat-icon>add</mat-icon> {{ i18n.t('leads.newLead') }}
       </button>
       <button mat-stroked-button color="accent" (click)="csvInput.click()">
-        <mat-icon>upload_file</mat-icon> Importar CSV
+        <mat-icon>upload_file</mat-icon> {{ i18n.t('leads.importCsv') }}
       </button>
       <input #csvInput type="file" accept=".csv" hidden (change)="onCsvSelected($event)">
     </div>
@@ -64,27 +64,27 @@
     <table mat-table [dataSource]="dataSource" matSort class="leads-table">
 
       <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Nome</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ i18n.t('leads.thName') }}</th>
         <td mat-cell *matCellDef="let lead">{{ lead.name }}</td>
       </ng-container>
 
       <ng-container matColumnDef="email">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ i18n.t('leads.thEmail') }}</th>
         <td mat-cell *matCellDef="let lead">{{ lead.email || '-' }}</td>
       </ng-container>
 
       <ng-container matColumnDef="phone">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Telefone</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ i18n.t('leads.thPhone') }}</th>
         <td mat-cell *matCellDef="let lead">{{ lead.phone || '-' }}</td>
       </ng-container>
 
       <ng-container matColumnDef="source">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Origem</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ i18n.t('leads.thSource') }}</th>
         <td mat-cell *matCellDef="let lead">{{ getSourceLabel(lead.source) }}</td>
       </ng-container>
 
       <ng-container matColumnDef="funnel_status">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ i18n.t('leads.thStatus') }}</th>
         <td mat-cell *matCellDef="let lead">
           <span class="status-badge" [class]="'badge-' + lead.funnel_status">
             {{ getStatusLabel(lead.funnel_status) }}
@@ -93,7 +93,7 @@
       </ng-container>
 
       <ng-container matColumnDef="tags">
-        <th mat-header-cell *matHeaderCellDef>Tags</th>
+        <th mat-header-cell *matHeaderCellDef>{{ i18n.t('leads.thTags') }}</th>
         <td mat-cell *matCellDef="let lead">
           <div class="tags-cell">
             @for (tag of getTagsList(lead.tags); track tag) {
@@ -104,22 +104,22 @@
       </ng-container>
 
       <ng-container matColumnDef="value">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Valor</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ i18n.t('leads.thValue') }}</th>
         <td mat-cell *matCellDef="let lead">
           {{ lead.value ? formatPrice(lead.value) : '-' }}
         </td>
       </ng-container>
 
       <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Acoes</th>
+        <th mat-header-cell *matHeaderCellDef>{{ i18n.t('leads.thActions') }}</th>
         <td mat-cell *matCellDef="let lead">
-          <button mat-icon-button color="primary" (click)="openLeadDialog(lead)" matTooltip="Editar">
+          <button mat-icon-button color="primary" (click)="openLeadDialog(lead)" [matTooltip]="i18n.t('leads.edit')">
             <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button color="accent" (click)="openInteractions(lead)" matTooltip="Historico">
+          <button mat-icon-button color="accent" (click)="openInteractions(lead)" [matTooltip]="i18n.t('leads.history')">
             <mat-icon>history</mat-icon>
           </button>
-          <button mat-icon-button color="warn" (click)="confirmDelete(lead)" matTooltip="Excluir">
+          <button mat-icon-button color="warn" (click)="confirmDelete(lead)" [matTooltip]="i18n.t('leads.deleteAction')">
             <mat-icon>delete</mat-icon>
           </button>
         </td>
@@ -132,7 +132,7 @@
     @if (leads.length === 0 && !loading) {
       <div class="empty-state">
         <mat-icon>people_outline</mat-icon>
-        <p>Nenhum lead encontrado.</p>
+        <p>{{ i18n.t('leads.noLeads') }}</p>
       </div>
     }
 

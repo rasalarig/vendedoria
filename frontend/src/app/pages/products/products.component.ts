@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ProductService, Product } from '../../services/product.service';
+import { I18nService } from '../../services/i18n.service';
 
 @Component({
   selector: 'app-products',
@@ -19,12 +20,12 @@ import { ProductService, Product } from '../../services/product.service';
     <div class="products-page">
       <div class="page-header">
         <div>
-          <h1>Seus Produtos</h1>
-          <p class="subtitle">Gerencie os produtos e servicos do seu negocio</p>
+          <h1>{{ i18n.t('products.title') }}</h1>
+          <p class="subtitle">{{ i18n.t('products.subtitle') }}</p>
         </div>
         <button mat-flat-button color="primary" (click)="navigateToNew()" class="new-btn">
           <mat-icon>add</mat-icon>
-          Novo Produto
+          {{ i18n.t('products.newProduct') }}
         </button>
       </div>
 
@@ -33,11 +34,11 @@ import { ProductService, Product } from '../../services/product.service';
           <div class="empty-icon-wrapper">
             <mat-icon class="empty-icon">inventory_2</mat-icon>
           </div>
-          <h2>Nenhum produto cadastrado</h2>
-          <p class="empty-hint">Adicione seus produtos para que a IA possa criar criativos incriveis para voce.</p>
+          <h2>{{ i18n.t('products.noProducts') }}</h2>
+          <p class="empty-hint">{{ i18n.t('products.emptyHint') }}</p>
           <button mat-flat-button color="primary" (click)="navigateToNew()" class="cta-btn">
             <mat-icon>add</mat-icon>
-            Cadastrar primeiro produto
+            {{ i18n.t('products.registerFirst') }}
           </button>
         </div>
       }
@@ -53,7 +54,7 @@ import { ProductService, Product } from '../../services/product.service';
                   <mat-icon>shopping_bag</mat-icon>
                 </div>
               }
-              <button class="delete-btn" mat-icon-button (click)="confirmDelete($event, product)" title="Excluir produto">
+              <button class="delete-btn" mat-icon-button (click)="confirmDelete($event, product)" [title]="i18n.t('products.deleteProduct')">
                 <mat-icon>delete_outline</mat-icon>
               </button>
             </div>
@@ -347,6 +348,7 @@ export class ProductsComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private router: Router,
+    public i18n: I18nService,
   ) {}
 
   ngOnInit(): void {
@@ -368,7 +370,7 @@ export class ProductsComponent implements OnInit {
   }
 
   getImageUrl(path: string): string {
-    const base = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const base = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
     return base + path;
   }
 
@@ -395,7 +397,7 @@ export class ProductsComponent implements OnInit {
 
   confirmDelete(event: MouseEvent, product: Product): void {
     event.stopPropagation();
-    const confirmed = window.confirm(`Tem certeza que deseja excluir "${product.name}"?`);
+    const confirmed = window.confirm(`${this.i18n.t('products.confirmDelete')} "${product.name}"?`);
     if (confirmed) {
       this.productService.delete(product.id).subscribe({
         next: () => this.loadProducts(),

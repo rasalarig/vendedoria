@@ -292,7 +292,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   getAttachmentUrl(path: string | undefined): string {
     if (!path) return '';
     if (window.location.hostname === 'localhost') {
-      return 'http://localhost:8000' + path;
+      return 'http://localhost:8001' + path;
     }
     return path;
   }

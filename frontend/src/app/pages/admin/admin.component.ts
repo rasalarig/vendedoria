@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../services/i18n.service';
 
 @Component({
   selector: 'app-admin',
@@ -12,12 +13,12 @@ import { MatIconModule } from '@angular/material/icon';
       <!-- Header -->
       <div class="page-header">
         <div class="header-left">
-          <h1>Painel Administrativo</h1>
-          <p class="subtitle">Creditos, limites e uso das plataformas pagas</p>
+          <h1>{{ i18n.t('admin.title') }}</h1>
+          <p class="subtitle">{{ i18n.t('admin.subtitle') }}</p>
           @if (exchangeRate) {
             <div class="exchange-rate-banner">
               <mat-icon>currency_exchange</mat-icon>
-              <span>Cotacao: US$ 1 = R$ {{ formatBrl(exchangeRate.usd_brl) }} (fonte: {{ exchangeRate.source }})</span>
+              <span>{{ i18n.t('admin.exchangeRate') }}: US$ 1 = R$ {{ formatBrl(exchangeRate.usd_brl) }} ({{ i18n.t('admin.source') }}: {{ exchangeRate.source }})</span>
             </div>
           }
         </div>
@@ -31,7 +32,7 @@ import { MatIconModule } from '@angular/material/icon';
       @if (loading) {
         <div class="loading-state">
           <mat-icon class="spin">hourglass_empty</mat-icon>
-          <p>Carregando dados...</p>
+          <p>{{ i18n.t('admin.loadingData') }}</p>
         </div>
       }
 
@@ -44,7 +45,7 @@ import { MatIconModule } from '@angular/material/icon';
               <mat-icon>trending_down</mat-icon>
             </div>
             <div class="summary-info">
-              <span class="summary-label">Custos Operacionais</span>
+              <span class="summary-label">{{ i18n.t('admin.operationalCosts') }}</span>
               <span class="summary-value">{{ formatValue(summary.total_platform_cost_usd, summary.total_platform_cost_brl) }}</span>
               <span class="summary-hint">Together AI + Veo 3</span>
             </div>
@@ -54,9 +55,9 @@ import { MatIconModule } from '@angular/material/icon';
               <mat-icon>card_giftcard</mat-icon>
             </div>
             <div class="summary-info">
-              <span class="summary-label">Bonus Concedidos</span>
+              <span class="summary-label">{{ i18n.t('admin.bonusGranted') }}</span>
               <span class="summary-value">{{ formatValue(summary.total_bonus_usd, summary.total_bonus_brl) }}</span>
-              <span class="summary-hint">Investimento sem retorno</span>
+              <span class="summary-hint">{{ i18n.t('admin.bonusHint') }}</span>
             </div>
           </div>
           <div class="summary-card revenue-card" (click)="openModal('revenue')">
@@ -64,9 +65,9 @@ import { MatIconModule } from '@angular/material/icon';
               <mat-icon>trending_up</mat-icon>
             </div>
             <div class="summary-info">
-              <span class="summary-label">Receita</span>
+              <span class="summary-label">{{ i18n.t('admin.revenue') }}</span>
               <span class="summary-value">{{ formatValue(summary.total_revenue_usd, summary.total_revenue_brl) }}</span>
-              <span class="summary-hint">Creditos comprados</span>
+              <span class="summary-hint">{{ i18n.t('admin.revenueHint') }}</span>
             </div>
           </div>
         </div>
@@ -1044,10 +1045,10 @@ export class AdminComponent implements OnInit {
   breakdownData: any = null;
   modalExchangeRate = 5.70;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, public i18n: I18nService) {}
 
   ngOnInit(): void {
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
     this.http.get<any>(`${backendUrl}/api/admin/platform-status`).subscribe({
       next: (data) => {
         this.platforms = data.platforms;
@@ -1087,7 +1088,7 @@ export class AdminComponent implements OnInit {
     this.activeModal = type;
     this.modalLoading = true;
 
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
 
     switch (type) {
       case 'users':

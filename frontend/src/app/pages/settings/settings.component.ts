@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { SettingsService, AppSettings } from '../../services/settings.service';
+import { I18nService } from '../../services/i18n.service';
 
 @Component({
   selector: 'app-settings',
@@ -78,113 +79,115 @@ export class SettingsComponent implements OnInit {
   helpModalLink = '';
   helpModalLinkText = '';
 
-  private helpContent: Record<string, { title: string; steps: string[]; link?: string; linkText?: string }> = {
-    overview: {
-      title: 'Como comecar a criar campanhas',
-      steps: [
-        'Complete todos os itens obrigatorios marcados com X vermelho',
-        'Os itens opcionais podem ser configurados depois',
-        'Quando todos os itens estiverem verdes, voce pode criar campanhas pelo chat',
-        'Dica: siga os itens de cima para baixo na ordem apresentada'
-      ]
-    },
-    meta_connected: {
-      title: 'Como conectar sua conta Meta',
-      steps: [
-        'Acesse developers.facebook.com e crie um app do tipo "Empresa" (se ainda nao tiver)',
-        'Copie o App ID e o App Secret do seu app',
-        'Na secao "Credenciais" abaixo, cole o App ID e App Secret nos campos correspondentes',
-        'Clique em "Conectar com Meta" — voce sera redirecionado ao Facebook',
-        'Faca login com sua conta do Facebook e autorize o acesso',
-        'Selecione o portfolio empresarial (Business Manager) que contem sua conta de anuncios',
-        'Pronto! O Vendedoria tera acesso para gerenciar suas campanhas'
-      ],
-      link: 'https://developers.facebook.com/apps/',
-      linkText: 'Abrir Meta for Developers'
-    },
-    ad_account: {
-      title: 'Como selecionar a conta de anuncios',
-      steps: [
-        'Primeiro, conecte sua conta Meta (passo anterior)',
-        'Apos conectar, as contas de anuncios do seu Business Manager aparecerao automaticamente',
-        'Selecione a conta que deseja usar para veicular campanhas',
-        'A conta deve estar ATIVA (sem restricoes ou bloqueios)',
-        'Se nao aparecer nenhuma conta, crie uma em business.facebook.com > Configuracoes > Contas de anuncios'
-      ],
-      link: 'https://business.facebook.com/settings/ad-accounts',
-      linkText: 'Gerenciar contas no Business Manager'
-    },
-    facebook_page: {
-      title: 'Como vincular uma pagina do Facebook',
-      steps: [
-        'Voce precisa ter uma Pagina do Facebook para seus anuncios aparecerem',
-        'Os anuncios no Facebook e Instagram sao publicados em nome dessa pagina',
-        'Se ainda nao tem uma pagina, crie uma em facebook.com/pages/creation/',
-        'Vincule a pagina ao seu Business Manager em business.facebook.com > Configuracoes > Paginas',
-        'Apos conectar o Meta no Vendedoria, as paginas disponiveis serao listadas automaticamente',
-        'Selecione a pagina desejada na secao de configuracoes'
-      ],
-      link: 'https://www.facebook.com/pages/creation/',
-      linkText: 'Criar pagina no Facebook'
-    },
-    pixel_configured: {
-      title: 'Como configurar o Meta Pixel',
-      steps: [
-        'O Pixel e um codigo que rastreia visitantes e conversoes no seu site (opcional, mas recomendado)',
-        'Va na aba "Pixel" nas configuracoes do Vendedoria para criar ou vincular um pixel',
-        'Apos criar, copie o codigo do pixel e instale no seu site (no <head> de todas as paginas)',
-        'Com o pixel instalado, o Meta consegue otimizar suas campanhas para conversoes reais',
-        'Voce tambem pode gerenciar pixels diretamente no Events Manager do Meta'
-      ],
-      link: 'https://business.facebook.com/events_manager',
-      linkText: 'Abrir Events Manager'
-    },
-    has_product: {
-      title: 'Como cadastrar um produto',
-      steps: [
-        'Use o chat: diga "quero cadastrar um produto" e a IA vai guiar voce',
-        'Ou acesse a aba "Produtos" e clique em "Novo Produto"',
-        'Preencha: nome do produto, descricao, preco e URL do site/landing page',
-        'A URL e importante — e para la que os anuncios vao direcionar os clientes',
-        'Voce pode cadastrar quantos produtos quiser e criar campanhas para cada um'
-      ]
-    },
-    has_creative: {
-      title: 'Como gerar criativos para anuncios',
-      steps: [
-        'Apos cadastrar um produto, peca no chat: "gere criativos para [nome do produto]"',
-        'A IA vai gerar automaticamente imagens e textos para seus anuncios',
-        'Voce vera um preview de cada criativo gerado',
-        'Aprove pelo menos 1 criativo — so apos a aprovacao a campanha pode ser criada',
-        'Voce pode pedir para gerar mais opcoes se nao gostar dos resultados'
-      ]
-    },
-    payment_method: {
-      title: 'Como configurar metodo de pagamento',
-      steps: [
-        'Acesse o Gerenciador de Anuncios do Meta (Ads Manager)',
-        'Va em Configuracoes > Informacoes de pagamento',
-        'Adicione um metodo de pagamento: cartao de credito, boleto bancario ou Pix',
-        'Sem metodo de pagamento, suas campanhas nao serao veiculadas pelo Meta',
-        'O Meta cobra diretamente na forma de pagamento configurada — o Vendedoria nao intermedia pagamentos'
-      ],
-      link: 'https://www.facebook.com/ads/manager/account_settings/account_billing/',
-      linkText: 'Configurar pagamento no Ads Manager'
-    },
-    app_mode_live: {
-      title: 'Como publicar o app Meta (modo Live)',
-      steps: [
-        'Acesse developers.facebook.com e selecione seu app',
-        'No menu lateral, clique em "Publicar"',
-        'O Meta pode pedir que voce complete a "Verificacao do app" antes de publicar',
-        'Isso inclui: politica de privacidade, descricao do uso dos dados, e revisao de permissoes',
-        'Apos aprovado, o app muda de "Desenvolvimento" para "Live" e pode ser usado por qualquer pessoa',
-        'Enquanto estiver em Desenvolvimento, apenas usuarios de teste podem usar o app'
-      ],
-      link: 'https://developers.facebook.com/apps/',
-      linkText: 'Abrir Meta for Developers'
-    }
-  };
+  private getHelpContent(): Record<string, { title: string; steps: string[]; link?: string; linkText?: string }> {
+    return {
+      overview: {
+        title: this.i18n.t('settings.helpOverviewTitle'),
+        steps: [
+          this.i18n.t('settings.helpOverviewStep1'),
+          this.i18n.t('settings.helpOverviewStep2'),
+          this.i18n.t('settings.helpOverviewStep3'),
+          this.i18n.t('settings.helpOverviewStep4'),
+        ]
+      },
+      meta_connected: {
+        title: this.i18n.t('settings.helpMetaTitle'),
+        steps: [
+          this.i18n.t('settings.helpMetaStep1'),
+          this.i18n.t('settings.helpMetaStep2'),
+          this.i18n.t('settings.helpMetaStep3'),
+          this.i18n.t('settings.helpMetaStep4'),
+          this.i18n.t('settings.helpMetaStep5'),
+          this.i18n.t('settings.helpMetaStep6'),
+          this.i18n.t('settings.helpMetaStep7'),
+        ],
+        link: 'https://developers.facebook.com/apps/',
+        linkText: this.i18n.t('settings.helpMetaLink'),
+      },
+      ad_account: {
+        title: this.i18n.t('settings.helpAdAccountTitle'),
+        steps: [
+          this.i18n.t('settings.helpAdAccountStep1'),
+          this.i18n.t('settings.helpAdAccountStep2'),
+          this.i18n.t('settings.helpAdAccountStep3'),
+          this.i18n.t('settings.helpAdAccountStep4'),
+          this.i18n.t('settings.helpAdAccountStep5'),
+        ],
+        link: 'https://business.facebook.com/settings/ad-accounts',
+        linkText: this.i18n.t('settings.helpAdAccountLink'),
+      },
+      facebook_page: {
+        title: this.i18n.t('settings.helpFacebookPageTitle'),
+        steps: [
+          this.i18n.t('settings.helpFacebookPageStep1'),
+          this.i18n.t('settings.helpFacebookPageStep2'),
+          this.i18n.t('settings.helpFacebookPageStep3'),
+          this.i18n.t('settings.helpFacebookPageStep4'),
+          this.i18n.t('settings.helpFacebookPageStep5'),
+          this.i18n.t('settings.helpFacebookPageStep6'),
+        ],
+        link: 'https://www.facebook.com/pages/creation/',
+        linkText: this.i18n.t('settings.helpFacebookPageLink'),
+      },
+      pixel_configured: {
+        title: this.i18n.t('settings.helpPixelTitle'),
+        steps: [
+          this.i18n.t('settings.helpPixelStep1'),
+          this.i18n.t('settings.helpPixelStep2'),
+          this.i18n.t('settings.helpPixelStep3'),
+          this.i18n.t('settings.helpPixelStep4'),
+          this.i18n.t('settings.helpPixelStep5'),
+        ],
+        link: 'https://business.facebook.com/events_manager',
+        linkText: this.i18n.t('settings.helpPixelLink'),
+      },
+      has_product: {
+        title: this.i18n.t('settings.helpProductTitle'),
+        steps: [
+          this.i18n.t('settings.helpProductStep1'),
+          this.i18n.t('settings.helpProductStep2'),
+          this.i18n.t('settings.helpProductStep3'),
+          this.i18n.t('settings.helpProductStep4'),
+          this.i18n.t('settings.helpProductStep5'),
+        ]
+      },
+      has_creative: {
+        title: this.i18n.t('settings.helpCreativeTitle'),
+        steps: [
+          this.i18n.t('settings.helpCreativeStep1'),
+          this.i18n.t('settings.helpCreativeStep2'),
+          this.i18n.t('settings.helpCreativeStep3'),
+          this.i18n.t('settings.helpCreativeStep4'),
+          this.i18n.t('settings.helpCreativeStep5'),
+        ]
+      },
+      payment_method: {
+        title: this.i18n.t('settings.helpPaymentTitle'),
+        steps: [
+          this.i18n.t('settings.helpPaymentStep1'),
+          this.i18n.t('settings.helpPaymentStep2'),
+          this.i18n.t('settings.helpPaymentStep3'),
+          this.i18n.t('settings.helpPaymentStep4'),
+          this.i18n.t('settings.helpPaymentStep5'),
+        ],
+        link: 'https://www.facebook.com/ads/manager/account_settings/account_billing/',
+        linkText: this.i18n.t('settings.helpPaymentLink'),
+      },
+      app_mode_live: {
+        title: this.i18n.t('settings.helpAppLiveTitle'),
+        steps: [
+          this.i18n.t('settings.helpAppLiveStep1'),
+          this.i18n.t('settings.helpAppLiveStep2'),
+          this.i18n.t('settings.helpAppLiveStep3'),
+          this.i18n.t('settings.helpAppLiveStep4'),
+          this.i18n.t('settings.helpAppLiveStep5'),
+          this.i18n.t('settings.helpAppLiveStep6'),
+        ],
+        link: 'https://developers.facebook.com/apps/',
+        linkText: this.i18n.t('settings.helpAppLiveLink'),
+      }
+    };
+  }
 
   getCompletedCount(): number {
     if (!this.prerequisites) return 0;
@@ -211,6 +214,7 @@ export class SettingsComponent implements OnInit {
     private settingsService: SettingsService,
     private snackBar: MatSnackBar,
     private route: ActivatedRoute,
+    public i18n: I18nService,
   ) {}
 
   ngOnInit(): void {
@@ -296,7 +300,7 @@ export class SettingsComponent implements OnInit {
       next: (data) => {
         this.settings = data;
         this.saving = false;
-        this.snackBar.open('Configuracoes salvas com sucesso!', 'OK', {
+        this.snackBar.open(this.i18n.t('settings.saved'), 'OK', {
           duration: 3000,
           horizontalPosition: 'end',
           verticalPosition: 'top',
@@ -304,7 +308,7 @@ export class SettingsComponent implements OnInit {
       },
       error: () => {
         this.saving = false;
-        this.snackBar.open('Erro ao salvar configuracoes.', 'Fechar', {
+        this.snackBar.open(this.i18n.t('settings.saveError'), this.i18n.t('common.close'), {
           duration: 5000,
           horizontalPosition: 'end',
           verticalPosition: 'top',
@@ -327,11 +331,11 @@ export class SettingsComponent implements OnInit {
           this.openMetaAuth();
         },
         error: () => {
-          this.snackBar.open('Erro ao salvar App ID/Secret.', 'Fechar', { duration: 3000 });
+          this.snackBar.open(this.i18n.t('settings.errorSaveAppSecret'), this.i18n.t('common.close'), { duration: 3000 });
         },
       });
     } else {
-      this.snackBar.open('Preencha o App ID e App Secret primeiro.', 'Fechar', { duration: 3000 });
+      this.snackBar.open(this.i18n.t('settings.fillAppId'), this.i18n.t('common.close'), { duration: 3000 });
     }
   }
 
@@ -340,7 +344,7 @@ export class SettingsComponent implements OnInit {
     this.settingsService.getMetaAuthUrl().subscribe({
       next: (data) => {
         if (data.error) {
-          this.snackBar.open(data.error, 'Fechar', { duration: 5000 });
+          this.snackBar.open(data.error, this.i18n.t('common.close'), { duration: 5000 });
           this.metaLoading = false;
           return;
         }
@@ -374,7 +378,7 @@ export class SettingsComponent implements OnInit {
       },
       error: () => {
         this.metaLoading = false;
-        this.snackBar.open('Erro ao iniciar conexao com Facebook.', 'Fechar', { duration: 5000 });
+        this.snackBar.open(this.i18n.t('settings.errorMetaAuth'), this.i18n.t('common.close'), { duration: 5000 });
       },
     });
   }
@@ -383,19 +387,19 @@ export class SettingsComponent implements OnInit {
     this.settingsService.metaCallback(code).subscribe({
       next: (data) => {
         if (data.error) {
-          this.snackBar.open(`Erro: ${data.error}`, 'Fechar', { duration: 5000 });
+          this.snackBar.open(this.i18n.t('settings.errorPrefix').replace('{error}', data.error), this.i18n.t('common.close'), { duration: 5000 });
           this.metaLoading = false;
           return;
         }
         this.metaConnected = true;
         this.metaUserName = data.user_name || '';
-        this.snackBar.open(`Conectado como ${this.metaUserName}!`, 'OK', { duration: 3000 });
+        this.snackBar.open(this.i18n.t('settings.connectedAs').replace('{name}', this.metaUserName), 'OK', { duration: 3000 });
         this.loadMetaAccounts();
         this.loadSettings(); // Refresh settings
       },
       error: () => {
         this.metaLoading = false;
-        this.snackBar.open('Erro ao processar autorizacao.', 'Fechar', { duration: 5000 });
+        this.snackBar.open(this.i18n.t('settings.errorMetaCallback'), this.i18n.t('common.close'), { duration: 5000 });
       },
     });
   }
@@ -421,13 +425,13 @@ export class SettingsComponent implements OnInit {
       next: () => {
         this.metaSelectedAccount = accountId;
         this.settings.meta_ad_account_id = accountId;
-        this.snackBar.open('Conta de anuncios selecionada!', 'OK', { duration: 3000 });
+        this.snackBar.open(this.i18n.t('settings.adAccountSelected'), 'OK', { duration: 3000 });
       },
     });
   }
 
   openHelpModal(key: string): void {
-    const content = this.helpContent[key];
+    const content = this.getHelpContent()[key];
     if (content) {
       this.helpModalTitle = content.title;
       this.helpModalSteps = content.steps;
@@ -442,7 +446,7 @@ export class SettingsComponent implements OnInit {
   }
 
   disconnectMeta(): void {
-    if (confirm('Tem certeza que deseja desconectar sua conta Meta Ads?')) {
+    if (confirm(this.i18n.t('settings.disconnectConfirm'))) {
       this.settingsService.disconnectMeta().subscribe({
         next: () => {
           this.metaConnected = false;
@@ -451,7 +455,7 @@ export class SettingsComponent implements OnInit {
           this.metaSelectedAccount = '';
           this.settings.meta_access_token = '';
           this.settings.meta_ad_account_id = '';
-          this.snackBar.open('Meta Ads desconectado.', 'OK', { duration: 3000 });
+          this.snackBar.open(this.i18n.t('settings.metaDisconnected'), 'OK', { duration: 3000 });
         },
       });
     }

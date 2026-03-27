@@ -41,7 +41,7 @@ export interface FaceUploadResult {
 @Injectable({ providedIn: 'root' })
 export class SellerService {
   private apiUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api/sellers'
+    ? 'http://localhost:8001/api/sellers'
     : '/api/sellers';
 
   constructor(private http: HttpClient) {}

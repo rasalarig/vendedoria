@@ -14,6 +14,7 @@ import { CampaignService, Campaign, CampaignCreate } from '../../services/campai
 import { ProductService, Product } from '../../services/product.service';
 import { VideoCreativeService, GeneratedVideo } from '../../services/video-creative.service';
 import { SettingsService } from '../../services/settings.service';
+import { I18nService } from '../../services/i18n.service';
 import { Subscription, interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
@@ -36,12 +37,12 @@ import { switchMap } from 'rxjs/operators';
     <div class="campaigns-page">
       <div class="page-header">
         <div>
-          <h1>Campanhas</h1>
-          <p class="page-subtitle">Crie e gerencie suas campanhas de anuncios</p>
+          <h1>{{ i18n.t('campaigns.title') }}</h1>
+          <p class="page-subtitle">{{ i18n.t('campaigns.subtitle') }}</p>
         </div>
         <button class="btn-new-campaign" (click)="toggleWizard()">
           <mat-icon>{{ showWizard ? 'close' : 'add' }}</mat-icon>
-          {{ showWizard ? 'Fechar' : 'Nova Campanha' }}
+          {{ showWizard ? i18n.t('campaigns.close') : i18n.t('campaigns.new') }}
         </button>
       </div>
 
@@ -73,20 +74,20 @@ import { switchMap } from 'rxjs/operators';
           <!-- Step 1: Selecionar Criativo -->
           @if (currentStep === 0) {
             <div class="wizard-step">
-              <h2 class="step-title">Selecionar Criativo</h2>
-              <p class="step-desc">Escolha um video aprovado para usar na sua campanha</p>
+              <h2 class="step-title">{{ i18n.t('campaigns.selectCreative') }}</h2>
+              <p class="step-desc">{{ i18n.t('campaigns.selectCreativeDesc') }}</p>
 
               @if (loadingVideos) {
                 <div class="loading-state">
                   <mat-spinner diameter="40"></mat-spinner>
-                  <p>Carregando criativos...</p>
+                  <p>{{ i18n.t('campaigns.loadingCreatives') }}</p>
                 </div>
               } @else if (approvedVideos.length === 0) {
                 <div class="empty-creatives">
                   <mat-icon>videocam_off</mat-icon>
-                  <p>Voce precisa aprovar um criativo primeiro</p>
+                  <p>{{ i18n.t('campaigns.noCreatives') }}</p>
                   <button class="btn-go-creatives" (click)="goToCreatives()">
-                    <mat-icon>arrow_forward</mat-icon> Ir para Criativos
+                    <mat-icon>arrow_forward</mat-icon> {{ i18n.t('campaigns.goToCreatives') }}
                   </button>
                 </div>
               } @else {
@@ -106,8 +107,8 @@ import { switchMap } from 'rxjs/operators';
                         <div class="duration-badge">{{ formatDuration(video.duration) }}</div>
                       </div>
                       <div class="creative-info">
-                        <span class="creative-seller">{{ video.seller_name || 'Vendedor' }}</span>
-                        <span class="creative-product">{{ video.product_name || 'Produto' }}</span>
+                        <span class="creative-seller">{{ video.seller_name || i18n.t('wizard.seller') }}</span>
+                        <span class="creative-product">{{ video.product_name || i18n.t('creatives.product') }}</span>
                       </div>
                       @if (selectedVideoId === video.id) {
                         <div class="selected-overlay">
@@ -122,7 +123,7 @@ import { switchMap } from 'rxjs/operators';
               <div class="wizard-actions">
                 <div></div>
                 <button class="btn-next" [disabled]="!selectedVideoId" (click)="nextStep()">
-                  Proximo <mat-icon>arrow_forward</mat-icon>
+                  {{ i18n.t('common.next') }} <mat-icon>arrow_forward</mat-icon>
                 </button>
               </div>
             </div>
@@ -131,8 +132,8 @@ import { switchMap } from 'rxjs/operators';
           <!-- Step 2: Escolher Plataformas -->
           @if (currentStep === 1) {
             <div class="wizard-step">
-              <h2 class="step-title">Escolher Plataformas</h2>
-              <p class="step-desc">Selecione onde seus anuncios serao veiculados</p>
+              <h2 class="step-title">{{ i18n.t('campaigns.choosePlatforms') }}</h2>
+              <p class="step-desc">{{ i18n.t('campaigns.choosePlatformsDesc') }}</p>
 
               <div class="platforms-grid">
                 <div class="platform-card instagram"
@@ -168,10 +169,10 @@ import { switchMap } from 'rxjs/operators';
 
               <div class="wizard-actions">
                 <button class="btn-back" (click)="prevStep()">
-                  <mat-icon>arrow_back</mat-icon> Voltar
+                  <mat-icon>arrow_back</mat-icon> {{ i18n.t('common.back') }}
                 </button>
                 <button class="btn-next" [disabled]="!platformInstagram && !platformTikTok" (click)="nextStep()">
-                  Proximo <mat-icon>arrow_forward</mat-icon>
+                  {{ i18n.t('common.next') }} <mat-icon>arrow_forward</mat-icon>
                 </button>
               </div>
             </div>
@@ -180,14 +181,14 @@ import { switchMap } from 'rxjs/operators';
           <!-- Step 3: Definir Orcamento -->
           @if (currentStep === 2) {
             <div class="wizard-step">
-              <h2 class="step-title">Quanto quer investir por dia?</h2>
-              <p class="step-desc">Defina o orcamento diario e a duracao da campanha</p>
+              <h2 class="step-title">{{ i18n.t('campaigns.dailyBudget') }}</h2>
+              <p class="step-desc">{{ i18n.t('campaigns.dailyBudgetDesc') }}</p>
 
               <div class="budget-section">
                 <div class="budget-display">
                   <span class="budget-currency">R$</span>
                   <span class="budget-value">{{ dailyBudget }}</span>
-                  <span class="budget-period">/dia</span>
+                  <span class="budget-period">{{ i18n.t('campaigns.perDay') }}</span>
                 </div>
 
                 <div class="budget-slider-container">
@@ -201,33 +202,33 @@ import { switchMap } from 'rxjs/operators';
                 </div>
 
                 <div class="preset-buttons">
-                  <button class="preset-btn" [class.active]="dailyBudget === 20" (click)="setDailyBudget(20)">R$20/dia</button>
-                  <button class="preset-btn" [class.active]="dailyBudget === 50" (click)="setDailyBudget(50)">R$50/dia</button>
-                  <button class="preset-btn" [class.active]="dailyBudget === 100" (click)="setDailyBudget(100)">R$100/dia</button>
+                  <button class="preset-btn" [class.active]="dailyBudget === 20" (click)="setDailyBudget(20)">R$20{{ i18n.t('campaigns.perDay') }}</button>
+                  <button class="preset-btn" [class.active]="dailyBudget === 50" (click)="setDailyBudget(50)">R$50{{ i18n.t('campaigns.perDay') }}</button>
+                  <button class="preset-btn" [class.active]="dailyBudget === 100" (click)="setDailyBudget(100)">R$100{{ i18n.t('campaigns.perDay') }}</button>
                 </div>
 
                 <div class="reach-estimate">
                   <mat-icon>groups</mat-icon>
-                  <span>Alcance estimado: ~{{ estimatedReachMin | number:'1.0-0' }} - {{ estimatedReachMax | number:'1.0-0' }} pessoas/dia</span>
+                  <span>{{ i18n.t('campaigns.estimatedReach') }}: ~{{ estimatedReachMin | number:'1.0-0' }} - {{ estimatedReachMax | number:'1.0-0' }} {{ i18n.t('campaigns.peoplePerDay') }}</span>
                 </div>
 
                 <div class="duration-section">
-                  <h3 class="duration-title">Duracao da campanha</h3>
+                  <h3 class="duration-title">{{ i18n.t('campaigns.campaignDuration') }}</h3>
                   <div class="duration-options">
-                    <button class="duration-btn" [class.active]="campaignDuration === 7" (click)="setCampaignDuration(7)">7 dias</button>
-                    <button class="duration-btn" [class.active]="campaignDuration === 14" (click)="setCampaignDuration(14)">14 dias</button>
-                    <button class="duration-btn" [class.active]="campaignDuration === 30" (click)="setCampaignDuration(30)">30 dias</button>
-                    <button class="duration-btn" [class.active]="campaignDuration === 0" (click)="setCampaignDuration(0)">Continuo</button>
+                    <button class="duration-btn" [class.active]="campaignDuration === 7" (click)="setCampaignDuration(7)">7 {{ i18n.t('campaigns.days') }}</button>
+                    <button class="duration-btn" [class.active]="campaignDuration === 14" (click)="setCampaignDuration(14)">14 {{ i18n.t('campaigns.days') }}</button>
+                    <button class="duration-btn" [class.active]="campaignDuration === 30" (click)="setCampaignDuration(30)">30 {{ i18n.t('campaigns.days') }}</button>
+                    <button class="duration-btn" [class.active]="campaignDuration === 0" (click)="setCampaignDuration(0)">{{ i18n.t('campaigns.continuous') }}</button>
                   </div>
                 </div>
 
                 <div class="total-budget-display">
-                  <span class="total-label">Total estimado:</span>
+                  <span class="total-label">{{ i18n.t('campaigns.totalEstimated') }}</span>
                   <span class="total-value">
                     @if (campaignDuration > 0) {
                       R$ {{ (dailyBudget * campaignDuration) | number:'1.2-2' }}
                     } @else {
-                      Sem limite (continuo)
+                      {{ i18n.t('campaigns.noLimit') }}
                     }
                   </span>
                 </div>
@@ -235,10 +236,10 @@ import { switchMap } from 'rxjs/operators';
 
               <div class="wizard-actions">
                 <button class="btn-back" (click)="prevStep()">
-                  <mat-icon>arrow_back</mat-icon> Voltar
+                  <mat-icon>arrow_back</mat-icon> {{ i18n.t('common.back') }}
                 </button>
                 <button class="btn-next" (click)="nextStep()">
-                  Proximo <mat-icon>arrow_forward</mat-icon>
+                  {{ i18n.t('common.next') }} <mat-icon>arrow_forward</mat-icon>
                 </button>
               </div>
             </div>
@@ -247,24 +248,24 @@ import { switchMap } from 'rxjs/operators';
           <!-- Step 4: Revisar e Publicar -->
           @if (currentStep === 3) {
             <div class="wizard-step">
-              <h2 class="step-title">Revisar e Publicar</h2>
-              <p class="step-desc">Confira os detalhes antes de publicar sua campanha</p>
+              <h2 class="step-title">{{ i18n.t('campaigns.reviewPublish') }}</h2>
+              <p class="step-desc">{{ i18n.t('campaigns.reviewPublishDesc') }}</p>
 
               <div class="review-card">
                 <div class="review-section">
-                  <h4 class="review-label">Criativo</h4>
+                  <h4 class="review-label">{{ i18n.t('campaigns.creative') }}</h4>
                   <div class="review-creative">
                     @if (selectedVideo) {
                       <div class="review-thumb">
                         @if (selectedVideo.thumbnail_url) {
-                          <img [src]="selectedVideo.thumbnail_url" alt="Criativo" (error)="onImageError($event)">
+                          <img [src]="selectedVideo.thumbnail_url" [alt]="i18n.t('campaigns.creative')" (error)="onImageError($event)">
                         } @else {
                           <div class="thumb-placeholder-sm"><mat-icon>videocam</mat-icon></div>
                         }
                       </div>
                       <div class="review-creative-info">
-                        <span class="review-product-name">{{ selectedVideo.product_name || 'Produto' }}</span>
-                        <span class="review-seller">{{ selectedVideo.seller_name || 'Vendedor' }}</span>
+                        <span class="review-product-name">{{ selectedVideo.product_name || i18n.t('creatives.product') }}</span>
+                        <span class="review-seller">{{ selectedVideo.seller_name || i18n.t('wizard.seller') }}</span>
                       </div>
                     }
                   </div>
@@ -273,7 +274,7 @@ import { switchMap } from 'rxjs/operators';
                 <mat-divider></mat-divider>
 
                 <div class="review-section">
-                  <h4 class="review-label">Plataformas</h4>
+                  <h4 class="review-label">{{ i18n.t('campaigns.platforms') }}</h4>
                   <div class="review-platforms">
                     @if (platformInstagram) {
                       <span class="review-platform-badge instagram">
@@ -291,21 +292,21 @@ import { switchMap } from 'rxjs/operators';
                 <mat-divider></mat-divider>
 
                 <div class="review-section">
-                  <h4 class="review-label">Orcamento</h4>
+                  <h4 class="review-label">{{ i18n.t('campaigns.budget') }}</h4>
                   <div class="review-budget">
-                    <span>R$ {{ dailyBudget }}/dia por {{ campaignDuration > 0 ? campaignDuration + ' dias' : 'tempo indeterminado' }}</span>
+                    <span>R$ {{ dailyBudget }}{{ i18n.t('campaigns.perDay') }} {{ campaignDuration > 0 ? campaignDuration + ' ' + i18n.t('campaigns.days') : i18n.t('campaigns.indefiniteTime') }}</span>
                   </div>
                 </div>
 
                 <mat-divider></mat-divider>
 
                 <div class="review-section">
-                  <h4 class="review-label">Total</h4>
+                  <h4 class="review-label">{{ i18n.t('campaigns.total') }}</h4>
                   <div class="review-total">
                     @if (campaignDuration > 0) {
                       <span>R$ {{ (dailyBudget * campaignDuration) | number:'1.2-2' }}</span>
                     } @else {
-                      <span>Sem limite (continuo)</span>
+                      <span>{{ i18n.t('campaigns.noLimit') }}</span>
                     }
                   </div>
                 </div>
@@ -313,25 +314,25 @@ import { switchMap } from 'rxjs/operators';
                 <mat-divider></mat-divider>
 
                 <div class="review-section">
-                  <h4 class="review-label">Segmentacao</h4>
+                  <h4 class="review-label">{{ i18n.t('campaigns.targeting') }}</h4>
                   <div class="review-targeting">
                     <mat-icon>smart_toy</mat-icon>
-                    <span>Automatico (baseado no produto)</span>
+                    <span>{{ i18n.t('campaigns.autoTargeting') }}</span>
                   </div>
                 </div>
               </div>
 
               <div class="wizard-actions">
                 <button class="btn-back" (click)="prevStep()">
-                  <mat-icon>arrow_back</mat-icon> Voltar
+                  <mat-icon>arrow_back</mat-icon> {{ i18n.t('common.back') }}
                 </button>
                 <button class="btn-publish" [disabled]="creating" (click)="publishCampaign()">
                   @if (creating) {
                     <mat-spinner diameter="20" class="btn-spinner"></mat-spinner>
-                    <span>Publicando...</span>
+                    <span>{{ i18n.t('campaigns.publishing') }}</span>
                   } @else {
                     <mat-icon>rocket_launch</mat-icon>
-                    <span>Publicar Campanha</span>
+                    <span>{{ i18n.t('campaigns.publish') }}</span>
                   }
                 </button>
               </div>
@@ -342,18 +343,18 @@ import { switchMap } from 'rxjs/operators';
 
       <!-- ===== CAMPAIGN LIST ===== -->
       <div class="campaigns-list-section">
-        <h2>Suas Campanhas</h2>
+        <h2>{{ i18n.t('campaigns.yourCampaigns') }}</h2>
 
         @if (loadingCampaigns) {
           <div class="loading-state">
             <mat-spinner diameter="40"></mat-spinner>
-            <p>Carregando campanhas...</p>
+            <p>{{ i18n.t('campaigns.loadingCampaigns') }}</p>
           </div>
         } @else if (campaigns.length === 0) {
           <div class="empty-state">
             <mat-icon class="empty-icon">campaign</mat-icon>
-            <p>Nenhuma campanha criada ainda</p>
-            <p class="empty-hint">Clique em "Nova Campanha" para criar sua primeira campanha</p>
+            <p>{{ i18n.t('campaigns.noCampaigns') }}</p>
+            <p class="empty-hint">{{ i18n.t('campaigns.noCampaignsHint') }}</p>
           </div>
         } @else {
           <div class="campaigns-grid">
@@ -386,29 +387,29 @@ import { switchMap } from 'rxjs/operators';
                 <div class="campaign-card-metrics">
                   <div class="metric-inline">
                     <span class="metric-val">{{ campaign.impressions | number }}</span>
-                    <span class="metric-lbl">impressoes</span>
+                    <span class="metric-lbl">{{ i18n.t('campaigns.impressions') }}</span>
                   </div>
                   <div class="metric-inline">
                     <span class="metric-val">{{ campaign.clicks | number }}</span>
-                    <span class="metric-lbl">cliques</span>
+                    <span class="metric-lbl">{{ i18n.t('campaigns.clicks') }}</span>
                   </div>
                   <div class="metric-inline">
                     <span class="metric-val">R$ {{ campaign.spent | number:'1.2-2' }}</span>
-                    <span class="metric-lbl">gasto</span>
+                    <span class="metric-lbl">{{ i18n.t('campaigns.spent') }}</span>
                   </div>
                 </div>
 
                 <div class="campaign-card-actions">
                   @if (campaign.status === 'active') {
-                    <button class="action-btn pause" (click)="pauseCampaign(campaign)" matTooltip="Pausar">
-                      <mat-icon>pause_circle</mat-icon> Pausar
+                    <button class="action-btn pause" (click)="pauseCampaign(campaign)" [matTooltip]="i18n.t('campaigns.pause')">
+                      <mat-icon>pause_circle</mat-icon> {{ i18n.t('campaigns.pause') }}
                     </button>
                   } @else if (campaign.status === 'paused' || campaign.status === 'draft') {
-                    <button class="action-btn resume" (click)="resumeCampaign(campaign)" matTooltip="Retomar">
-                      <mat-icon>play_circle</mat-icon> Retomar
+                    <button class="action-btn resume" (click)="resumeCampaign(campaign)" [matTooltip]="i18n.t('campaigns.resume')">
+                      <mat-icon>play_circle</mat-icon> {{ i18n.t('campaigns.resume') }}
                     </button>
                   }
-                  <button class="action-btn delete" (click)="deleteCampaign(campaign)" matTooltip="Excluir">
+                  <button class="action-btn delete" (click)="deleteCampaign(campaign)" [matTooltip]="i18n.t('common.delete')">
                     <mat-icon>delete_outline</mat-icon>
                   </button>
                 </div>
@@ -836,7 +837,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
   // Wizard state
   showWizard = false;
   currentStep = 0;
-  stepLabels = ['Criativo', 'Plataformas', 'Orcamento', 'Revisar'];
+  get stepLabels() { return [this.i18n.t('campaigns.stepCreative'), this.i18n.t('campaigns.stepPlatforms'), this.i18n.t('campaigns.stepBudget'), this.i18n.t('campaigns.stepReview')]; }
 
   // Step 1 - Creative
   approvedVideos: GeneratedVideo[] = [];
@@ -870,6 +871,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
     private videoCreativeService: VideoCreativeService,
     private settingsService: SettingsService,
     private snackBar: MatSnackBar,
+    public i18n: I18nService,
     private router: Router,
   ) {}
 
@@ -1049,14 +1051,14 @@ export class CampaignsComponent implements OnInit, OnDestroy {
     this.campaignService.create(data).subscribe({
       next: () => {
         this.creating = false;
-        this.showMessage('Campanha publicada com sucesso!');
+        this.showMessage(this.i18n.t('campaigns.publishSuccess'));
         this.showWizard = false;
         this.resetWizard();
         this.loadCampaigns();
       },
       error: (err) => {
         this.creating = false;
-        const msg = err?.error?.detail || 'Erro ao publicar campanha';
+        const msg = err?.error?.detail || this.i18n.t('campaigns.publishError');
         this.showMessage(msg, true);
       },
     });
@@ -1069,9 +1071,9 @@ export class CampaignsComponent implements OnInit, OnDestroy {
       next: (updated) => {
         const idx = this.campaigns.findIndex(c => c.id === campaign.id);
         if (idx >= 0) this.campaigns[idx] = updated;
-        this.showMessage('Campanha pausada');
+        this.showMessage(this.i18n.t('campaigns.pausedMsg'));
       },
-      error: () => this.showMessage('Erro ao pausar campanha', true),
+      error: () => this.showMessage(this.i18n.t('campaigns.pauseError'), true),
     });
   }
 
@@ -1080,34 +1082,34 @@ export class CampaignsComponent implements OnInit, OnDestroy {
       next: (updated) => {
         const idx = this.campaigns.findIndex(c => c.id === campaign.id);
         if (idx >= 0) this.campaigns[idx] = updated;
-        this.showMessage('Campanha retomada');
+        this.showMessage(this.i18n.t('campaigns.resumedMsg'));
       },
-      error: () => this.showMessage('Erro ao retomar campanha', true),
+      error: () => this.showMessage(this.i18n.t('campaigns.resumeError'), true),
     });
   }
 
   deleteCampaign(campaign: Campaign): void {
-    if (!confirm(`Excluir campanha "${campaign.name}"?`)) return;
+    if (!confirm(`${this.i18n.t('campaigns.deleteConfirm')} "${campaign.name}"?`)) return;
     this.campaignService.delete(campaign.id).subscribe({
       next: () => {
         this.campaigns = this.campaigns.filter(c => c.id !== campaign.id);
-        this.showMessage('Campanha excluida');
+        this.showMessage(this.i18n.t('campaigns.deletedMsg'));
       },
-      error: () => this.showMessage('Erro ao excluir campanha', true),
+      error: () => this.showMessage(this.i18n.t('campaigns.deleteError'), true),
     });
   }
 
   getStatusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      draft: 'RASCUNHO',
-      active: 'ATIVA',
-      paused: 'PAUSADA',
-      completed: 'CONCLUIDA',
-      error: 'ERRO',
-      mock: 'SIMULADO',
-      pending: 'PENDENTE',
+    const keyMap: Record<string, string> = {
+      draft: 'campaigns.statusDraft',
+      active: 'campaigns.statusActive',
+      paused: 'campaigns.statusPaused',
+      completed: 'campaigns.statusCompleted',
+      error: 'campaigns.statusError',
+      mock: 'campaigns.statusMock',
+      pending: 'campaigns.statusPending',
     };
-    return labels[status] || status.toUpperCase();
+    return keyMap[status] ? this.i18n.t(keyMap[status]) : status.toUpperCase();
   }
 
   onImageError(event: Event): void {

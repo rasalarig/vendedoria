@@ -362,7 +362,7 @@ export class SellersComponent implements OnInit {
     // Custom faces: use the stored avatar_face_url
     if (seller.avatar_face.startsWith('custom') && seller.avatar_face_url) {
       const baseUrl = window.location.hostname === 'localhost'
-        ? 'http://localhost:8000'
+        ? 'http://localhost:8001'
         : '';
       // If already a full URL, return as-is; otherwise prepend base
       return seller.avatar_face_url.startsWith('http')

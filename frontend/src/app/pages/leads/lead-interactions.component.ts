@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Lead, LeadInteraction, LeadService } from '../../services/lead.service';
+import { I18nService } from '../../services/i18n.service';
 
 export interface InteractionDialogData {
   lead: Lead;
@@ -27,28 +28,28 @@ export interface InteractionDialogData {
     MatIconModule,
   ],
   template: `
-    <h2 mat-dialog-title>Historico - {{ data.lead.name }}</h2>
+    <h2 mat-dialog-title>{{ i18n.t('leads.interactionsTitle') }} - {{ data.lead.name }}</h2>
     <mat-dialog-content>
       <div class="status-section">
         <mat-form-field appearance="outline" class="status-select">
-          <mat-label>Status do Funil</mat-label>
+          <mat-label>{{ i18n.t('leads.funnelStatusLabel') }}</mat-label>
           <mat-select [(ngModel)]="currentStatus" (selectionChange)="onStatusChange()">
-            <mat-option value="novo">Novo</mat-option>
-            <mat-option value="contatado">Contatado</mat-option>
-            <mat-option value="interessado">Interessado</mat-option>
-            <mat-option value="convertido">Convertido</mat-option>
-            <mat-option value="perdido">Perdido</mat-option>
+            <mat-option value="novo">{{ i18n.t('leads.novo') }}</mat-option>
+            <mat-option value="contatado">{{ i18n.t('leads.contatado') }}</mat-option>
+            <mat-option value="interessado">{{ i18n.t('leads.interessado') }}</mat-option>
+            <mat-option value="convertido">{{ i18n.t('leads.convertido') }}</mat-option>
+            <mat-option value="perdido">{{ i18n.t('leads.perdido') }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
       <div class="add-note-section">
         <mat-form-field appearance="outline" class="note-input">
-          <mat-label>Adicionar Nota</mat-label>
+          <mat-label>{{ i18n.t('leads.addNote') }}</mat-label>
           <input matInput [(ngModel)]="newNote" (keyup.enter)="addNote()">
         </mat-form-field>
         <button mat-flat-button color="primary" (click)="addNote()" [disabled]="!newNote.trim()">
-          <mat-icon>add</mat-icon> Adicionar
+          <mat-icon>add</mat-icon> {{ i18n.t('leads.addButton') }}
         </button>
       </div>
 
@@ -77,12 +78,12 @@ export interface InteractionDialogData {
           </div>
         }
         @if (interactions.length === 0) {
-          <p class="no-interactions">Nenhuma interacao registrada.</p>
+          <p class="no-interactions">{{ i18n.t('leads.noInteractions') }}</p>
         }
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button (click)="dialogRef.close(statusChanged)">Fechar</button>
+      <button mat-button (click)="dialogRef.close(statusChanged)">{{ i18n.t('leads.close') }}</button>
     </mat-dialog-actions>
   `,
   styles: [`
@@ -177,6 +178,8 @@ export interface InteractionDialogData {
   `],
 })
 export class LeadInteractionsComponent implements OnInit {
+  i18n = inject(I18nService);
+
   interactions: LeadInteraction[] = [];
   currentStatus: string;
   newNote = '';

@@ -1,10 +1,11 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { I18nService } from '../../services/i18n.service';
 
 interface Product {
   id: number;
@@ -86,23 +87,23 @@ interface WizardStep {
         <!-- Step 1: Escolha o Produto -->
         @if (currentStep === 1) {
           <div class="step-header">
-            <h2>Escolha o Produto</h2>
-            <p>Selecione qual produto deseja vender</p>
+            <h2>{{ i18n.t('vendaCreate.chooseProduct') }}</h2>
+            <p>{{ i18n.t('vendaCreate.chooseProductDesc') }}</p>
           </div>
 
           @if (loadingProducts) {
             <div class="loading-state">
               <mat-icon class="spin">hourglass_empty</mat-icon>
-              <p>Carregando produtos...</p>
+              <p>{{ i18n.t('vendaCreate.loadingProducts') }}</p>
             </div>
           } @else if (products.length === 0) {
             <div class="empty-state">
               <mat-icon>inventory_2</mat-icon>
-              <h3>Nenhum produto cadastrado</h3>
-              <p>Cadastre um produto antes de iniciar uma venda.</p>
+              <h3>{{ i18n.t('vendaCreate.noProducts') }}</h3>
+              <p>{{ i18n.t('vendaCreate.noProductsDesc') }}</p>
               <button class="btn-primary" (click)="goToProducts()">
                 <mat-icon>add</mat-icon>
-                Cadastrar Produto
+                {{ i18n.t('vendaCreate.registerProduct') }}
               </button>
             </div>
           } @else {
@@ -138,8 +139,8 @@ interface WizardStep {
         <!-- Step 2: Onde vender? -->
         @if (currentStep === 2) {
           <div class="step-header">
-            <h2>Onde vender?</h2>
-            <p>Escolha a plataforma de anuncios</p>
+            <h2>{{ i18n.t('vendaCreate.whereSell') }}</h2>
+            <p>{{ i18n.t('vendaCreate.whereSellDesc') }}</p>
           </div>
 
           <div class="platforms-grid">
@@ -156,7 +157,7 @@ interface WizardStep {
                   <span class="platform-desc">{{ platform.desc }}</span>
                 </div>
                 @if (!platform.available) {
-                  <span class="badge-soon">Em breve</span>
+                  <span class="badge-soon">{{ i18n.t('common.comingSoon') }}</span>
                 }
                 @if (selectedPlatform?.id === platform.id) {
                   <div class="selected-badge">
@@ -171,14 +172,14 @@ interface WizardStep {
         <!-- Step 3: Quem sera o ator? -->
         @if (currentStep === 3) {
           <div class="step-header">
-            <h2>Quem sera o ator/atriz?</h2>
-            <p>Escolha o rosto para o video da campanha</p>
+            <h2>{{ i18n.t('vendaCreate.whoActor') }}</h2>
+            <p>{{ i18n.t('vendaCreate.whoActorDesc') }}</p>
           </div>
 
           @if (loadingFaces) {
             <div class="loading-state">
               <mat-icon class="spin">hourglass_empty</mat-icon>
-              <p>Carregando rostos...</p>
+              <p>{{ i18n.t('vendaCreate.loadingFaces') }}</p>
             </div>
           } @else {
             <div class="faces-grid">
@@ -212,22 +213,22 @@ interface WizardStep {
                       <mat-icon class="upload-icon">add_a_photo</mat-icon>
                     }
                   </div>
-                  <span class="face-name">{{ uploading ? 'Enviando...' : 'Enviar sua foto' }}</span>
+                  <span class="face-name">{{ uploading ? i18n.t('vendaCreate.uploading') : i18n.t('vendaCreate.uploadPhoto') }}</span>
                 </div>
               } @else {
                 <div class="face-card"
                      [class.selected]="selectedFace?.id?.startsWith('custom')"
                      (click)="selectCustomFace()">
                   <div class="face-img-wrap">
-                    <img [src]="uploadedFaceUrl" alt="Foto personalizada">
+                    <img [src]="uploadedFaceUrl" [alt]="i18n.t('vendaCreate.customPhotoAlt')">
                     @if (selectedFace?.id?.startsWith('custom')) {
                       <div class="check-overlay">
                         <mat-icon>check_circle</mat-icon>
                       </div>
                     }
                   </div>
-                  <span class="face-name">Personalizado</span>
-                  <button class="change-photo-btn" (click)="triggerUpload(); $event.stopPropagation()">Trocar</button>
+                  <span class="face-name">{{ i18n.t('vendaCreate.custom') }}</span>
+                  <button class="change-photo-btn" (click)="triggerUpload(); $event.stopPropagation()">{{ i18n.t('vendaCreate.changePhoto') }}</button>
                 </div>
               }
             </div>
@@ -241,8 +242,8 @@ interface WizardStep {
 
             <!-- Actor style selection -->
             <div class="style-selection-section">
-              <h3>Estilo de apresentacao</h3>
-              <p class="hint">Como o ator/atriz deve se comunicar no video</p>
+              <h3>{{ i18n.t('vendaCreate.actorStyle') }}</h3>
+              <p class="hint">{{ i18n.t('vendaCreate.actorStyleHint') }}</p>
               <div class="styles-grid">
                 @for (style of actorStyles; track style.id) {
                   <div class="style-chip"
@@ -258,13 +259,13 @@ interface WizardStep {
 
             <!-- Additional images section -->
             <div class="additional-images-section">
-              <h3>Imagens adicionais para o enredo (opcional)</h3>
-              <p class="hint">Fotos do produto, cenarios ou cenas para compor o video</p>
+              <h3>{{ i18n.t('vendaCreate.additionalImages') }}</h3>
+              <p class="hint">{{ i18n.t('vendaCreate.additionalImagesHint') }}</p>
 
               <div class="images-strip">
                 @for (img of additionalImages; track img.previewUrl) {
                   <div class="strip-thumb">
-                    <img [src]="img.previewUrl" alt="Imagem adicional">
+                    <img [src]="img.previewUrl" [alt]="i18n.t('vendaCreate.additionalImageAlt')">
                     <button class="remove-btn" (click)="removeAdditionalImage(img)">
                       <mat-icon>close</mat-icon>
                     </button>
@@ -272,7 +273,7 @@ interface WizardStep {
                 }
                 <div class="strip-add" (click)="additionalImageInput.click()">
                   <mat-icon>add_photo_alternate</mat-icon>
-                  <span>Adicionar</span>
+                  <span>{{ i18n.t('vendaCreate.add') }}</span>
                 </div>
               </div>
               <input #additionalImageInput type="file" multiple accept="image/*"
@@ -284,8 +285,8 @@ interface WizardStep {
         <!-- Step 4: Tipo de Venda -->
         @if (currentStep === 4) {
           <div class="step-header">
-            <h2>Tipo de Venda</h2>
-            <p>Escolha a estrategia de venda</p>
+            <h2>{{ i18n.t('vendaCreate.saleType') }}</h2>
+            <p>{{ i18n.t('vendaCreate.saleTypeDesc') }}</p>
           </div>
 
           <div class="sale-types-grid">
@@ -301,7 +302,7 @@ interface WizardStep {
                   <span class="sale-type-desc">{{ saleType.desc }}</span>
                 </div>
                 @if (!saleType.available) {
-                  <span class="badge-soon">Em breve</span>
+                  <span class="badge-soon">{{ i18n.t('common.comingSoon') }}</span>
                 }
                 @if (selectedSaleType?.id === saleType.id) {
                   <div class="selected-badge">
@@ -316,11 +317,11 @@ interface WizardStep {
         <!-- Step 5: Roteiro e Video -->
         @if (currentStep === 5) {
           <div class="step-header">
-            <h2>Roteiro do Video</h2>
-            <p class="step-subtitle">Revise e edite o roteiro antes de gerar o video</p>
+            <h2>{{ i18n.t('vendaCreate.script') }}</h2>
+            <p class="step-subtitle">{{ i18n.t('vendaCreate.scriptSubtitle') }}</p>
             <p style="color: #aaa; margin-top: 4px; font-size: 14px;">
               <mat-icon style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;">timer</mat-icon>
-              Duracao do video: <strong style="color: #fff;">10 segundos</strong>
+              {{ i18n.t('vendaCreate.videoDuration') }}: <strong style="color: #fff;">{{ i18n.t('vendaCreate.tenSeconds') }}</strong>
             </p>
           </div>
 
@@ -330,27 +331,27 @@ interface WizardStep {
               [style.background]="scriptMode === 'manual' ? '#7c3aed' : '#2a2a3e'"
               style="flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #444; color: #fff; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
               <mat-icon style="font-size: 18px; width: 18px; height: 18px;">edit</mat-icon>
-              Escrever meu roteiro
+              {{ i18n.t('vendaCreate.writeScript') }}
             </button>
             <button (click)="scriptMode = 'ai'"
               [style.background]="scriptMode === 'ai' ? '#7c3aed' : '#2a2a3e'"
               style="flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #444; color: #fff; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
               <mat-icon style="font-size: 18px; width: 18px; height: 18px;">smart_toy</mat-icon>
-              Gerar com IA
+              {{ i18n.t('vendaCreate.generateWithAI') }}
             </button>
           </div>
 
           @if (scriptLoading) {
             <div class="loading-state">
               <mat-icon class="spin">hourglass_empty</mat-icon>
-              <p>Gerando roteiro com IA...</p>
+              <p>{{ i18n.t('vendaCreate.generatingScript') }}</p>
             </div>
           } @else if (!scriptApproved) {
             <!-- Script editing phase -->
             <div class="script-edit-section">
               @if (scriptMode === 'manual') {
-                <p style="color: #aaa; font-size: 13px; margin-bottom: 8px;">Escreva seu roteiro abaixo (gratis, sem custo de creditos):</p>
-                <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6" placeholder="Digite seu roteiro aqui..."></textarea>
+                <p style="color: #aaa; font-size: 13px; margin-bottom: 8px;">{{ i18n.t('vendaCreate.writeScriptHint') }}</p>
+                <textarea class="script-textarea" [(ngModel)]="scriptText" rows="6" [placeholder]="i18n.t('vendaCreate.scriptPlaceholder')"></textarea>
               } @else {
                 @if (!scriptText.trim()) {
                   <!-- No script yet - show prominent CTA -->
@@ -1988,10 +1989,11 @@ interface WizardStep {
   `],
 })
 export class VendaCreateComponent implements OnInit {
+  i18n = inject(I18nService);
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   private apiUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api'
+    ? 'http://localhost:8001/api'
     : '/api';
 
   currentStep = 1;
@@ -2207,7 +2209,7 @@ export class VendaCreateComponent implements OnInit {
   getProductImageUrl(product: Product): string {
     if (!product.image_path) return '';
     if (product.image_path.startsWith('http')) return product.image_path;
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
     return backendUrl + product.image_path;
   }
 
@@ -2259,7 +2261,7 @@ export class VendaCreateComponent implements OnInit {
       next: (result) => {
         this.uploadedFaceId = result.face_id;
         const baseUrl = window.location.hostname === 'localhost'
-          ? 'http://localhost:8000'
+          ? 'http://localhost:8001'
           : '';
         this.uploadedFaceUrl = baseUrl + result.thumbnail_url;
         this.uploading = false;
@@ -2306,7 +2308,7 @@ export class VendaCreateComponent implements OnInit {
   // Cost confirmation
   requestCostConfirm(action: string, onConfirm: () => void, duration: number = 10): void {
     this.costConfirmLoading = true;
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
     this.http.get<any>(`${backendUrl}/api/credits/estimate`, {
       params: { action, duration: duration.toString() }
     }).subscribe({
@@ -2353,7 +2355,7 @@ export class VendaCreateComponent implements OnInit {
   private _doGenerateScript(): void {
     this.scriptLoading = true;
     this.scriptApproved = false;
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
     const faceUrl = this.getFacePreviewUrl();
     this.http.post<any>(`${backendUrl}/api/creatives/script/generate`, {
       product_id: this.selectedProduct!.id,
@@ -2400,7 +2402,7 @@ export class VendaCreateComponent implements OnInit {
     this.scriptChatInput = '';
     this.scriptChatLoading = true;
 
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
     this.http.post<any>(`${backendUrl}/api/creatives/script/refine`, {
         product_id: this.selectedProduct!.id,
         current_script: this.scriptText,
@@ -2429,7 +2431,7 @@ export class VendaCreateComponent implements OnInit {
     this.videoError = null;
 
     const backendUrl = window.location.hostname === 'localhost'
-      ? 'http://localhost:8000'
+      ? 'http://localhost:8001'
       : '';
 
     const faceUrl = this.getFacePreviewUrl();
@@ -2492,7 +2494,7 @@ export class VendaCreateComponent implements OnInit {
     if (this.generating) return;
     this.generating = true;
 
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
 
     const payload = {
       product_id: this.selectedProduct?.id,
@@ -2544,7 +2546,7 @@ export class VendaCreateComponent implements OnInit {
   loadExistingVideos(): void {
     if (!this.selectedProduct) return;
     this.existingVideosLoading = true;
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
     this.http.get<any[]>(`${backendUrl}/api/creatives/generated-videos`, {
       params: { product_id: this.selectedProduct.id.toString() }
     }).subscribe({
@@ -2566,7 +2568,7 @@ export class VendaCreateComponent implements OnInit {
     const formData = new FormData();
     formData.append('file', file);
 
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
     this.http.post<any>(`${backendUrl}/api/creatives/upload-video?product_id=${this.selectedProduct.id}`, formData).subscribe({
       next: (video) => {
         this.existingVideos.unshift(video);
@@ -2578,7 +2580,7 @@ export class VendaCreateComponent implements OnInit {
   }
 
   getVideoUrl(video: any): string {
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
     if (video.filename) {
       const path = video.filename.startsWith('/') ? video.filename : '/uploads/videos/' + (video.provider === 'custom' ? 'custom' : 'generated') + '/' + video.filename;
       return backendUrl + path;
@@ -2596,7 +2598,7 @@ export class VendaCreateComponent implements OnInit {
       return;
     }
     this.selectedExistingVideo = video;
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
     if (video.filename) {
       const path = video.filename.startsWith('/') ? video.filename : `/uploads/videos/${video.provider === 'custom' ? 'custom' : 'generated'}/${video.filename}`;
       this.generatedVideoUrl = `${backendUrl}${path}`;

@@ -1,19 +1,19 @@
 <div class="analytics-page">
   <div class="page-header">
-    <h1>Analytics e Relatorios</h1>
+    <h1>{{ i18n.t('analytics.title') }}</h1>
   </div>
 
   @if (loading) {
     <div class="loading-state">
       <mat-icon>hourglass_empty</mat-icon>
-      <p>Carregando dados...</p>
+      <p>{{ i18n.t('analytics.loading') }}</p>
     </div>
   }
 
   @if (!loading && !hasData) {
     <div class="empty-state">
       <mat-icon>insert_chart_outlined</mat-icon>
-      <p>Crie campanhas e leads para ver analises aqui</p>
+      <p>{{ i18n.t('analytics.emptyState') }}</p>
     </div>
   }
 
@@ -22,32 +22,32 @@
     <div class="kpi-grid">
       <div class="kpi-card orange">
         <mat-icon class="kpi-icon">account_balance_wallet</mat-icon>
-        <div class="kpi-label">Gasto Total (R$)</div>
+        <div class="kpi-label">{{ i18n.t('analytics.totalSpent') }}</div>
         <div class="kpi-value">R$ {{ data.kpis.total_spent | number:'1.2-2' }}</div>
       </div>
       <div class="kpi-card blue">
         <mat-icon class="kpi-icon">people</mat-icon>
-        <div class="kpi-label">Total de Leads</div>
+        <div class="kpi-label">{{ i18n.t('analytics.totalLeads') }}</div>
         <div class="kpi-value">{{ data.kpis.total_leads | number }}</div>
       </div>
       <div class="kpi-card green">
         <mat-icon class="kpi-icon">check_circle</mat-icon>
-        <div class="kpi-label">Conversoes</div>
+        <div class="kpi-label">{{ i18n.t('analytics.conversions') }}</div>
         <div class="kpi-value">{{ data.kpis.total_conversions | number }}</div>
       </div>
       <div class="kpi-card cyan">
         <mat-icon class="kpi-icon">analytics</mat-icon>
-        <div class="kpi-label">CPL (Custo/Lead)</div>
+        <div class="kpi-label">{{ i18n.t('analytics.cpl') }}</div>
         <div class="kpi-value">R$ {{ data.kpis.cpl | number:'1.2-2' }}</div>
       </div>
       <div class="kpi-card purple">
         <mat-icon class="kpi-icon">paid</mat-icon>
-        <div class="kpi-label">CPA (Custo/Aquisicao)</div>
+        <div class="kpi-label">{{ i18n.t('analytics.cpa') }}</div>
         <div class="kpi-value">R$ {{ data.kpis.cpa | number:'1.2-2' }}</div>
       </div>
       <div class="kpi-card emerald">
         <mat-icon class="kpi-icon">trending_up</mat-icon>
-        <div class="kpi-label">ROAS</div>
+        <div class="kpi-label">{{ i18n.t('analytics.roas') }}</div>
         <div class="kpi-value">{{ data.kpis.roas | number:'1.2-2' }}x</div>
       </div>
     </div>
@@ -56,7 +56,7 @@
     <div class="row-two">
       <!-- Visual Funnel -->
       <div class="card funnel-card">
-        <h3>Funil de Conversao</h3>
+        <h3>{{ i18n.t('analytics.conversionFunnel') }}</h3>
         <div class="funnel-container">
           @for (stage of data.funnel; track stage.stage; let i = $index) {
             <div class="funnel-stage">
@@ -81,38 +81,38 @@
 
       <!-- WhatsApp Stats -->
       <div class="card wa-card">
-        <h3>WhatsApp</h3>
+        <h3>{{ i18n.t('analytics.whatsapp') }}</h3>
         <div class="wa-stats">
           <div class="wa-stat">
             <div class="wa-stat-header">
-              <span>Enviadas</span>
+              <span>{{ i18n.t('analytics.waSent') }}</span>
               <span class="wa-stat-value">{{ data.whatsapp_summary.total_sent | number }}</span>
             </div>
             <mat-progress-bar mode="determinate" [value]="100" color="primary"></mat-progress-bar>
           </div>
           <div class="wa-stat">
             <div class="wa-stat-header">
-              <span>Entregues</span>
+              <span>{{ i18n.t('analytics.waDelivered') }}</span>
               <span class="wa-stat-value">{{ data.whatsapp_summary.total_delivered | number }}</span>
             </div>
             <mat-progress-bar mode="determinate" [value]="getWaPercent(data.whatsapp_summary.total_delivered)" color="accent"></mat-progress-bar>
           </div>
           <div class="wa-stat">
             <div class="wa-stat-header">
-              <span>Lidas</span>
+              <span>{{ i18n.t('analytics.waRead') }}</span>
               <span class="wa-stat-value">{{ data.whatsapp_summary.total_read | number }}</span>
             </div>
             <mat-progress-bar mode="determinate" [value]="getWaPercent(data.whatsapp_summary.total_read)" color="primary"></mat-progress-bar>
           </div>
           <div class="wa-stat">
             <div class="wa-stat-header">
-              <span>Respondidas</span>
+              <span>{{ i18n.t('analytics.waReplied') }}</span>
               <span class="wa-stat-value">{{ data.whatsapp_summary.total_replied | number }}</span>
             </div>
             <mat-progress-bar mode="determinate" [value]="getWaPercent(data.whatsapp_summary.total_replied)" color="accent"></mat-progress-bar>
           </div>
           <div class="wa-highlight">
-            <span class="wa-highlight-label">Taxa de Resposta</span>
+            <span class="wa-highlight-label">{{ i18n.t('analytics.responseRate') }}</span>
             <span class="wa-highlight-value">{{ data.kpis.wa_response_rate }}%</span>
           </div>
         </div>
@@ -122,7 +122,7 @@
     <!-- Row 3: Charts -->
     <div class="row-charts">
       <div class="card chart-card">
-        <h3>Evolucao Semanal</h3>
+        <h3>{{ i18n.t('analytics.weeklyEvolution') }}</h3>
         <div class="chart-wrapper">
           <canvas baseChart
             [type]="'line'"
@@ -132,7 +132,7 @@
         </div>
       </div>
       <div class="card chart-card">
-        <h3>Gasto Diario</h3>
+        <h3>{{ i18n.t('analytics.dailySpend') }}</h3>
         <div class="chart-wrapper">
           <canvas baseChart
             [type]="'bar'"
@@ -145,19 +145,19 @@
 
     <!-- Row 4: Campaign Comparison Table -->
     <div class="card table-card">
-      <h3>Comparacao de Campanhas</h3>
+      <h3>{{ i18n.t('analytics.campaignComparison') }}</h3>
       @if (data.campaign_comparison.length === 0) {
-        <p class="no-data">Nenhuma campanha encontrada</p>
+        <p class="no-data">{{ i18n.t('analytics.noCampaigns') }}</p>
       } @else {
         <div class="table-container">
           <table mat-table [dataSource]="tableDataSource" matSort>
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Campanha</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ i18n.t('analytics.thCampaign') }}</th>
               <td mat-cell *matCellDef="let row">{{ row.name }}</td>
             </ng-container>
 
             <ng-container matColumnDef="platform">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Plataforma</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ i18n.t('analytics.thPlatform') }}</th>
               <td mat-cell *matCellDef="let row">
                 <span class="platform-badge" [class.meta]="row.platform === 'Meta Ads'" [class.whatsapp]="row.platform === 'WhatsApp'">
                   {{ row.platform }}
@@ -166,32 +166,32 @@
             </ng-container>
 
             <ng-container matColumnDef="col1">
-              <th mat-header-cell *matHeaderCellDef>Impressoes / Enviadas</th>
+              <th mat-header-cell *matHeaderCellDef>{{ i18n.t('analytics.thImpSent') }}</th>
               <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 1) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="col2">
-              <th mat-header-cell *matHeaderCellDef>Cliques / Entregues</th>
+              <th mat-header-cell *matHeaderCellDef>{{ i18n.t('analytics.thClicksDel') }}</th>
               <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 2) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="col3">
-              <th mat-header-cell *matHeaderCellDef>Leads / Lidas</th>
+              <th mat-header-cell *matHeaderCellDef>{{ i18n.t('analytics.thLeadsRead') }}</th>
               <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 3) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="col4">
-              <th mat-header-cell *matHeaderCellDef>Conversoes / Respondidas</th>
+              <th mat-header-cell *matHeaderCellDef>{{ i18n.t('analytics.thConvReplied') }}</th>
               <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 4) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="col5">
-              <th mat-header-cell *matHeaderCellDef>Gasto / Taxa</th>
+              <th mat-header-cell *matHeaderCellDef>{{ i18n.t('analytics.thSpentRate') }}</th>
               <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 5) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="col6">
-              <th mat-header-cell *matHeaderCellDef>CTR / CPC</th>
+              <th mat-header-cell *matHeaderCellDef>{{ i18n.t('analytics.thCtrCpc') }}</th>
               <td mat-cell *matCellDef="let row">{{ getCampaignCol(row, 6) }}</td>
             </ng-container>
 
@@ -204,9 +204,9 @@
 
     <!-- Row 5: Lead Funnel Breakdown -->
     <div class="card lead-funnel-card">
-      <h3>Distribuicao de Leads por Status</h3>
+      <h3>{{ i18n.t('analytics.leadDistribution') }}</h3>
       @if (totalLeadsInFunnel === 0) {
-        <p class="no-data">Nenhum lead encontrado</p>
+        <p class="no-data">{{ i18n.t('analytics.noLeads') }}</p>
       } @else {
         <div class="lead-funnel">
           @for (item of leadFunnelItems; track item.label) {

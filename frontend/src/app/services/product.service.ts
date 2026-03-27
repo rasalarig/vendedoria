@@ -21,7 +21,7 @@ export interface Product {
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private apiUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api/products'
+    ? 'http://localhost:8001/api/products'
     : '/api/products';
 
   constructor(private http: HttpClient) {}

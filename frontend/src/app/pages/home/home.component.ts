@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService, AuthUser } from '../../services/auth.service';
+import { I18nService } from '../../services/i18n.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -22,18 +23,18 @@ interface DashboardData {
       <ng-container *ngIf="loading">
         <div class="loading-state">
           <div class="spinner"></div>
-          <p>Carregando seus dados...</p>
+          <p>{{ i18n.t('home.loadingData') }}</p>
         </div>
       </ng-container>
 
       <ng-container *ngIf="!loading && isEmpty">
         <div class="hero-section">
           <div class="hero-content">
-            <h1 class="hero-title">Ola, {{ userName }}! <span class="wave">&#x1F44B;</span></h1>
-            <p class="hero-subtitle">Vamos criar sua primeira campanha de vendas</p>
+            <h1 class="hero-title">{{ i18n.t('home.hello') }}, {{ userName }}! <span class="wave">&#x1F44B;</span></h1>
+            <p class="hero-subtitle">{{ i18n.t('home.createFirstCampaign') }}</p>
             <a routerLink="/wizard" class="cta-button">
               <mat-icon>rocket_launch</mat-icon>
-              Comecar agora
+              {{ i18n.t('home.startNow') }}
             </a>
           </div>
 
@@ -43,8 +44,8 @@ interface DashboardData {
                 <div class="step-icon-wrapper" [style.background]="step.color + '20'" [style.color]="step.color">
                   <mat-icon>{{ step.icon }}</mat-icon>
                 </div>
-                <span class="step-number">{{ step.number }}</span>
-                <span class="step-label">{{ step.label }}</span>
+                <span class="step-number">{{ i18n.t(step.numberKey) }}</span>
+                <span class="step-label">{{ i18n.t(step.labelKey) }}</span>
               </div>
               <div class="step-arrow" *ngIf="!last">
                 <mat-icon>arrow_forward</mat-icon>
@@ -56,8 +57,8 @@ interface DashboardData {
 
       <ng-container *ngIf="!loading && !isEmpty">
         <div class="dashboard-header">
-          <h1 class="dashboard-title">Ola, {{ userName }}! <span class="wave">&#x1F44B;</span></h1>
-          <p class="dashboard-subtitle">Aqui esta o resumo da sua jornada de vendas</p>
+          <h1 class="dashboard-title">{{ i18n.t('home.hello') }}, {{ userName }}! <span class="wave">&#x1F44B;</span></h1>
+          <p class="dashboard-subtitle">{{ i18n.t('home.journeySummary') }}</p>
         </div>
 
         <div class="cards-grid">
@@ -69,10 +70,10 @@ interface DashboardData {
               </div>
               <span class="card-count">{{ data.products.length }}</span>
             </div>
-            <h3 class="card-label">Produtos</h3>
+            <h3 class="card-label">{{ i18n.t('home.products') }}</h3>
             <div class="card-actions">
-              <a routerLink="/products" class="card-link">Ver todos</a>
-              <a routerLink="/products" class="card-link primary">Cadastrar</a>
+              <a routerLink="/products" class="card-link">{{ i18n.t('home.viewAll') }}</a>
+              <a routerLink="/products" class="card-link primary">{{ i18n.t('home.register') }}</a>
             </div>
           </div>
 
@@ -84,10 +85,10 @@ interface DashboardData {
               </div>
               <span class="card-count">{{ salesCount }}</span>
             </div>
-            <h3 class="card-label">Vendas</h3>
+            <h3 class="card-label">{{ i18n.t('home.sales') }}</h3>
             <div class="card-actions">
-              <a routerLink="/vendas" class="card-link">Ver vendas</a>
-              <a routerLink="/vendas/nova" class="card-link primary">Nova venda</a>
+              <a routerLink="/vendas" class="card-link">{{ i18n.t('home.viewSales') }}</a>
+              <a routerLink="/vendas/nova" class="card-link primary">{{ i18n.t('home.newSale') }}</a>
             </div>
           </div>
         </div>
@@ -96,22 +97,22 @@ interface DashboardData {
         <div class="stats-bar" *ngIf="salesCount > 0">
           <div class="stat-item">
             <span class="stat-value">R$ {{ totalSpent | number:'1.2-2' }}</span>
-            <span class="stat-label">Total Gasto</span>
+            <span class="stat-label">{{ i18n.t('home.totalSpent') }}</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <span class="stat-value">{{ totalClicks | number }}</span>
-            <span class="stat-label">Cliques Totais</span>
+            <span class="stat-label">{{ i18n.t('home.totalClicks') }}</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <span class="stat-value">{{ totalImpressions | number }}</span>
-            <span class="stat-label">Impressoes</span>
+            <span class="stat-label">{{ i18n.t('home.impressions') }}</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <span class="stat-value">{{ estimatedRoi }}%</span>
-            <span class="stat-label">ROI Estimado</span>
+            <span class="stat-label">{{ i18n.t('home.estimatedRoi') }}</span>
           </div>
         </div>
       </ng-container>
@@ -390,6 +391,7 @@ interface DashboardData {
 export class HomeComponent implements OnInit {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  i18n = inject(I18nService);
 
   loading = true;
   isEmpty = true;
@@ -404,14 +406,14 @@ export class HomeComponent implements OnInit {
   totalImpressions = 48500;
   estimatedRoi = 320;
 
-  private backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+  private backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
 
   journeySteps = [
-    { number: 'Passo 1', label: 'Cadastrar Produto', icon: 'inventory_2', color: '#8b5cf6' },
-    { number: 'Passo 2', label: 'Criar Venda', icon: 'rocket_launch', color: '#3b82f6' },
-    { number: 'Passo 3', label: 'Gerar Criativo', icon: 'auto_awesome', color: '#10b981' },
-    { number: 'Passo 4', label: 'Lancar Campanha', icon: 'campaign', color: '#f59e0b' },
-    { number: 'Passo 5', label: 'Acompanhar Metricas', icon: 'insights', color: '#ef4444' },
+    { numberKey: 'home.step1', labelKey: 'home.registerProduct', icon: 'inventory_2', color: '#8b5cf6' },
+    { numberKey: 'home.step2', labelKey: 'home.createSale', icon: 'rocket_launch', color: '#3b82f6' },
+    { numberKey: 'home.step3', labelKey: 'home.generateCreative', icon: 'auto_awesome', color: '#10b981' },
+    { numberKey: 'home.step4', labelKey: 'home.launchCampaign', icon: 'campaign', color: '#f59e0b' },
+    { numberKey: 'home.step5', labelKey: 'home.trackMetrics', icon: 'insights', color: '#ef4444' },
   ];
 
   cardConfig = [

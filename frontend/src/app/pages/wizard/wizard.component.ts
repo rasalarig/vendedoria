@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { I18nService } from '../../services/i18n.service';
 
 interface WizardStep {
   title: string;
@@ -78,7 +79,7 @@ interface WizardStep {
             {{ steps[currentStep].cta }}
             <mat-icon class="cta-arrow">arrow_forward</mat-icon>
           </button>
-          <button class="skip-link" (click)="skipStep()">Pular etapa</button>
+          <button class="skip-link" (click)="skipStep()">{{ i18n.t('wizard.skipStep') }}</button>
         </div>
       </div>
 
@@ -90,7 +91,7 @@ interface WizardStep {
           (click)="prevStep()"
         >
           <mat-icon>arrow_back</mat-icon>
-          Voltar
+          {{ i18n.t('common.back') }}
         </button>
         <div *ngIf="currentStep === 0" class="nav-spacer"></div>
         <button
@@ -98,7 +99,7 @@ interface WizardStep {
           [style.background]="steps[currentStep].color"
           (click)="nextStep()"
         >
-          {{ currentStep === steps.length - 1 ? 'Concluir' : 'Proximo' }}
+          {{ currentStep === steps.length - 1 ? i18n.t('wizard.finish') : i18n.t('common.next') }}
           <mat-icon>{{ currentStep === steps.length - 1 ? 'check' : 'arrow_forward' }}</mat-icon>
         </button>
       </div>
@@ -430,48 +431,50 @@ interface WizardStep {
   `]
 })
 export class WizardComponent implements OnInit {
-  steps: WizardStep[] = [
-    {
-      title: 'Vendedor',
-      description: 'Crie seu vendedor virtual',
-      icon: 'face',
-      color: '#8b5cf6',
-      cta: 'Criar Vendedor',
-      route: '/sellers/create'
-    },
-    {
-      title: 'Produto',
-      description: 'Cadastre seu produto',
-      icon: 'inventory_2',
-      color: '#ec4899',
-      cta: 'Cadastrar Produto',
-      route: '/products'
-    },
-    {
-      title: 'Videos',
-      description: 'Suba videos de referencia',
-      icon: 'video_library',
-      color: '#f59e0b',
-      cta: 'Subir Videos',
-      route: '/videos'
-    },
-    {
-      title: 'Criativo',
-      description: 'Gere seu anuncio em video',
-      icon: 'movie_creation',
-      color: '#10b981',
-      cta: 'Gerar Criativo',
-      route: '/vendas'
-    },
-    {
-      title: 'Campanha',
-      description: 'Lance sua campanha',
-      icon: 'rocket_launch',
-      color: '#3b82f6',
-      cta: 'Criar Campanha',
-      route: '/vendas'
-    }
-  ];
+  get steps(): WizardStep[] {
+    return [
+      {
+        title: this.i18n.t('wizard.seller'),
+        description: this.i18n.t('wizard.createSellerDesc'),
+        icon: 'face',
+        color: '#8b5cf6',
+        cta: this.i18n.t('wizard.ctaCreateSeller'),
+        route: '/sellers/create'
+      },
+      {
+        title: this.i18n.t('wizard.product'),
+        description: this.i18n.t('wizard.registerProductDesc'),
+        icon: 'inventory_2',
+        color: '#ec4899',
+        cta: this.i18n.t('wizard.registerProduct'),
+        route: '/products'
+      },
+      {
+        title: this.i18n.t('wizard.videos'),
+        description: this.i18n.t('wizard.uploadVideosDesc'),
+        icon: 'video_library',
+        color: '#f59e0b',
+        cta: this.i18n.t('wizard.ctaUploadVideos'),
+        route: '/videos'
+      },
+      {
+        title: this.i18n.t('wizard.creative'),
+        description: this.i18n.t('wizard.generateCreativeDesc'),
+        icon: 'movie_creation',
+        color: '#10b981',
+        cta: this.i18n.t('wizard.ctaGenerateCreative'),
+        route: '/vendas'
+      },
+      {
+        title: this.i18n.t('wizard.campaign'),
+        description: this.i18n.t('wizard.launchCampaignDesc'),
+        icon: 'rocket_launch',
+        color: '#3b82f6',
+        cta: this.i18n.t('wizard.ctaLaunchCampaign'),
+        route: '/vendas'
+      }
+    ];
+  }
 
   currentStep = 0;
   completedSteps = new Set<number>();
@@ -481,7 +484,7 @@ export class WizardComponent implements OnInit {
   private readonly STORAGE_KEY = 'vendedoria_wizard_step';
   private readonly COMPLETED_KEY = 'vendedoria_wizard_completed';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, public i18n: I18nService) {}
 
   ngOnInit(): void {
     const saved = localStorage.getItem(this.STORAGE_KEY);

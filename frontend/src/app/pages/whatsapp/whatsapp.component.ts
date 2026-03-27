@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -18,6 +18,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { WhatsAppService, Contact, WhatsAppCampaign, WhatsAppMessage } from '../../services/whatsapp.service';
 import { ProductService, Product } from '../../services/product.service';
+import { I18nService } from '../../services/i18n.service';
 import { ContactDialogComponent } from './contact-dialog.component';
 
 @Component({
@@ -44,14 +45,14 @@ import { ContactDialogComponent } from './contact-dialog.component';
   ],
   template: `
     <div class="whatsapp-page">
-      <h1><mat-icon class="page-icon">whatsapp</mat-icon> Campanhas WhatsApp</h1>
+      <h1><mat-icon class="page-icon">whatsapp</mat-icon> {{ i18n.t('whatsapp.title') }}</h1>
 
       <mat-tab-group animationDuration="200ms" class="whatsapp-tabs">
         <!-- Tab 1: Contatos -->
         <mat-tab>
           <ng-template mat-tab-label>
             <mat-icon>contacts</mat-icon>
-            <span class="tab-label">Contatos</span>
+            <span class="tab-label">{{ i18n.t('whatsapp.contacts') }}</span>
           </ng-template>
 
           <div class="tab-content">
@@ -59,16 +60,16 @@ import { ContactDialogComponent } from './contact-dialog.component';
             <div class="actions-bar">
               <div class="actions-left">
                 <button mat-flat-button color="primary" (click)="openAddContactDialog()">
-                  <mat-icon>person_add</mat-icon> Adicionar Contato
+                  <mat-icon>person_add</mat-icon> {{ i18n.t('whatsapp.addContact') }}
                 </button>
                 <button mat-stroked-button class="import-btn" (click)="csvFileInput.click()">
-                  <mat-icon>upload_file</mat-icon> Importar CSV
+                  <mat-icon>upload_file</mat-icon> {{ i18n.t('whatsapp.importCsv') }}
                 </button>
                 <input #csvFileInput type="file" accept=".csv" hidden (change)="onCsvFileSelected($event)">
               </div>
               <div class="actions-right">
                 <mat-form-field appearance="outline" class="filter-field">
-                  <mat-label>Filtrar por tag</mat-label>
+                  <mat-label>{{ i18n.t('whatsapp.filterByTag') }}</mat-label>
                   <input matInput [(ngModel)]="tagFilter" (keyup.enter)="loadContacts()" placeholder="Ex: cliente">
                   <button matSuffix mat-icon-button (click)="loadContacts()" matTooltip="Filtrar">
                     <mat-icon>search</mat-icon>
@@ -930,6 +931,8 @@ import { ContactDialogComponent } from './contact-dialog.component';
   `],
 })
 export class WhatsappComponent implements OnInit {
+  i18n = inject(I18nService);
+
   // Contacts
   contacts: Contact[] = [];
   loadingContacts = false;

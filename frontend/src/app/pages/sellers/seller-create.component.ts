@@ -788,7 +788,7 @@ export class SellerCreateComponent implements OnInit {
         this.uploadedFaceId = result.face_id;
         // Build full URL for localhost dev
         const baseUrl = window.location.hostname === 'localhost'
-          ? 'http://localhost:8000'
+          ? 'http://localhost:8001'
           : '';
         this.uploadedFaceUrl = baseUrl + result.thumbnail_url;
         this.uploading = false;

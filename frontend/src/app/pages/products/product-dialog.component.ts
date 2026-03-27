@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { Product } from '../../services/product.service';
+import { I18nService } from '../../services/i18n.service';
 
 export interface ProductDialogData {
   product?: Product;
@@ -30,7 +31,7 @@ export interface ProductDialogData {
     <div class="dialog-wrapper">
       <h2 mat-dialog-title class="dialog-title">
         <mat-icon class="title-icon">{{ data.product ? 'edit' : 'add_circle' }}</mat-icon>
-        {{ data.product ? 'Editar Produto' : 'Novo Produto' }}
+        {{ data.product ? i18n.t('products.editProduct') : i18n.t('products.newProduct') }}
       </h2>
       <mat-dialog-content>
         <form [formGroup]="form" class="product-form">
@@ -48,74 +49,74 @@ export interface ProductDialogData {
               <img [src]="imagePreview" alt="Preview" class="photo-preview">
               <div class="photo-overlay">
                 <mat-icon>photo_camera</mat-icon>
-                <span>Alterar foto</span>
+                <span>{{ i18n.t('products.changePhoto') }}</span>
               </div>
             } @else {
               <mat-icon class="upload-icon">add_photo_alternate</mat-icon>
-              <p class="upload-text">Arraste uma foto ou clique para selecionar</p>
-              <p class="upload-hint">JPG, PNG ou WebP</p>
+              <p class="upload-text">{{ i18n.t('products.dragPhoto') }}</p>
+              <p class="upload-hint">{{ i18n.t('products.photoFormats') }}</p>
             }
             <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" style="display:none">
           </div>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nome do produto</mat-label>
-            <input matInput formControlName="name" placeholder="Ex: Curso de Marketing Digital">
+            <mat-label>{{ i18n.t('products.name') }}</mat-label>
+            <input matInput formControlName="name" [placeholder]="i18n.t('products.namePlaceholder')">
             @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-              <mat-error>Nome e obrigatorio</mat-error>
+              <mat-error>{{ i18n.t('products.nameRequired') }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Preco (R$)</mat-label>
+            <mat-label>{{ i18n.t('products.priceLabel') }}</mat-label>
             <input matInput type="number" formControlName="price" placeholder="0.00" step="0.01">
             @if (form.get('price')?.hasError('required') && form.get('price')?.touched) {
-              <mat-error>Preco e obrigatorio</mat-error>
+              <mat-error>{{ i18n.t('products.priceRequired') }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Tipo</mat-label>
+            <mat-label>{{ i18n.t('products.type') }}</mat-label>
             <mat-select formControlName="product_type">
               <mat-option value="produto">
-                <mat-icon>inventory_2</mat-icon> Produto
+                <mat-icon>inventory_2</mat-icon> {{ i18n.t('products.product') }}
               </mat-option>
               <mat-option value="servico">
-                <mat-icon>design_services</mat-icon> Servico
+                <mat-icon>design_services</mat-icon> {{ i18n.t('products.service') }}
               </mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Tipo de Pagamento</mat-label>
+            <mat-label>{{ i18n.t('products.paymentType') }}</mat-label>
             <mat-select formControlName="pricing_type">
               <mat-option value="one_time">
-                <mat-icon>payments</mat-icon> Pagamento Unico
+                <mat-icon>payments</mat-icon> {{ i18n.t('products.oneTime') }}
               </mat-option>
               <mat-option value="monthly">
-                <mat-icon>autorenew</mat-icon> Mensal (Recorrente)
+                <mat-icon>autorenew</mat-icon> {{ i18n.t('products.monthly') }}
               </mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Descricao curta</mat-label>
-            <textarea matInput formControlName="description" rows="3" placeholder="Descreva seu produto em poucas palavras" maxlength="300"></textarea>
+            <mat-label>{{ i18n.t('products.description') }}</mat-label>
+            <textarea matInput formControlName="description" rows="3" [placeholder]="i18n.t('products.descriptionPlaceholder')" maxlength="300"></textarea>
             <mat-hint align="end">{{ form.get('description')?.value?.length || 0 }}/300</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>URL do site</mat-label>
+            <mat-label>{{ i18n.t('products.websiteUrl') }}</mat-label>
             <mat-icon matPrefix class="url-prefix-icon">link</mat-icon>
-            <input matInput formControlName="website_url" placeholder="https://www.seusite.com.br">
+            <input matInput formControlName="website_url" [placeholder]="i18n.t('products.websitePlaceholder')">
           </mat-form-field>
         </form>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
-        <button mat-button (click)="onCancel()" class="cancel-btn">Cancelar</button>
+        <button mat-button (click)="onCancel()" class="cancel-btn">{{ i18n.t('common.cancel') }}</button>
         <button mat-flat-button color="primary" (click)="onSave()" [disabled]="form.invalid" class="save-btn">
           <mat-icon>check</mat-icon>
-          Salvar
+          {{ i18n.t('common.save') }}
         </button>
       </mat-dialog-actions>
     </div>
@@ -299,6 +300,7 @@ export class ProductDialogComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     public dialogRef: MatDialogRef<ProductDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: ProductDialogData,
+    public i18n: I18nService,
   ) {}
 
   ngOnInit(): void {
@@ -313,7 +315,7 @@ export class ProductDialogComponent implements OnInit {
     });
 
     if (p?.image_path) {
-      const base = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+      const base = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
       this.imagePreview = `${base}${p.image_path}`;
     }
   }

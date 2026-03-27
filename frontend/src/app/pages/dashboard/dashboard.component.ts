@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { ApiService } from '../../services/api.service';
+import { I18nService } from '../../services/i18n.service';
 
 interface DashboardMetrics {
   total_spent: number;
@@ -76,6 +77,8 @@ interface DashboardData {
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit {
+  i18n = inject(I18nService);
+
   metrics: DashboardMetrics = {
     total_spent: 0,
     total_impressions: 0,
@@ -152,13 +155,13 @@ export class DashboardComponent implements OnInit {
 
   getStatusLabel(status: string): string {
     const labels: Record<string, string> = {
-      active: 'Ativo',
-      ACTIVE: 'Ativo',
-      published: 'Ativo',
-      paused: 'Pausado',
-      PAUSED: 'Pausado',
-      draft: 'Rascunho',
-      completed: 'Finalizado',
+      active: this.i18n.t('dashboard.statusActive'),
+      ACTIVE: this.i18n.t('dashboard.statusActive'),
+      published: this.i18n.t('dashboard.statusActive'),
+      paused: this.i18n.t('dashboard.statusPaused'),
+      PAUSED: this.i18n.t('dashboard.statusPaused'),
+      draft: this.i18n.t('dashboard.statusDraft'),
+      completed: this.i18n.t('dashboard.statusCompleted'),
     };
     return labels[status] || status;
   }

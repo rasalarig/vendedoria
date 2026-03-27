@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -15,6 +15,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Lead, LeadStats, LeadService } from '../../services/lead.service';
 import { LeadDialogComponent, LeadDialogData } from './lead-dialog.component';
 import { LeadInteractionsComponent, InteractionDialogData } from './lead-interactions.component';
+import { I18nService } from '../../services/i18n.service';
 
 @Component({
   selector: 'app-leads',
@@ -38,6 +39,8 @@ import { LeadInteractionsComponent, InteractionDialogData } from './lead-interac
   styleUrls: ['./leads.component.scss'],
 })
 export class LeadsComponent implements OnInit {
+  i18n = inject(I18nService);
+
   leads: Lead[] = [];
   loading = true;
   dataSource = new MatTableDataSource<Lead>([]);
@@ -159,7 +162,7 @@ export class LeadsComponent implements OnInit {
   }
 
   confirmDelete(lead: Lead): void {
-    const confirmed = window.confirm(`Tem certeza que deseja excluir "${lead.name}"?`);
+    const confirmed = window.confirm(`${this.i18n.t('leads.confirmDelete')} "${lead.name}"?`);
     if (confirmed) {
       this.leadService.delete(lead.id).subscribe({
         next: () => { this.loadLeads(); this.loadStats(); },
@@ -173,13 +176,13 @@ export class LeadsComponent implements OnInit {
     const file = input.files[0];
     this.leadService.importCsv(file).subscribe({
       next: (result) => {
-        alert(`Importados: ${result.imported} leads.${result.errors.length > 0 ? '\nErros: ' + result.errors.join(', ') : ''}`);
+        alert(`${this.i18n.t('leads.importedCount')}: ${result.imported} ${this.i18n.t('leads.importedLeads')}.${result.errors.length > 0 ? '\n' + this.i18n.t('leads.importErrors') + ': ' + result.errors.join(', ') : ''}`);
         this.loadLeads();
         this.loadStats();
         input.value = '';
       },
       error: () => {
-        alert('Erro ao importar CSV.');
+        alert(this.i18n.t('leads.importError'));
         input.value = '';
       },
     });
@@ -202,11 +205,11 @@ export class LeadsComponent implements OnInit {
 
   getStatusLabel(status: string | null): string {
     const map: Record<string, string> = {
-      novo: 'Novo',
-      contatado: 'Contatado',
-      interessado: 'Interessado',
-      convertido: 'Convertido',
-      perdido: 'Perdido',
+      novo: this.i18n.t('leads.novo'),
+      contatado: this.i18n.t('leads.contatado'),
+      interessado: this.i18n.t('leads.interessado'),
+      convertido: this.i18n.t('leads.convertido'),
+      perdido: this.i18n.t('leads.perdido'),
     };
     return status ? (map[status] || status) : '-';
   }

@@ -46,7 +46,7 @@ export interface CampaignCreate {
 @Injectable({ providedIn: 'root' })
 export class CampaignService {
   private apiUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api/campaigns'
+    ? 'http://localhost:8001/api/campaigns'
     : '/api/campaigns';
 
   constructor(private http: HttpClient) {}

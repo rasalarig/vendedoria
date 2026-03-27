@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { Lead } from '../../services/lead.service';
+import { I18nService } from '../../services/i18n.service';
 
 export interface LeadDialogData {
   lead?: Lead;
@@ -25,25 +26,25 @@ export interface LeadDialogData {
     MatButtonModule,
   ],
   template: `
-    <h2 mat-dialog-title>{{ data.lead ? 'Editar Lead' : 'Novo Lead' }}</h2>
+    <h2 mat-dialog-title>{{ data.lead ? i18n.t('leads.editLead') : i18n.t('leads.dialogNewLead') }}</h2>
     <mat-dialog-content>
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Nome *</mat-label>
+        <mat-label>{{ i18n.t('leads.nameLabel') }}</mat-label>
         <input matInput [(ngModel)]="form.name" required>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Email</mat-label>
+        <mat-label>{{ i18n.t('leads.emailLabel') }}</mat-label>
         <input matInput [(ngModel)]="form.email" type="email">
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Telefone</mat-label>
+        <mat-label>{{ i18n.t('leads.phoneLabel') }}</mat-label>
         <input matInput [(ngModel)]="form.phone">
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Origem</mat-label>
+        <mat-label>{{ i18n.t('leads.sourceLabel') }}</mat-label>
         <mat-select [(ngModel)]="form.source">
           <mat-option value="manual">Manual</mat-option>
           <mat-option value="meta_ads">Meta Ads</mat-option>
@@ -54,40 +55,40 @@ export interface LeadDialogData {
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Tags (separadas por virgula)</mat-label>
+        <mat-label>{{ i18n.t('leads.tagsLabel') }}</mat-label>
         <input matInput [(ngModel)]="form.tags">
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Status do Funil</mat-label>
+        <mat-label>{{ i18n.t('leads.funnelStatusLabel') }}</mat-label>
         <mat-select [(ngModel)]="form.funnel_status">
-          <mat-option value="novo">Novo</mat-option>
-          <mat-option value="contatado">Contatado</mat-option>
-          <mat-option value="interessado">Interessado</mat-option>
-          <mat-option value="convertido">Convertido</mat-option>
-          <mat-option value="perdido">Perdido</mat-option>
+          <mat-option value="novo">{{ i18n.t('leads.novo') }}</mat-option>
+          <mat-option value="contatado">{{ i18n.t('leads.contatado') }}</mat-option>
+          <mat-option value="interessado">{{ i18n.t('leads.interessado') }}</mat-option>
+          <mat-option value="convertido">{{ i18n.t('leads.convertido') }}</mat-option>
+          <mat-option value="perdido">{{ i18n.t('leads.perdido') }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Produto de Interesse</mat-label>
+        <mat-label>{{ i18n.t('leads.productInterest') }}</mat-label>
         <input matInput [(ngModel)]="form.product_interest">
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Valor (R$)</mat-label>
+        <mat-label>{{ i18n.t('leads.valueLabel') }}</mat-label>
         <input matInput [(ngModel)]="form.value" type="number">
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Observacoes</mat-label>
+        <mat-label>{{ i18n.t('leads.notesLabel') }}</mat-label>
         <textarea matInput [(ngModel)]="form.notes" rows="3"></textarea>
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button (click)="dialogRef.close(null)">Cancelar</button>
+      <button mat-button (click)="dialogRef.close(null)">{{ i18n.t('leads.cancel') }}</button>
       <button mat-flat-button color="primary" (click)="save()" [disabled]="!form.name">
-        {{ data.lead ? 'Salvar' : 'Criar' }}
+        {{ data.lead ? i18n.t('leads.save') : i18n.t('leads.create') }}
       </button>
     </mat-dialog-actions>
   `,
@@ -103,6 +104,8 @@ export interface LeadDialogData {
   `],
 })
 export class LeadDialogComponent {
+  i18n = inject(I18nService);
+
   form: any = {
     name: '',
     email: '',

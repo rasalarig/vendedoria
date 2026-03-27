@@ -12,7 +12,7 @@ export interface AuthUser {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+  private backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
   private userSubject = new BehaviorSubject<AuthUser | null>(null);
   user$ = this.userSubject.asObservable();
 

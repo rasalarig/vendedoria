@@ -32,7 +32,7 @@ export interface MarketStrategy {
 @Injectable({ providedIn: 'root' })
 export class StrategyService {
   private apiUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api/strategy'
+    ? 'http://localhost:8001/api/strategy'
     : '/api/strategy';
 
   constructor(private http: HttpClient) {}

@@ -54,7 +54,7 @@ export interface ImportResult {
 @Injectable({ providedIn: 'root' })
 export class WhatsAppService {
   private apiUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api/whatsapp'
+    ? 'http://localhost:8001/api/whatsapp'
     : '/api/whatsapp';
 
   constructor(private http: HttpClient) {}

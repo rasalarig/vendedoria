@@ -17,6 +17,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { VideoCreativeService, GeneratedVideo, CostEstimate } from '../../services/video-creative.service';
 import { ProductService, Product } from '../../services/product.service';
 import { SettingsService } from '../../services/settings.service';
+import { I18nService } from '../../services/i18n.service';
 import { Subscription, interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
@@ -60,13 +61,13 @@ interface ProductVideoGroup {
       <section class="generate-section">
         <h1 class="section-title">
           <mat-icon>videocam</mat-icon>
-          Gerar Novo Criativo em Video
+          {{ i18n.t('creatives.generateNew') }}
         </h1>
 
         <!-- Product selector -->
         <div class="selectors-row">
           <mat-form-field appearance="outline" class="selector-field">
-            <mat-label>Produto</mat-label>
+            <mat-label>{{ i18n.t('creatives.product') }}</mat-label>
             <mat-select [(value)]="selectedProductId">
               @for (product of products; track product.id) {
                 <mat-option [value]="product.id">{{ product.name }}</mat-option>
@@ -77,7 +78,7 @@ interface ProductVideoGroup {
 
         <!-- Provider info (Veo 3) -->
         <div class="provider-section">
-          <label class="field-label">Provedor de Video</label>
+          <label class="field-label">{{ i18n.t('creatives.providerLabel') }}</label>
           <div class="provider-cards">
             <div class="provider-card selected">
               <div class="provider-icon-wrap">
@@ -107,7 +108,7 @@ interface ProductVideoGroup {
           </div>
 
           <div class="cost-display">
-            <div class="cost-label">Custo estimado</div>
+            <div class="cost-label">{{ i18n.t('creatives.estimatedCost') }}</div>
             <div class="cost-value">R$ {{ estimatedCost | number:'1.2-2' }}</div>
           </div>
 
@@ -116,10 +117,10 @@ interface ProductVideoGroup {
                   (click)="generateVideo()">
             @if (generating) {
               <mat-spinner diameter="20" class="btn-spinner"></mat-spinner>
-              <span>Gerando...</span>
+              <span>{{ i18n.t('creatives.generating') }}</span>
             } @else {
               <mat-icon>auto_fix_high</mat-icon>
-              <span>Gerar Video (R$ {{ estimatedCost | number:'1.2-2' }})</span>
+              <span>{{ i18n.t('creatives.generateVideo') }} (R$ {{ estimatedCost | number:'1.2-2' }})</span>
             }
           </button>
         </div>
@@ -134,7 +135,7 @@ interface ProductVideoGroup {
                 <mat-spinner diameter="48" color="accent"></mat-spinner>
               </div>
               <div class="generating-info">
-                <h3>Gerando seu video...</h3>
+                <h3>{{ i18n.t('creatives.generatingVideo') }}</h3>
                 <p>Provedor: <strong>{{ getProviderName(gv.provider) }}</strong></p>
                 <p class="generating-hint">Tempo estimado: ~{{ gv.duration * 3 }}s</p>
               </div>
@@ -147,7 +148,7 @@ interface ProductVideoGroup {
       @if (loading) {
         <div class="loading-state">
           <mat-spinner diameter="48"></mat-spinner>
-          <p>Carregando videos gerados...</p>
+          <p>{{ i18n.t('creatives.loadingVideos') }}</p>
         </div>
       }
 
@@ -155,8 +156,8 @@ interface ProductVideoGroup {
       @if (!loading && generatedVideos.length === 0 && generatingVideos.length === 0) {
         <div class="empty-state">
           <mat-icon class="empty-icon">movie_creation</mat-icon>
-          <p>Nenhum video criativo gerado ainda</p>
-          <p class="empty-hint">Selecione o produto e clique em "Gerar Video" para comecar</p>
+          <p>{{ i18n.t('creatives.noVideos') }}</p>
+          <p class="empty-hint">{{ i18n.t('creatives.noVideosHint') }}</p>
         </div>
       }
 
@@ -186,19 +187,19 @@ interface ProductVideoGroup {
                     <div class="video-status-badge" [ngClass]="'vstatus-' + video.status">
                       @if (video.status === 'generating') {
                         <mat-spinner diameter="12" class="status-spinner"></mat-spinner>
-                        Gerando
+                        {{ i18n.t('creatives.statusGenerating') }}
                       }
                       @if (video.status === 'ready') {
                         <mat-icon class="status-icon">check</mat-icon>
-                        Pronto
+                        {{ i18n.t('creatives.statusReady') }}
                       }
                       @if (video.status === 'approved') {
                         <mat-icon class="status-icon">verified</mat-icon>
-                        Aprovado
+                        {{ i18n.t('creatives.statusApproved') }}
                       }
                       @if (video.status === 'failed') {
                         <mat-icon class="status-icon">error</mat-icon>
-                        Falhou
+                        {{ i18n.t('creatives.statusFailed') }}
                       }
                     </div>
                     <!-- Version badge -->
@@ -242,7 +243,7 @@ interface ProductVideoGroup {
                   <div class="video-placeholder-large">
                     <mat-icon>movie</mat-icon>
                     <span>Preview do video</span>
-                    <span class="placeholder-status">Status: {{ getStatusLabel(previewVideo.status) }}</span>
+                    <span class="placeholder-status">{{ i18n.t('campaigns.status') }}: {{ getStatusLabel(previewVideo.status) }}</span>
                   </div>
                 }
               </div>
@@ -668,6 +669,7 @@ export class CreativesComponent implements OnInit, OnDestroy {
     private productService: ProductService,
     private settingsService: SettingsService,
     private snackBar: MatSnackBar,
+    public i18n: I18nService,
   ) {}
 
   ngOnInit(): void {
@@ -883,13 +885,13 @@ export class CreativesComponent implements OnInit, OnDestroy {
   }
 
   getStatusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      generating: 'Gerando',
-      ready: 'Pronto',
-      approved: 'Aprovado',
-      failed: 'Falhou',
+    const keyMap: Record<string, string> = {
+      generating: 'creatives.statusGenerating',
+      ready: 'creatives.statusReady',
+      approved: 'creatives.statusApproved',
+      failed: 'creatives.statusFailed',
     };
-    return labels[status] || status;
+    return keyMap[status] ? this.i18n.t(keyMap[status]) : status;
   }
 
   formatDate(dateStr: string): string {

@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
+import { I18nService } from '../../services/i18n.service';
 
 @Component({
   selector: 'app-venda-detail',
@@ -14,17 +15,17 @@ import { MatIconModule } from '@angular/material/icon';
       <div class="detail-header">
         <button class="back-btn" (click)="goBack()">
           <mat-icon>arrow_back</mat-icon>
-          Voltar
+          {{ i18n.t('vendaDetail.back') }}
         </button>
         @if (sale) {
-          <h1>Venda #{{ sale.id }}</h1>
+          <h1>{{ i18n.t('vendaDetail.saleTitle') }} #{{ sale.id }}</h1>
         }
       </div>
 
       @if (loading) {
         <div class="loading-state">
           <mat-icon class="spin">hourglass_empty</mat-icon>
-          <p>Carregando...</p>
+          <p>{{ i18n.t('vendaDetail.loading') }}</p>
         </div>
       }
 
@@ -32,7 +33,7 @@ import { MatIconModule } from '@angular/material/icon';
         <div class="error-state">
           <mat-icon>error_outline</mat-icon>
           <p>{{ error }}</p>
-          <button class="btn-secondary" (click)="goBack()">Voltar para Vendas</button>
+          <button class="btn-secondary" (click)="goBack()">{{ i18n.t('vendaDetail.backToSales') }}</button>
         </div>
       }
 
@@ -41,18 +42,18 @@ import { MatIconModule } from '@angular/material/icon';
         <div class="info-grid">
           <!-- Sale Card -->
           <div class="info-card">
-            <h2><mat-icon>receipt_long</mat-icon> Dados da Venda</h2>
+            <h2><mat-icon>receipt_long</mat-icon> {{ i18n.t('vendaDetail.saleData') }}</h2>
             <div class="info-rows">
               <div class="info-row">
-                <span class="info-label">Produto</span>
+                <span class="info-label">{{ i18n.t('vendaDetail.product') }}</span>
                 <span class="info-value">{{ sale.product_name || 'N/A' }}</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Plataforma</span>
+                <span class="info-label">{{ i18n.t('vendaDetail.platform') }}</span>
                 <span class="info-value">{{ getPlatformLabel(sale.platform) }}</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Status</span>
+                <span class="info-label">{{ i18n.t('vendaDetail.status') }}</span>
                 <span class="info-value status-badge"
                       [class.active]="sale.status === 'completed' || sale.status === 'campaign_active'"
                       [class.pending]="sale.status === 'campaign_pending'"
@@ -61,12 +62,12 @@ import { MatIconModule } from '@angular/material/icon';
                 </span>
               </div>
               <div class="info-row">
-                <span class="info-label">Data</span>
+                <span class="info-label">{{ i18n.t('vendaDetail.date') }}</span>
                 <span class="info-value">{{ sale.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
               @if (sale.script) {
                 <div class="info-row script-row">
-                  <span class="info-label">Roteiro</span>
+                  <span class="info-label">{{ i18n.t('vendaDetail.script') }}</span>
                   <p class="script-text">{{ sale.script }}</p>
                 </div>
               }
@@ -75,15 +76,15 @@ import { MatIconModule } from '@angular/material/icon';
 
           <!-- Campaign/Ad Card -->
           <div class="info-card">
-            <h2><mat-icon>campaign</mat-icon> Anuncio Vinculado</h2>
+            <h2><mat-icon>campaign</mat-icon> {{ i18n.t('vendaDetail.linkedAd') }}</h2>
             @if (sale.campaign) {
               <div class="info-rows">
                 <div class="info-row">
-                  <span class="info-label">Campanha</span>
+                  <span class="info-label">{{ i18n.t('vendaDetail.campaign') }}</span>
                   <span class="info-value">{{ sale.campaign.name }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">Status</span>
+                  <span class="info-label">{{ i18n.t('vendaDetail.status') }}</span>
                   <span class="info-value status-badge"
                         [class.active]="sale.campaign.status === 'active'"
                         [class.pending]="sale.campaign.status === 'draft' || sale.campaign.status === 'pending'"
@@ -92,16 +93,16 @@ import { MatIconModule } from '@angular/material/icon';
                   </span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">Objetivo</span>
+                  <span class="info-label">{{ i18n.t('vendaDetail.objective') }}</span>
                   <span class="info-value">{{ sale.campaign.objective }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">Orcamento Diario</span>
+                  <span class="info-label">{{ i18n.t('vendaDetail.dailyBudget') }}</span>
                   <span class="info-value">{{ formatCurrency(sale.campaign.daily_budget) }}</span>
                 </div>
                 @if (sale.campaign.meta_campaign_id) {
                   <div class="info-row">
-                    <span class="info-label">Meta Campaign ID</span>
+                    <span class="info-label">{{ i18n.t('vendaDetail.metaCampaignId') }}</span>
                     <span class="info-value mono">{{ sale.campaign.meta_campaign_id }}</span>
                   </div>
                 }
@@ -111,17 +112,17 @@ import { MatIconModule } from '@angular/material/icon';
                   <button class="btn-retry" (click)="retryCampaign()" [disabled]="retryLoading">
                     @if (retryLoading) {
                       <mat-icon class="spin">hourglass_empty</mat-icon>
-                      Recriando campanha...
+                      {{ i18n.t('vendaDetail.recreatingCampaign') }}
                     } @else {
                       <mat-icon>refresh</mat-icon>
-                      Tentar Novamente
+                      {{ i18n.t('vendaDetail.tryAgain') }}
                     }
                   </button>
                   @if (retryError || sale.error_message) {
                     <div class="error-card">
                       <div class="error-card-header">
                         <mat-icon>warning_amber</mat-icon>
-                        <strong>Problema ao criar campanha</strong>
+                        <strong>{{ i18n.t('vendaDetail.campaignProblem') }}</strong>
                       </div>
                       <div class="error-card-body">
                         @for (msg of getErrorMessages(); track msg) {
@@ -144,15 +145,15 @@ import { MatIconModule } from '@angular/material/icon';
             } @else {
               <div class="empty-campaign">
                 <mat-icon>link_off</mat-icon>
-                <p>Nenhum anuncio vinculado a esta venda</p>
+                <p>{{ i18n.t('vendaDetail.noLinkedAd') }}</p>
                 @if (canRetryCampaign()) {
                   <button class="btn-retry" (click)="retryCampaign()" [disabled]="retryLoading">
                     @if (retryLoading) {
                       <mat-icon class="spin">hourglass_empty</mat-icon>
-                      Criando campanha...
+                      {{ i18n.t('vendaDetail.creatingCampaign') }}
                     } @else {
                       <mat-icon>refresh</mat-icon>
-                      Tentar Criar Campanha
+                      {{ i18n.t('vendaDetail.tryCreateCampaign') }}
                     }
                   </button>
                 }
@@ -160,7 +161,7 @@ import { MatIconModule } from '@angular/material/icon';
                   <div class="error-card">
                     <div class="error-card-header">
                       <mat-icon>warning_amber</mat-icon>
-                      <strong>Problema ao criar campanha</strong>
+                      <strong>{{ i18n.t('vendaDetail.campaignProblem') }}</strong>
                     </div>
                     <div class="error-card-body">
                       @for (msg of getErrorMessages(); track msg) {
@@ -186,27 +187,27 @@ import { MatIconModule } from '@angular/material/icon';
         <!-- Metrics Section (only if campaign exists) -->
         @if (sale.campaign) {
           <div class="metrics-section">
-            <h2><mat-icon>analytics</mat-icon> Metricas do Anuncio</h2>
+            <h2><mat-icon>analytics</mat-icon> {{ i18n.t('vendaDetail.adMetrics') }}</h2>
             <div class="metrics-grid">
               <div class="metric-card">
                 <mat-icon>visibility</mat-icon>
                 <span class="metric-value">{{ formatNumber(sale.campaign.impressions) }}</span>
-                <span class="metric-label">Impressoes</span>
+                <span class="metric-label">{{ i18n.t('vendaDetail.impressions') }}</span>
               </div>
               <div class="metric-card">
                 <mat-icon>touch_app</mat-icon>
                 <span class="metric-value">{{ formatNumber(sale.campaign.clicks) }}</span>
-                <span class="metric-label">Cliques</span>
+                <span class="metric-label">{{ i18n.t('vendaDetail.clicks') }}</span>
               </div>
               <div class="metric-card">
                 <mat-icon>shopping_cart</mat-icon>
                 <span class="metric-value">{{ formatNumber(sale.campaign.conversions) }}</span>
-                <span class="metric-label">Conversoes</span>
+                <span class="metric-label">{{ i18n.t('vendaDetail.conversions') }}</span>
               </div>
               <div class="metric-card">
                 <mat-icon>paid</mat-icon>
                 <span class="metric-value">{{ formatCurrency(sale.campaign.spent) }}</span>
-                <span class="metric-label">Gasto</span>
+                <span class="metric-label">{{ i18n.t('vendaDetail.spent') }}</span>
               </div>
               <div class="metric-card">
                 <mat-icon>percent</mat-icon>
@@ -670,8 +671,10 @@ import { MatIconModule } from '@angular/material/icon';
   `]
 })
 export class VendaDetailComponent implements OnInit {
+  i18n = inject(I18nService);
+
   private apiUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api'
+    ? 'http://localhost:8001/api'
     : '/api';
 
   sale: any = null;
@@ -691,7 +694,7 @@ export class VendaDetailComponent implements OnInit {
     if (id) {
       this.http.get<any>(`${this.apiUrl}/sales/${id}/detail`).subscribe({
         next: (data) => { this.sale = data; this.loading = false; },
-        error: () => { this.error = 'Venda nao encontrada'; this.loading = false; },
+        error: () => { this.error = this.i18n.t('vendaDetail.saleNotFound'); this.loading = false; },
       });
     }
   }
@@ -723,7 +726,7 @@ export class VendaDetailComponent implements OnInit {
       },
       error: (err) => {
         this.retryLoading = false;
-        this.retryError = err.error?.detail || 'Erro ao tentar criar campanha';
+        this.retryError = err.error?.detail || this.i18n.t('vendaDetail.errorRetryCampaign');
       },
     });
   }
@@ -743,15 +746,15 @@ export class VendaDetailComponent implements OnInit {
 
   getStatusLabel(status: string): string {
     const map: Record<string, string> = {
-      'created': 'Criada',
-      'campaign_pending': 'Campanha Pendente',
-      'campaign_active': 'Campanha Ativa',
-      'campaign_error': 'Erro na Campanha',
-      'completed': 'Concluida',
-      'draft': 'Rascunho',
-      'active': 'Ativo',
-      'paused': 'Pausado',
-      'error': 'Erro',
+      'created': this.i18n.t('vendaDetail.statusCreated'),
+      'campaign_pending': this.i18n.t('vendaDetail.statusCampaignPending'),
+      'campaign_active': this.i18n.t('vendaDetail.statusCampaignActive'),
+      'campaign_error': this.i18n.t('vendaDetail.statusCampaignError'),
+      'completed': this.i18n.t('vendaDetail.statusCompleted'),
+      'draft': this.i18n.t('vendaDetail.statusDraft'),
+      'active': this.i18n.t('vendaDetail.statusActive'),
+      'paused': this.i18n.t('vendaDetail.statusPaused'),
+      'error': this.i18n.t('vendaDetail.statusError'),
     };
     return map[status] || status;
   }
@@ -765,16 +768,16 @@ export class VendaDetailComponent implements OnInit {
   getErrorTip(): string {
     const raw = (this.retryError || this.sale?.error_message || '').toLowerCase();
     if (raw.includes('imagem') || raw.includes('image')) {
-      return 'Dica: Tente reenviar a imagem do produto nas configuracoes do produto antes de tentar novamente.';
+      return this.i18n.t('vendaDetail.tipImage');
     }
     if (raw.includes('pagamento') || raw.includes('payment') || raw.includes('billing') || raw.includes('forma de pagamento')) {
-      return 'Dica: Verifique se sua conta de anuncios esta vinculada ao portfolio correto com forma de pagamento ativa em business.facebook.com > Configuracoes > Pagamentos.';
+      return this.i18n.t('vendaDetail.tipPayment');
     }
     if (raw.includes('token') || raw.includes('expirad')) {
-      return 'Dica: Seu token de acesso pode ter expirado. Va em Configuracoes e reconecte sua conta Meta.';
+      return this.i18n.t('vendaDetail.tipToken');
     }
     if (raw.includes('development') || raw.includes('desenvolvimento')) {
-      return 'Dica: Seu app Meta ainda esta em modo de desenvolvimento. Publique o app em developers.facebook.com para criar anuncios reais.';
+      return this.i18n.t('vendaDetail.tipDevelopment');
     }
     return '';
   }

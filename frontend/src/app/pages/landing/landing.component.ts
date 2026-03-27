@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { I18nService } from '../../services/i18n.service';
 
 @Component({
   selector: 'app-landing',
@@ -13,7 +14,13 @@ import { MatButtonModule } from '@angular/material/button';
     <header class="lp-header" [class.scrolled]="scrolled">
       <div class="lp-container header-inner">
         <a routerLink="/landing" class="brand-logo">VendedorIA</a>
-        <a routerLink="/login" class="btn-enter">Entrar</a>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="lang-selector">
+            <button class="lang-btn" [class.active]="i18n.currentLang === 'pt'" (click)="i18n.setLang('pt')" title="Portugues (BR)">PT</button>
+            <button class="lang-btn" [class.active]="i18n.currentLang === 'en'" (click)="i18n.setLang('en')" title="English (US)">EN</button>
+          </div>
+          <a routerLink="/login" class="btn-enter">{{ i18n.t('landing.enter') }}</a>
+        </div>
       </div>
     </header>
 
@@ -22,39 +29,38 @@ import { MatButtonModule } from '@angular/material/button';
       <div class="hero-glow hero-glow--left"></div>
       <div class="hero-glow hero-glow--right"></div>
       <div class="lp-container hero-inner">
-        <span class="hero-badge">Plataforma de Marketing com IA</span>
+        <span class="hero-badge">{{ i18n.t('landing.heroBadge') }}</span>
         <h1 class="hero-title">
-          Venda Mais com o<br/>
-          <span class="gradient-text">Poder da Inteligência Artificial</span>
+          {{ i18n.t('landing.heroTitle1') }}<br/>
+          <span class="gradient-text">{{ i18n.t('landing.heroTitle2') }}</span>
         </h1>
         <p class="hero-subtitle">
-          Cadastre produtos, crie campanhas no Meta Ads, TikTok e WhatsApp,
-          e acompanhe resultados &mdash; tudo conversando com uma IA especialista em marketing.
+          {{ i18n.t('landing.heroSubtitle') }}
         </p>
         <div class="hero-actions">
           <a routerLink="/login" class="btn-primary btn-lg">
-            Começar Grátis
+            {{ i18n.t('landing.startFree') }}
             <mat-icon>arrow_forward</mat-icon>
           </a>
           <a (click)="scrollTo('como-funciona')" class="btn-ghost btn-lg" style="cursor:pointer">
-            Como Funciona
+            {{ i18n.t('landing.howItWorks') }}
             <mat-icon>expand_more</mat-icon>
           </a>
         </div>
         <div class="hero-metrics">
           <div class="metric-item">
             <span class="metric-value">100%</span>
-            <span class="metric-label">Automatizado</span>
+            <span class="metric-label">{{ i18n.t('landing.automated') }}</span>
           </div>
           <div class="metric-divider"></div>
           <div class="metric-item">
             <span class="metric-value">3</span>
-            <span class="metric-label">Plataformas</span>
+            <span class="metric-label">{{ i18n.t('landing.platforms') }}</span>
           </div>
           <div class="metric-divider"></div>
           <div class="metric-item">
             <span class="metric-value">IA</span>
-            <span class="metric-label">Generativa</span>
+            <span class="metric-label">{{ i18n.t('landing.generativeAI') }}</span>
           </div>
         </div>
       </div>
@@ -63,17 +69,17 @@ import { MatButtonModule } from '@angular/material/button';
     <!-- Benefits Section -->
     <section class="benefits section-animate" id="beneficios">
       <div class="lp-container">
-        <span class="section-badge">Recursos</span>
-        <h2 class="section-title">Tudo que você precisa para<br/><span class="gradient-text">vender mais online</span></h2>
-        <p class="section-subtitle">Uma plataforma completa de marketing com inteligência artificial que trabalha para você 24 horas por dia.</p>
+        <span class="section-badge">{{ i18n.t('landing.resources') }}</span>
+        <h2 class="section-title">{{ i18n.t('landing.benefitsTitle1') }}<br/><span class="gradient-text">{{ i18n.t('landing.benefitsTitle2') }}</span></h2>
+        <p class="section-subtitle">{{ i18n.t('landing.benefitsSubtitle') }}</p>
         <div class="benefits-grid">
-          @for (benefit of benefits; track benefit.title) {
+          @for (benefit of benefits; track benefit.titleKey) {
             <div class="benefit-card section-animate">
               <div class="benefit-icon-wrap">
                 <mat-icon>{{ benefit.icon }}</mat-icon>
               </div>
-              <h3>{{ benefit.title }}</h3>
-              <p>{{ benefit.description }}</p>
+              <h3>{{ i18n.t(benefit.titleKey) }}</h3>
+              <p>{{ i18n.t(benefit.descKey) }}</p>
             </div>
           }
         </div>
@@ -83,9 +89,9 @@ import { MatButtonModule } from '@angular/material/button';
     <!-- How It Works - Journey Timeline -->
     <section class="journey-section section-animate" id="como-funciona">
       <div class="lp-container">
-        <span class="section-badge">Como Funciona</span>
-        <h2 class="section-title">Sua jornada de vendas,<br/><span class="gradient-text">do produto ao resultado</span></h2>
-        <p class="section-subtitle">Em 4 passos, a IA cuida de tudo — do criativo ao anúncio otimizado.</p>
+        <span class="section-badge">{{ i18n.t('landing.howItWorksLabel') }}</span>
+        <h2 class="section-title">{{ i18n.t('landing.journeyTitle1') }}<br/><span class="gradient-text">{{ i18n.t('landing.journeyTitle2') }}</span></h2>
+        <p class="section-subtitle">{{ i18n.t('landing.journeySubtitle') }}</p>
 
         <div class="journey-timeline">
           <!-- Timeline vertical line -->
@@ -99,22 +105,22 @@ import { MatButtonModule } from '@angular/material/button';
             <div class="journey-card">
               <div class="journey-card-header">
                 <mat-icon>inventory_2</mat-icon>
-                <h3>Cadastre seu Produto</h3>
+                <h3>{{ i18n.t('landing.step1Title') }}</h3>
               </div>
-              <p class="journey-card-desc">Registre tudo sobre seu produto conversando naturalmente com a IA.</p>
+              <p class="journey-card-desc">{{ i18n.t('landing.step1Desc') }}</p>
               <ul class="journey-subitems">
                 <li class="journey-subitem section-animate">
                   <mat-icon>smart_toy</mat-icon>
-                  <span>Converse com a IA</span>
-                  <span class="journey-badge" style="--badge-color: #8b5cf6">Chat Inteligente</span>
+                  <span>{{ i18n.t('landing.step1Sub1') }}</span>
+                  <span class="journey-badge" style="--badge-color: #8b5cf6">{{ i18n.t('landing.step1Badge1') }}</span>
                 </li>
                 <li class="journey-subitem section-animate">
                   <mat-icon>photo_library</mat-icon>
-                  <span>Upload de fotos e vídeos</span>
+                  <span>{{ i18n.t('landing.step1Sub2') }}</span>
                 </li>
                 <li class="journey-subitem section-animate">
                   <mat-icon>link</mat-icon>
-                  <span>URL do site ou landing page</span>
+                  <span>{{ i18n.t('landing.step1Sub3') }}</span>
                 </li>
               </ul>
             </div>
@@ -128,9 +134,9 @@ import { MatButtonModule } from '@angular/material/button';
             <div class="journey-card">
               <div class="journey-card-header">
                 <mat-icon>hub</mat-icon>
-                <h3>Escolha Onde Anunciar</h3>
+                <h3>{{ i18n.t('landing.step2Title') }}</h3>
               </div>
-              <p class="journey-card-desc">Selecione as plataformas e a IA configura tudo automaticamente.</p>
+              <p class="journey-card-desc">{{ i18n.t('landing.step2Desc') }}</p>
               <ul class="journey-subitems">
                 <li class="journey-subitem section-animate">
                   <mat-icon>campaign</mat-icon>
@@ -140,12 +146,12 @@ import { MatButtonModule } from '@angular/material/button';
                 <li class="journey-subitem section-animate">
                   <mat-icon>play_circle</mat-icon>
                   <span>TikTok</span>
-                  <span class="journey-badge" style="--badge-color: #ec4899">Em breve</span>
+                  <span class="journey-badge" style="--badge-color: #ec4899">{{ i18n.t('common.comingSoon') }}</span>
                 </li>
                 <li class="journey-subitem section-animate">
                   <mat-icon>forum</mat-icon>
                   <span>WhatsApp</span>
-                  <span class="journey-badge" style="--badge-color: #22c55e">Em breve</span>
+                  <span class="journey-badge" style="--badge-color: #22c55e">{{ i18n.t('common.comingSoon') }}</span>
                 </li>
               </ul>
             </div>
@@ -159,27 +165,27 @@ import { MatButtonModule } from '@angular/material/button';
             <div class="journey-card">
               <div class="journey-card-header">
                 <mat-icon>auto_awesome</mat-icon>
-                <h3>IA Cria Tudo pra Você</h3>
+                <h3>{{ i18n.t('landing.step3Title') }}</h3>
               </div>
-              <p class="journey-card-desc">Criativos, textos e segmentação gerados automaticamente pela inteligência artificial.</p>
+              <p class="journey-card-desc">{{ i18n.t('landing.step3Desc') }}</p>
               <ul class="journey-subitems">
                 <li class="journey-subitem section-animate">
                   <mat-icon>palette</mat-icon>
-                  <span>Imagens com IA Generativa</span>
-                  <span class="journey-badge" style="--badge-color: #ec4899">Automático</span>
+                  <span>{{ i18n.t('landing.step3Sub1') }}</span>
+                  <span class="journey-badge" style="--badge-color: #ec4899">{{ i18n.t('landing.step3Badge1') }}</span>
                 </li>
                 <li class="journey-subitem section-animate">
                   <mat-icon>videocam</mat-icon>
-                  <span>Vídeos com Google Veo 3</span>
-                  <span class="journey-badge" style="--badge-color: #8b5cf6">IA de Vídeo</span>
+                  <span>{{ i18n.t('landing.step3Sub2') }}</span>
+                  <span class="journey-badge" style="--badge-color: #8b5cf6">{{ i18n.t('landing.step3Badge2') }}</span>
                 </li>
                 <li class="journey-subitem section-animate">
                   <mat-icon>edit_note</mat-icon>
-                  <span>Textos e headlines otimizados</span>
+                  <span>{{ i18n.t('landing.step3Sub3') }}</span>
                 </li>
                 <li class="journey-subitem section-animate">
                   <mat-icon>groups</mat-icon>
-                  <span>Público-alvo recomendado</span>
+                  <span>{{ i18n.t('landing.step3Sub4') }}</span>
                 </li>
               </ul>
             </div>
@@ -193,22 +199,22 @@ import { MatButtonModule } from '@angular/material/button';
             <div class="journey-card">
               <div class="journey-card-header">
                 <mat-icon>monitoring</mat-icon>
-                <h3>Acompanhe os Resultados</h3>
+                <h3>{{ i18n.t('landing.step4Title') }}</h3>
               </div>
-              <p class="journey-card-desc">Monitore o desempenho das suas campanhas em tempo real.</p>
+              <p class="journey-card-desc">{{ i18n.t('landing.step4Desc') }}</p>
               <ul class="journey-subitems">
                 <li class="journey-subitem section-animate">
                   <mat-icon>visibility</mat-icon>
-                  <span>Impressões, cliques e CTR</span>
+                  <span>{{ i18n.t('landing.step4Sub1') }}</span>
                 </li>
                 <li class="journey-subitem section-animate">
                   <mat-icon>trending_up</mat-icon>
-                  <span>Conversões e ROI em tempo real</span>
-                  <span class="journey-badge" style="--badge-color: #10b981">Tempo Real</span>
+                  <span>{{ i18n.t('landing.step4Sub2') }}</span>
+                  <span class="journey-badge" style="--badge-color: #10b981">{{ i18n.t('landing.step4Badge2') }}</span>
                 </li>
                 <li class="journey-subitem section-animate">
                   <mat-icon>radio_button_checked</mat-icon>
-                  <span>Status da campanha ao vivo</span>
+                  <span>{{ i18n.t('landing.step4Sub3') }}</span>
                 </li>
               </ul>
             </div>
@@ -221,17 +227,17 @@ import { MatButtonModule } from '@angular/material/button';
     <!-- Platforms Section -->
     <section class="platforms section-animate" id="plataformas">
       <div class="lp-container">
-        <span class="section-badge">Integrações</span>
-        <h2 class="section-title">Multi-Plataforma,<br/><span class="gradient-text">um só lugar</span></h2>
-        <p class="section-subtitle">Gerencie todas as suas campanhas publicitárias em um único painel.</p>
+        <span class="section-badge">{{ i18n.t('landing.integrations') }}</span>
+        <h2 class="section-title">{{ i18n.t('landing.multiPlatformTitle1') }}<br/><span class="gradient-text">{{ i18n.t('landing.multiPlatformTitle2') }}</span></h2>
+        <p class="section-subtitle">{{ i18n.t('landing.multiPlatformSubtitle') }}</p>
         <div class="platforms-grid">
           @for (platform of platforms; track platform.name) {
             <div class="platform-card section-animate" [style.--accent]="platform.color">
               <span class="platform-emoji">{{ platform.emoji }}</span>
               <h3>{{ platform.name }}</h3>
-              <p>{{ platform.description }}</p>
+              <p>{{ i18n.t(platform.descKey) }}</p>
               <span class="platform-badge" [style.background]="platform.color + '22'" [style.color]="platform.color">
-                Integrado
+                {{ i18n.t('landing.integrated') }}
               </span>
             </div>
           }
@@ -243,10 +249,10 @@ import { MatButtonModule } from '@angular/material/button';
     <section class="final-cta section-animate">
       <div class="lp-container final-cta-inner">
         <div class="cta-glow"></div>
-        <h2>Pronto para Revolucionar<br/><span class="gradient-text">suas Vendas?</span></h2>
-        <p>Comece agora mesmo a usar inteligência artificial para criar campanhas, gerar criativos e vender mais.</p>
+        <h2>{{ i18n.t('landing.ctaTitle1') }}<br/><span class="gradient-text">{{ i18n.t('landing.ctaTitle2') }}</span></h2>
+        <p>{{ i18n.t('landing.ctaSubtitle') }}</p>
         <a routerLink="/login" class="btn-primary btn-lg">
-          Começar Agora
+          {{ i18n.t('landing.ctaButton') }}
           <mat-icon>arrow_forward</mat-icon>
         </a>
       </div>
@@ -257,9 +263,9 @@ import { MatButtonModule } from '@angular/material/button';
       <div class="lp-container footer-inner">
         <div class="footer-brand">
           <span class="brand-logo">VendedorIA</span>
-          <p>Plataforma de Marketing com Inteligência Artificial</p>
+          <p>{{ i18n.t('landing.footerDesc') }}</p>
         </div>
-        <p class="copyright">&copy; 2026 VendedorIA. Todos os direitos reservados.</p>
+        <p class="copyright">{{ i18n.t('landing.copyright') }}</p>
       </div>
     </footer>
   `,
@@ -340,6 +346,33 @@ import { MatButtonModule } from '@angular/material/button';
       background: rgba(139, 92, 246, 0.25);
       border-color: rgba(139, 92, 246, 0.5);
       transform: translateY(-1px);
+    }
+
+    .lang-selector {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .lang-btn {
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1;
+      padding: 5px 10px;
+      color: #a1a1aa;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .lang-btn:hover {
+      background: #3f3f46;
+      color: #fafafa;
+    }
+    .lang-btn.active {
+      background: #8b5cf6;
+      color: #fff;
+      border-color: #8b5cf6;
     }
 
     /* ===== Buttons ===== */
@@ -1061,64 +1094,25 @@ export class LandingComponent implements OnInit, OnDestroy {
   private isBrowser: boolean;
 
   benefits = [
-    {
-      icon: 'inventory_2',
-      title: 'Cadastre Produtos pelo Chat',
-      description: 'Adicione, edite e remova produtos conversando naturalmente com a IA.',
-    },
-    {
-      icon: 'campaign',
-      title: 'Campanhas Meta Ads com IA',
-      description: 'Crie campanhas no Facebook e Instagram otimizadas por inteligência artificial.',
-    },
-    {
-      icon: 'auto_awesome',
-      title: 'Criativos Gerados por IA',
-      description: 'Imagens e textos publicitários criados automaticamente para seus anúncios.',
-    },
-    {
-      icon: 'analytics',
-      title: 'Métricas em Tempo Real',
-      description: 'Acompanhe impressões, cliques, conversões e ROI das suas campanhas ao vivo.',
-    },
-    {
-      icon: 'hub',
-      title: 'Multi-Plataforma',
-      description: 'Meta Ads, TikTok Ads e WhatsApp Business integrados em um só lugar.',
-    },
-    {
-      icon: 'psychology',
-      title: 'Assistente de Marketing',
-      description: 'A IA recomenda estratégias, público-alvo e orçamento ideal para seu negócio.',
-    },
+    { icon: 'inventory_2', titleKey: 'landing.benefit1Title', descKey: 'landing.benefit1Desc' },
+    { icon: 'campaign', titleKey: 'landing.benefit2Title', descKey: 'landing.benefit2Desc' },
+    { icon: 'auto_awesome', titleKey: 'landing.benefit3Title', descKey: 'landing.benefit3Desc' },
+    { icon: 'analytics', titleKey: 'landing.benefit4Title', descKey: 'landing.benefit4Desc' },
+    { icon: 'hub', titleKey: 'landing.benefit5Title', descKey: 'landing.benefit5Desc' },
+    { icon: 'psychology', titleKey: 'landing.benefit6Title', descKey: 'landing.benefit6Desc' },
   ];
 
   platforms = [
-    {
-      name: 'Meta Ads',
-      emoji: '\uD83D\uDCF1',
-      description: 'Anuncie no Facebook e Instagram com campanhas otimizadas por IA.',
-      color: '#3b82f6',
-    },
-    {
-      name: 'TikTok Ads',
-      emoji: '\uD83C\uDFB5',
-      description: 'Alcance novos públicos com anúncios no TikTok gerados automaticamente.',
-      color: '#ec4899',
-    },
-    {
-      name: 'WhatsApp Business',
-      emoji: '\uD83D\uDCAC',
-      description: 'Engaje clientes diretamente pelo WhatsApp com mensagens inteligentes.',
-      color: '#22c55e',
-    },
+    { name: 'Meta Ads', emoji: '\uD83D\uDCF1', descKey: 'landing.platformMetaDesc', color: '#3b82f6' },
+    { name: 'TikTok Ads', emoji: '\uD83C\uDFB5', descKey: 'landing.platformTikTokDesc', color: '#ec4899' },
+    { name: 'WhatsApp Business', emoji: '\uD83D\uDCAC', descKey: 'landing.platformWhatsAppDesc', color: '#22c55e' },
   ];
 
   private scrollHandler = () => {
     this.scrolled = window.scrollY > 20;
   };
 
-  constructor(@Inject(PLATFORM_ID) platformId: Object) {
+  constructor(@Inject(PLATFORM_ID) platformId: Object, public i18n: I18nService) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 

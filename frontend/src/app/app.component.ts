@@ -8,6 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription, filter } from 'rxjs';
 import { AuthService, AuthUser } from './services/auth.service';
 import { ChatPanelComponent } from './components/chat-panel/chat-panel.component';
+import { I18nService } from './services/i18n.service';
 
 interface NavItem {
   path: string;
@@ -49,7 +50,7 @@ interface JourneyStep {
               <span class="brand-badge">v2</span>
             }
             <button class="collapse-btn" (click)="toggleSidebar()"
-                    [matTooltip]="sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'"
+                    [matTooltip]="sidebarCollapsed ? i18n.t('nav.expand') : i18n.t('nav.collapse')"
                     matTooltipPosition="right">
               <mat-icon>{{ sidebarCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
             </button>
@@ -57,7 +58,7 @@ interface JourneyStep {
 
           @if (!sidebarCollapsed) {
             <div class="journey-progress">
-              <div class="journey-label">Jornada</div>
+              <div class="journey-label">{{ i18n.t('nav.journey') }}</div>
               <div class="journey-steps">
                 @for (step of journeySteps; track step.path; let i = $index) {
                   <div class="journey-step"
@@ -108,9 +109,9 @@ interface JourneyStep {
                   <span class="user-name">{{ user.name }}</span>
                 }
                 <button (click)="logout()" class="logout-btn"
-                        [matTooltip]="sidebarCollapsed ? 'Sair' : ''"
+                        [matTooltip]="sidebarCollapsed ? i18n.t('nav.logout') : ''"
                         matTooltipPosition="right"
-                        title="Sair">
+                        [title]="i18n.t('nav.logout')">
                   <mat-icon>logout</mat-icon>
                 </button>
               </div>
@@ -125,14 +126,18 @@ interface JourneyStep {
         <!-- Main content -->
         <main class="main-content">
           <div class="credit-bar">
-            <div class="credit-info" (click)="openWalletModal()" style="cursor: pointer;" title="Ver historico">
+            <div class="credit-info" (click)="openWalletModal()" style="cursor: pointer;" [title]="i18n.t('header.viewHistory')">
               <mat-icon class="credit-icon">account_balance_wallet</mat-icon>
               <span class="credit-amount">R$ {{ formatBrl(creditBalanceBrl) }}</span>
             </div>
             <button class="credit-add-btn" (click)="addCredits()">
               <mat-icon>add</mat-icon>
-              Adicionar Creditos
+              {{ i18n.t('header.addCredits') }}
             </button>
+            <div class="lang-selector">
+              <button class="lang-btn" [class.active]="i18n.currentLang === 'pt'" (click)="i18n.setLang('pt')" title="Portugues (BR)">PT</button>
+              <button class="lang-btn" [class.active]="i18n.currentLang === 'en'" (click)="i18n.setLang('en')" title="English (US)">EN</button>
+            </div>
           </div>
           <div class="main-content-inner">
             <router-outlet></router-outlet>
@@ -175,24 +180,24 @@ interface JourneyStep {
           <div class="wallet-modal-content" (click)="$event.stopPropagation()">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
               <h2 style="margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px;">
-                <mat-icon>account_balance_wallet</mat-icon> Minha Carteira
+                <mat-icon>account_balance_wallet</mat-icon> {{ i18n.t('wallet.title') }}
               </h2>
               <button (click)="closeWalletModal()" style="background: none; border: none; color: #888; cursor: pointer; font-size: 24px;">&times;</button>
             </div>
 
             <div style="background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;">
-              <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">Saldo disponivel</div>
+              <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">{{ i18n.t('wallet.availableBalance') }}</div>
               <div style="font-size: 32px; font-weight: 700;">R$ {{ formatBrl(creditBalanceBrl) }}</div>
               <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">(US$ {{ formatBrl(creditBalance) }})</div>
             </div>
 
-            <h3 style="margin: 0 0 12px; font-size: 15px; color: #aaa;">Extrato</h3>
+            <h3 style="margin: 0 0 12px; font-size: 15px; color: #aaa;">{{ i18n.t('wallet.statement') }}</h3>
 
             <div style="overflow-y: auto; flex: 1; min-height: 100px;">
               @if (walletLoading) {
-                <div style="text-align: center; padding: 30px; color: #888;">Carregando...</div>
+                <div style="text-align: center; padding: 30px; color: #888;">{{ i18n.t('wallet.loading') }}</div>
               } @else if (walletHistory.length === 0) {
-                <div style="text-align: center; padding: 30px; color: #888;">Nenhuma transacao encontrada</div>
+                <div style="text-align: center; padding: 30px; color: #888;">{{ i18n.t('wallet.noTransactions') }}</div>
               } @else {
                 @for (entry of walletHistory; track entry.id) {
                   <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333;">
@@ -211,7 +216,7 @@ interface JourneyStep {
                       <div style="font-size: 14px; font-weight: 600;" [style.color]="entry.type === 'purchase' ? '#10b981' : '#ef4444'">
                         {{ entry.type === 'purchase' ? '+' : '-' }}R$ {{ formatBrl(entry.amount_brl) }}
                       </div>
-                      <div style="font-size: 11px; color: #666;">Saldo: R$ {{ formatBrl(entry.balance_after_brl) }}</div>
+                      <div style="font-size: 11px; color: #666;">{{ i18n.t('wallet.balance') }}: R$ {{ formatBrl(entry.balance_after_brl) }}</div>
                     </div>
                   </div>
                 }
@@ -219,10 +224,10 @@ interface JourneyStep {
             </div>
 
             <button (click)="addCredits(); closeWalletModal()" style="margin-top: 16px; padding: 12px; border-radius: 10px; border: none; background: #7c3aed; color: #fff; cursor: pointer; font-size: 15px; font-weight: 600; width: 100%;">
-              + Adicionar Creditos
+              {{ i18n.t('wallet.addCredits') }}
             </button>
             <button (click)="resetCredits()" style="margin-top: 8px; padding: 10px; border-radius: 10px; border: 1px solid #555; background: transparent; color: #888; cursor: pointer; font-size: 13px; width: 100%;">
-              Resetar Carteira (bonus inicial)
+              {{ i18n.t('wallet.reset') }}
             </button>
           </div>
         </div>
@@ -603,6 +608,35 @@ interface JourneyStep {
       height: 16px;
     }
 
+    /* Language selector */
+    .lang-selector {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 4px;
+    }
+    .lang-btn {
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1;
+      padding: 5px 10px;
+      color: #a1a1aa;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .lang-btn:hover {
+      background: #3f3f46;
+      color: #fafafa;
+    }
+    .lang-btn.active {
+      background: #8b5cf6;
+      color: #fff;
+      border-color: #8b5cf6;
+    }
+
     /* Right chat sidebar */
     .chat-sidebar {
       width: 380px;
@@ -827,24 +861,29 @@ export class AppComponent implements OnInit, OnDestroy {
   walletHistory: any[] = [];
   walletLoading = false;
   private creditPollInterval: any;
+  private verifyPollInterval: any;
 
   private routerSub!: Subscription;
   private userSub!: Subscription;
 
-  navItems: NavItem[] = [
-    { path: 'home', label: 'Inicio', icon: 'home' },
-    { path: 'vendas', label: 'Vendas', icon: 'rocket_launch' },
-    { path: 'products', label: 'Produtos', icon: 'inventory_2' },
-    { path: 'dashboard', label: 'Metricas', icon: 'monitoring', divider: true },
-    { path: 'settings', label: 'Configuracoes', icon: 'settings' },
-    { path: 'admin', label: 'Admin', icon: 'admin_panel_settings' },
-  ];
+  get navItems(): NavItem[] {
+    return [
+      { path: 'home', label: this.i18n.t('nav.home'), icon: 'home' },
+      { path: 'vendas', label: this.i18n.t('nav.sales'), icon: 'rocket_launch' },
+      { path: 'products', label: this.i18n.t('nav.products'), icon: 'inventory_2' },
+      { path: 'dashboard', label: this.i18n.t('nav.metrics'), icon: 'monitoring', divider: true },
+      { path: 'settings', label: this.i18n.t('nav.settings'), icon: 'settings' },
+      { path: 'admin', label: this.i18n.t('nav.admin'), icon: 'admin_panel_settings' },
+    ];
+  }
 
-  journeySteps: JourneyStep[] = [
-    { label: 'Produto', icon: 'inventory_2', path: 'products' },
-    { label: 'Venda', icon: 'rocket_launch', path: 'vendas' },
-    { label: 'Metricas', icon: 'monitoring', path: 'dashboard' },
-  ];
+  get journeySteps(): JourneyStep[] {
+    return [
+      { label: this.i18n.t('journey.product'), icon: 'inventory_2', path: 'products' },
+      { label: this.i18n.t('journey.sale'), icon: 'rocket_launch', path: 'vendas' },
+      { label: this.i18n.t('journey.metrics'), icon: 'monitoring', path: 'dashboard' },
+    ];
+  }
 
   currentJourneyStep = 0;
 
@@ -852,6 +891,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private http: HttpClient,
+    public i18n: I18nService,
   ) {
     // Restore sidebar collapsed state
     const stored = localStorage.getItem('sidebar_collapsed');
@@ -891,6 +931,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.routerSub?.unsubscribe();
     this.userSub?.unsubscribe();
     if (this.creditPollInterval) clearInterval(this.creditPollInterval);
+    if (this.verifyPollInterval) clearInterval(this.verifyPollInterval);
   }
 
   @HostListener('window:resize')
@@ -930,7 +971,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   loadCreditBalance(): void {
-    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001/api' : '/api';
     this.http.get<any>(`${apiUrl}/credits/balance`).subscribe({
       next: (res) => {
         this.creditBalance = res.balance_usd;
@@ -943,7 +984,7 @@ export class AppComponent implements OnInit, OnDestroy {
   openWalletModal(): void {
     this.walletModalOpen = true;
     this.walletLoading = true;
-    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001/api' : '/api';
     this.http.get<any>(`${apiUrl}/credits/history`).subscribe({
       next: (res) => {
         this.walletLoading = false;
@@ -963,18 +1004,59 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   addCredits(): void {
-    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001/api' : '/api';
     this.http.post<any>(`${apiUrl}/credits/checkout`, { amount_usd: 5 }).subscribe({
       next: (res) => {
         if (res.checkout_url) {
           window.open(res.checkout_url, '_blank');
         }
+        if (res.session_id) {
+          this.startVerifyPolling(apiUrl, res.session_id);
+        }
       },
       error: (err) => {
-        const detail = err?.error?.detail || 'Stripe nao configurado';
-        alert('Erro: ' + detail);
+        const detail = err?.error?.detail || this.i18n.t('payment.stripeError');
+        alert(this.i18n.t('payment.error') + ': ' + detail);
       }
     });
+  }
+
+  private startVerifyPolling(apiUrl: string, sessionId: string): void {
+    // Clear any existing verify polling
+    if (this.verifyPollInterval) clearInterval(this.verifyPollInterval);
+
+    let attempts = 0;
+    const maxAttempts = 200; // ~10 minutes at 3s intervals
+
+    this.verifyPollInterval = setInterval(() => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        clearInterval(this.verifyPollInterval);
+        this.verifyPollInterval = null;
+        return;
+      }
+
+      this.http.get<any>(`${apiUrl}/credits/verify-session?session_id=${encodeURIComponent(sessionId)}`).subscribe({
+        next: (res) => {
+          if (res.status === 'credited' || res.status === 'already_credited') {
+            this.creditBalance = res.balance_usd;
+            this.creditBalanceBrl = res.balance_brl;
+            clearInterval(this.verifyPollInterval);
+            this.verifyPollInterval = null;
+            alert(res.status === 'credited'
+              ? this.i18n.t('payment.confirmed')
+              : this.i18n.t('payment.alreadyCredited'));
+          } else if (res.status === 'error') {
+            clearInterval(this.verifyPollInterval);
+            this.verifyPollInterval = null;
+          }
+          // If 'pending', keep polling
+        },
+        error: () => {
+          // Network error - keep polling, it may recover
+        }
+      });
+    }, 3000);
   }
 
   formatBrl(value: number): string {
@@ -982,15 +1064,15 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   resetCredits(): void {
-    if (!confirm('Resetar carteira? O historico sera apagado e voce recebera o bonus inicial de R$ 3,03 (1 roteiro + 1 video).')) return;
-    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+    if (!confirm(this.i18n.t('wallet.resetConfirm'))) return;
+    const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001/api' : '/api';
     this.http.post<any>(`${apiUrl}/credits/reset`, {}).subscribe({
       next: (res) => {
         this.creditBalance = res.balance_usd;
         this.creditBalanceBrl = res.balance_brl;
         this.openWalletModal(); // refresh history
       },
-      error: () => alert('Erro ao resetar carteira')
+      error: () => alert(this.i18n.t('wallet.resetError'))
     });
   }
 }

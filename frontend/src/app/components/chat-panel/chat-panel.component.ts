@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChatService, ChatMessage } from '../../services/chat.service';
+import { I18nService } from '../../services/i18n.service';
 import { Subscription, filter } from 'rxjs';
 
 @Component({
@@ -1143,7 +1144,7 @@ export class ChatPanelComponent implements OnInit, OnDestroy, AfterViewChecked {
   getAttachmentUrl(path: string | undefined): string {
     if (!path) return '';
     if (window.location.hostname === 'localhost') {
-      return 'http://localhost:8000' + path;
+      return 'http://localhost:8001' + path;
     }
     return path;
   }

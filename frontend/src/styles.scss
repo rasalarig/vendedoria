@@ -42,6 +42,21 @@ $gradient-revenue: linear-gradient(135deg, #f59e0b, #ef4444);
 $gradient-info: linear-gradient(135deg, #3b82f6, #8b5cf6);
 
 // ====================================================
+// Chrome/Webkit autofill override (keep dark theme)
+// ====================================================
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px $bg-base inset !important;
+  -webkit-text-fill-color: $text-primary !important;
+  border-radius: inherit !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+// ====================================================
 // Global resets
 // ====================================================
 html, body {

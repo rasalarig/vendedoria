@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpClient } from '@angular/common/http';
 import { ProductService, Product } from '../../services/product.service';
+import { I18nService } from '../../services/i18n.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -28,12 +29,12 @@ import { ProductService, Product } from '../../services/product.service';
     <div class="product-detail-page">
       <!-- Header -->
       <div class="page-header">
-        <button mat-icon-button (click)="goBack()" class="back-btn" title="Voltar">
+        <button mat-icon-button (click)="goBack()" class="back-btn" [title]="i18n.t('common.back')">
           <mat-icon>arrow_back</mat-icon>
         </button>
         <div>
-          <h1>{{ isEditing ? 'Editar Produto' : 'Novo Produto' }}</h1>
-          <p class="subtitle">{{ isEditing ? 'Atualize as informacoes do seu produto' : 'Cadastre um novo produto ou servico' }}</p>
+          <h1>{{ isEditing ? i18n.t('products.editProduct') : i18n.t('products.newProduct') }}</h1>
+          <p class="subtitle">{{ isEditing ? i18n.t('products.editSubtitle') : i18n.t('products.newSubtitle') }}</p>
         </div>
       </div>
 
@@ -54,79 +55,79 @@ import { ProductService, Product } from '../../services/product.service';
               <img [src]="imagePreview" alt="Preview" class="photo-preview">
               <div class="photo-overlay">
                 <mat-icon>photo_camera</mat-icon>
-                <span>Alterar foto</span>
+                <span>{{ i18n.t('products.changePhoto') }}</span>
               </div>
             } @else {
               <mat-icon class="upload-icon">add_photo_alternate</mat-icon>
-              <p class="upload-text">Arraste uma foto ou clique para selecionar</p>
-              <p class="upload-hint">JPG, PNG ou WebP</p>
+              <p class="upload-text">{{ i18n.t('products.dragPhoto') }}</p>
+              <p class="upload-hint">{{ i18n.t('products.photoFormats') }}</p>
             }
             <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" style="display:none">
           </div>
 
           <div class="form-grid">
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Nome do produto</mat-label>
-              <input matInput formControlName="name" placeholder="Ex: Curso de Marketing Digital">
+              <mat-label>{{ i18n.t('products.name') }}</mat-label>
+              <input matInput formControlName="name" [placeholder]="i18n.t('products.namePlaceholder')">
               @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-                <mat-error>Nome e obrigatorio</mat-error>
+                <mat-error>{{ i18n.t('products.nameRequired') }}</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Preco (R$)</mat-label>
+              <mat-label>{{ i18n.t('products.priceLabel') }}</mat-label>
               <input matInput type="number" formControlName="price" placeholder="0.00" step="0.01">
               @if (form.get('price')?.hasError('required') && form.get('price')?.touched) {
-                <mat-error>Preco e obrigatorio</mat-error>
+                <mat-error>{{ i18n.t('products.priceRequired') }}</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Tipo</mat-label>
+              <mat-label>{{ i18n.t('products.type') }}</mat-label>
               <mat-select formControlName="product_type">
                 <mat-option value="produto">
-                  <mat-icon>inventory_2</mat-icon> Produto
+                  <mat-icon>inventory_2</mat-icon> {{ i18n.t('products.product') }}
                 </mat-option>
                 <mat-option value="servico">
-                  <mat-icon>design_services</mat-icon> Servico
+                  <mat-icon>design_services</mat-icon> {{ i18n.t('products.service') }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Tipo de Pagamento</mat-label>
+              <mat-label>{{ i18n.t('products.paymentType') }}</mat-label>
               <mat-select formControlName="pricing_type">
                 <mat-option value="one_time">
-                  <mat-icon>payments</mat-icon> Pagamento Unico
+                  <mat-icon>payments</mat-icon> {{ i18n.t('products.oneTime') }}
                 </mat-option>
                 <mat-option value="monthly">
-                  <mat-icon>autorenew</mat-icon> Mensal (Recorrente)
+                  <mat-icon>autorenew</mat-icon> {{ i18n.t('products.monthly') }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
           </div>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Descricao curta</mat-label>
-            <textarea matInput formControlName="description" rows="3" placeholder="Descreva seu produto em poucas palavras" maxlength="300"></textarea>
+            <mat-label>{{ i18n.t('products.description') }}</mat-label>
+            <textarea matInput formControlName="description" rows="3" [placeholder]="i18n.t('products.descriptionPlaceholder')" maxlength="300"></textarea>
             <mat-hint align="end">{{ form.get('description')?.value?.length || 0 }}/300</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>URL do site</mat-label>
+            <mat-label>{{ i18n.t('products.websiteUrl') }}</mat-label>
             <mat-icon matPrefix class="url-prefix-icon">link</mat-icon>
-            <input matInput formControlName="website_url" placeholder="https://www.seusite.com.br">
+            <input matInput formControlName="website_url" [placeholder]="i18n.t('products.websitePlaceholder')">
           </mat-form-field>
 
           <div class="form-actions">
-            <button mat-button (click)="goBack()" class="cancel-btn">Cancelar</button>
+            <button mat-button (click)="goBack()" class="cancel-btn">{{ i18n.t('common.cancel') }}</button>
             <button mat-flat-button color="primary" (click)="onSave()" [disabled]="form.invalid || saving" class="save-btn">
               @if (saving) {
                 <mat-spinner diameter="20"></mat-spinner>
               } @else {
                 <mat-icon>check</mat-icon>
               }
-              Salvar
+              {{ i18n.t('common.save') }}
             </button>
           </div>
         </form>
@@ -137,7 +138,7 @@ import { ProductService, Product } from '../../services/product.service';
         <div class="video-section">
           <div class="video-header">
             <div class="video-title-row">
-              <h2>Videos do Produto</h2>
+              <h2>{{ i18n.t('products.videos') }}</h2>
               <span class="video-count-badge">{{ videos.length }}</span>
             </div>
             <button mat-flat-button color="primary" (click)="videoFileInput.click()" [disabled]="uploadingVideo" class="upload-video-btn">
@@ -146,7 +147,7 @@ import { ProductService, Product } from '../../services/product.service';
               } @else {
                 <mat-icon>upload</mat-icon>
               }
-              Upload Video
+              {{ i18n.t('products.uploadVideo') }}
             </button>
             <input #videoFileInput type="file" accept="video/*" (change)="onVideoFileSelected($event)" style="display:none">
           </div>
@@ -154,13 +155,13 @@ import { ProductService, Product } from '../../services/product.service';
           @if (loadingVideos) {
             <div class="loading-videos">
               <mat-spinner diameter="32"></mat-spinner>
-              <span>Carregando videos...</span>
+              <span>{{ i18n.t('products.loadingVideos') }}</span>
             </div>
           } @else if (videos.length === 0) {
             <div class="empty-videos">
               <mat-icon class="empty-video-icon">videocam_off</mat-icon>
-              <p>Nenhum video encontrado para este produto</p>
-              <p class="empty-video-hint">Faca upload ou gere videos pelo assistente de vendas</p>
+              <p>{{ i18n.t('products.noVideos') }}</p>
+              <p class="empty-video-hint">{{ i18n.t('products.noVideosHint') }}</p>
             </div>
           } @else {
             <div class="video-grid">
@@ -180,7 +181,7 @@ import { ProductService, Product } from '../../services/product.service';
                         <mat-icon class="play-icon">play_circle_filled</mat-icon>
                       </div>
                     }
-                    <button class="video-delete-btn" mat-icon-button (click)="confirmDeleteVideo($event, video)" title="Excluir video">
+                    <button class="video-delete-btn" mat-icon-button (click)="confirmDeleteVideo($event, video)" [title]="i18n.t('products.deleteVideo')">
                       <mat-icon>delete</mat-icon>
                     </button>
                     @if (video.provider) {
@@ -689,7 +690,7 @@ export class ProductDetailComponent implements OnInit {
   loadingVideos = false;
   uploadingVideo = false;
 
-  private apiBase = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+  private apiBase = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
 
   constructor(
     private fb: FormBuilder,
@@ -698,6 +699,7 @@ export class ProductDetailComponent implements OnInit {
     private router: Router,
     private productService: ProductService,
     private http: HttpClient,
+    public i18n: I18nService,
   ) {}
 
   ngOnInit(): void {
@@ -898,7 +900,7 @@ export class ProductDetailComponent implements OnInit {
 
   confirmDeleteVideo(event: MouseEvent, video: any): void {
     event.stopPropagation();
-    const confirmed = window.confirm('Tem certeza que deseja excluir este video?');
+    const confirmed = window.confirm(this.i18n.t('products.confirmDeleteVideo'));
     if (!confirmed) return;
 
     const url = `${this.apiBase}/api/creatives/generated-videos/${video.id}`;

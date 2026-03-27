@@ -2,9 +2,9 @@
   <!-- Hero greeting -->
   <div class="hero-section">
     <h1 class="hero-title">
-      <span class="gradient-text">Dashboard de Vendas</span>
+      <span class="gradient-text">{{ i18n.t('dashboard.title') }}</span>
     </h1>
-    <p class="hero-subtitle">Acompanhe suas metricas e campanhas em tempo real</p>
+    <p class="hero-subtitle">{{ i18n.t('dashboard.subtitle') }}</p>
   </div>
 
   <!-- KPI Cards -->
@@ -14,14 +14,14 @@
       <div class="kpi-body">
         <div class="kpi-header">
           <mat-icon class="kpi-icon amber">account_balance_wallet</mat-icon>
-          <span class="kpi-label">Total Gasto</span>
+          <span class="kpi-label">{{ i18n.t('dashboard.totalSpent') }}</span>
         </div>
         <div class="kpi-number">
           <span class="kpi-currency">R$</span>{{ formatCurrency(metrics.total_spent) }}
         </div>
         <div class="kpi-change" [class.positive]="metrics.total_spent > 0">
           <mat-icon>{{ metrics.total_spent > 0 ? 'trending_up' : 'remove' }}</mat-icon>
-          <span>{{ metrics.active_campaigns }} campanhas ativas</span>
+          <span>{{ metrics.active_campaigns }} {{ i18n.t('dashboard.activeCampaigns') }}</span>
         </div>
       </div>
     </div>
@@ -31,7 +31,7 @@
       <div class="kpi-body">
         <div class="kpi-header">
           <mat-icon class="kpi-icon violet">visibility</mat-icon>
-          <span class="kpi-label">Impressoes</span>
+          <span class="kpi-label">{{ i18n.t('dashboard.impressions') }}</span>
         </div>
         <div class="kpi-number">{{ formatNumber(metrics.total_impressions) }}</div>
         <div class="kpi-change positive">
@@ -46,12 +46,12 @@
       <div class="kpi-body">
         <div class="kpi-header">
           <mat-icon class="kpi-icon blue">ads_click</mat-icon>
-          <span class="kpi-label">Cliques</span>
+          <span class="kpi-label">{{ i18n.t('dashboard.clicks') }}</span>
         </div>
         <div class="kpi-number">{{ formatNumber(metrics.total_clicks) }}</div>
         <div class="kpi-change positive">
           <mat-icon>trending_up</mat-icon>
-          <span>{{ metrics.total_leads }} leads</span>
+          <span>{{ metrics.total_leads }} {{ i18n.t('dashboard.leads') }}</span>
         </div>
       </div>
     </div>
@@ -61,12 +61,12 @@
       <div class="kpi-body">
         <div class="kpi-header">
           <mat-icon class="kpi-icon green">show_chart</mat-icon>
-          <span class="kpi-label">ROI</span>
+          <span class="kpi-label">{{ i18n.t('dashboard.roi') }}</span>
         </div>
         <div class="kpi-number">{{ metrics.roi }}<span class="kpi-unit">%</span></div>
         <div class="kpi-change" [class.positive]="metrics.roi >= 0" [class.negative]="metrics.roi < 0">
           <mat-icon>{{ metrics.roi >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
-          <span>{{ metrics.roi >= 0 ? 'Positivo' : 'Negativo' }}</span>
+          <span>{{ metrics.roi >= 0 ? i18n.t('dashboard.positive') : i18n.t('dashboard.negative') }}</span>
         </div>
       </div>
     </div>
@@ -75,25 +75,25 @@
   <!-- Chart Section -->
   <div class="chart-section glass-card">
     <div class="chart-header">
-      <h3>Metricas ao longo do tempo</h3>
+      <h3>{{ i18n.t('dashboard.metricsOverTime') }}</h3>
       <div class="chart-controls">
         <div class="chart-tabs">
           <button class="chart-tab" [class.active]="activeChartTab === 'impressions'"
-                  (click)="setChartTab('impressions')">Impressoes</button>
+                  (click)="setChartTab('impressions')">{{ i18n.t('dashboard.chartImpressions') }}</button>
           <button class="chart-tab" [class.active]="activeChartTab === 'clicks'"
-                  (click)="setChartTab('clicks')">Cliques</button>
+                  (click)="setChartTab('clicks')">{{ i18n.t('dashboard.chartClicks') }}</button>
           <button class="chart-tab" [class.active]="activeChartTab === 'spent'"
-                  (click)="setChartTab('spent')">Gasto</button>
+                  (click)="setChartTab('spent')">{{ i18n.t('dashboard.chartSpent') }}</button>
           <button class="chart-tab" [class.active]="activeChartTab === 'ctr'"
-                  (click)="setChartTab('ctr')">CTR</button>
+                  (click)="setChartTab('ctr')">{{ i18n.t('dashboard.chartCtr') }}</button>
         </div>
         <div class="period-selector">
           <button class="period-btn" [class.active]="selectedPeriod === '7'"
-                  (click)="setPeriod('7')">7 dias</button>
+                  (click)="setPeriod('7')">{{ i18n.t('dashboard.period7') }}</button>
           <button class="period-btn" [class.active]="selectedPeriod === '14'"
-                  (click)="setPeriod('14')">14 dias</button>
+                  (click)="setPeriod('14')">{{ i18n.t('dashboard.period14') }}</button>
           <button class="period-btn" [class.active]="selectedPeriod === '30'"
-                  (click)="setPeriod('30')">30 dias</button>
+                  (click)="setPeriod('30')">{{ i18n.t('dashboard.period30') }}</button>
         </div>
       </div>
     </div>
@@ -114,7 +114,7 @@
       } @else {
         <div class="chart-placeholder">
           <mat-icon>bar_chart</mat-icon>
-          <span>Dados do grafico serao exibidos aqui</span>
+          <span>{{ i18n.t('dashboard.chartPlaceholder') }}</span>
         </div>
       }
     </div>
@@ -123,9 +123,9 @@
   <!-- Active Campaigns Table -->
   <div class="campaigns-section glass-card">
     <div class="section-header-row">
-      <h3>Campanhas</h3>
+      <h3>{{ i18n.t('dashboard.campaigns') }}</h3>
       <button class="view-all-btn" (click)="navigateTo('/campaigns')">
-        Ver Todas
+        {{ i18n.t('dashboard.viewAll') }}
         <mat-icon>arrow_forward</mat-icon>
       </button>
     </div>
@@ -135,13 +135,13 @@
         <table class="campaigns-table">
           <thead>
             <tr>
-              <th>Campanha</th>
-              <th>Status</th>
-              <th>Budget/dia</th>
-              <th>Impressoes</th>
-              <th>Cliques</th>
-              <th>CTR</th>
-              <th>Gasto</th>
+              <th>{{ i18n.t('dashboard.thCampaign') }}</th>
+              <th>{{ i18n.t('dashboard.thStatus') }}</th>
+              <th>{{ i18n.t('dashboard.thBudgetDay') }}</th>
+              <th>{{ i18n.t('dashboard.thImpressions') }}</th>
+              <th>{{ i18n.t('dashboard.thClicks') }}</th>
+              <th>{{ i18n.t('dashboard.thCtr') }}</th>
+              <th>{{ i18n.t('dashboard.thSpent') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -174,10 +174,10 @@
     } @else {
       <div class="empty-state">
         <mat-icon>campaign</mat-icon>
-        <p>Nenhuma campanha encontrada</p>
+        <p>{{ i18n.t('dashboard.noCampaigns') }}</p>
         <button class="action-btn-primary" (click)="navigateTo('/campaigns')">
           <mat-icon>add</mat-icon>
-          Criar Campanha
+          {{ i18n.t('dashboard.createCampaign') }}
         </button>
       </div>
     }
@@ -187,7 +187,7 @@
   <div class="rankings-grid">
     <!-- Best Creatives -->
     <div class="ranking-card glass-card">
-      <h3>Melhores Criativos</h3>
+      <h3>{{ i18n.t('dashboard.bestCreatives') }}</h3>
       @if (topCreatives.length > 0) {
         <div class="ranking-list">
           @for (cr of topCreatives; track cr.id; let i = $index) {
@@ -211,14 +211,14 @@
       } @else {
         <div class="ranking-empty">
           <mat-icon>palette</mat-icon>
-          <span>Gere criativos para ver rankings</span>
+          <span>{{ i18n.t('dashboard.generateCreativesHint') }}</span>
         </div>
       }
     </div>
 
     <!-- Best Products -->
     <div class="ranking-card glass-card">
-      <h3>Melhores Produtos</h3>
+      <h3>{{ i18n.t('dashboard.bestProducts') }}</h3>
       @if (topProducts.length > 0) {
         <div class="ranking-list">
           @for (p of topProducts; track p.id; let i = $index) {
@@ -234,14 +234,14 @@
               <div class="ranking-info">
                 <span class="ranking-name">{{ p.name }}</span>
               </div>
-              <span class="ranking-stat">{{ formatNumber(p.clicks) }} cliques</span>
+              <span class="ranking-stat">{{ formatNumber(p.clicks) }} {{ i18n.t('dashboard.clicksUnit') }}</span>
             </div>
           }
         </div>
       } @else {
         <div class="ranking-empty">
           <mat-icon>shopping_bag</mat-icon>
-          <span>Cadastre produtos para ver rankings</span>
+          <span>{{ i18n.t('dashboard.registerProductsHint') }}</span>
         </div>
       }
     </div>
@@ -251,19 +251,19 @@
   <div class="quick-actions">
     <button class="action-btn" (click)="navigateTo('/campaigns')">
       <mat-icon>campaign</mat-icon>
-      <span>Nova Campanha</span>
+      <span>{{ i18n.t('dashboard.newCampaign') }}</span>
     </button>
     <button class="action-btn" (click)="navigateTo('/creatives')">
       <mat-icon>palette</mat-icon>
-      <span>Novo Criativo</span>
+      <span>{{ i18n.t('dashboard.newCreative') }}</span>
     </button>
     <button class="action-btn" (click)="navigateTo('/products')">
       <mat-icon>add</mat-icon>
-      <span>Novo Produto</span>
+      <span>{{ i18n.t('dashboard.newProduct') }}</span>
     </button>
     <button class="action-btn" (click)="navigateTo('/chat')">
       <mat-icon>smart_toy</mat-icon>
-      <span>Falar com IA</span>
+      <span>{{ i18n.t('dashboard.talkToAI') }}</span>
     </button>
   </div>
 </div>

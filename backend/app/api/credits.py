@@ -281,6 +281,74 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     return {"status": "ok"}
 
 
+@router.get("/verify-session")
+def verify_session(
+    session_id: str = Query(...),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Poll Stripe checkout session status (fallback when webhook secret is not configured)."""
+    if not settings.STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=503, detail="Stripe nao configurado")
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+    except Exception as e:
+        return {"status": "error", "detail": f"Erro ao consultar sessao: {str(e)}"}
+
+    # Validate that the session belongs to the authenticated user
+    session_user_id = session.get("metadata", {}).get("user_id")
+    if session_user_id is None or int(session_user_id) != user_id:
+        return {"status": "error", "detail": "Sessao nao pertence a este usuario"}
+
+    if session.get("payment_status") != "paid":
+        return {"status": "pending"}
+
+    # Payment is confirmed - check idempotency
+    existing = db.query(CreditTransaction).filter(
+        CreditTransaction.stripe_session_id == session_id
+    ).first()
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return {"status": "error", "detail": "Usuario nao encontrado"}
+
+    balance = user.credit_balance_usd or 0.0
+
+    if existing:
+        return {
+            "status": "already_credited",
+            "balance_usd": round(balance, 2),
+            "balance_brl": round(balance * USD_TO_BRL, 2),
+        }
+
+    # Credit the user
+    amount_usd = float(session["metadata"]["amount_usd"])
+    user.credit_balance_usd = balance + amount_usd
+
+    tx = CreditTransaction(
+        user_id=user_id,
+        amount_usd=amount_usd,
+        type="purchase",
+        description=f"Compra de {amount_usd} USD via Stripe",
+        stripe_session_id=session_id,
+        stripe_payment_intent=session.get("payment_intent"),
+    )
+    db.add(tx)
+    db.commit()
+    db.refresh(user)
+
+    new_balance = user.credit_balance_usd or 0.0
+    return {
+        "status": "credited",
+        "amount_usd": amount_usd,
+        "balance_usd": round(new_balance, 2),
+        "balance_brl": round(new_balance * USD_TO_BRL, 2),
+    }
+
+
 @router.get("/packages")
 def get_packages():
     """Return available credit packages."""

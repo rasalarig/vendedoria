@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     META_APP_ID: str = ""
     META_APP_SECRET: str = ""
     GOOGLE_AI_KEY: str = ""
+    JWT_SECRET: str = "vendedoria-secret-key-change-in-production"
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_PRICE_5: str = ""   # Stripe Price ID for $5 credits

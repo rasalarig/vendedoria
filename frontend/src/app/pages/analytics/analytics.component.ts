@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 import { AnalyticsService, AnalyticsData } from '../../services/analytics.service';
+import { I18nService } from '../../services/i18n.service';
 
 @Component({
   selector: 'app-analytics',
@@ -25,6 +26,8 @@ import { AnalyticsService, AnalyticsData } from '../../services/analytics.servic
   styleUrl: './analytics.component.scss',
 })
 export class AnalyticsComponent implements OnInit {
+  i18n = inject(I18nService);
+
   @ViewChild(MatSort) sort!: MatSort;
 
   data: AnalyticsData | null = null;
@@ -96,7 +99,7 @@ export class AnalyticsComponent implements OnInit {
       datasets: [
         {
           data: data.chart_data.leads,
-          label: 'Leads',
+          label: this.i18n.t('analytics.chartLeads'),
           borderColor: '#8b5cf6',
           backgroundColor: 'rgba(139, 92, 246, 0.08)',
           fill: true,
@@ -106,7 +109,7 @@ export class AnalyticsComponent implements OnInit {
         },
         {
           data: data.chart_data.conversions,
-          label: 'Conversoes',
+          label: this.i18n.t('analytics.chartConversions'),
           borderColor: '#ec4899',
           backgroundColor: 'rgba(236, 72, 153, 0.08)',
           fill: true,
@@ -122,7 +125,7 @@ export class AnalyticsComponent implements OnInit {
       datasets: [
         {
           data: data.chart_data.spent,
-          label: 'Gasto (R$)',
+          label: this.i18n.t('analytics.chartSpent'),
           backgroundColor: 'rgba(245, 158, 11, 0.5)',
           borderColor: '#f59e0b',
           borderWidth: 1,
@@ -150,11 +153,11 @@ export class AnalyticsComponent implements OnInit {
       perdido: '#ef4444',
     };
     const labelMap: Record<string, string> = {
-      novo: 'Novo',
-      contatado: 'Contatado',
-      interessado: 'Interessado',
-      convertido: 'Convertido',
-      perdido: 'Perdido',
+      novo: this.i18n.t('leads.novo'),
+      contatado: this.i18n.t('leads.contatado'),
+      interessado: this.i18n.t('leads.interessado'),
+      convertido: this.i18n.t('leads.convertido'),
+      perdido: this.i18n.t('leads.perdido'),
     };
     this.totalLeadsInFunnel = Object.values(data.lead_stats).reduce((a, b) => a + b, 0);
     this.leadFunnelItems = Object.entries(data.lead_stats).map(([key, count]) => ({
@@ -212,9 +215,9 @@ export class AnalyticsComponent implements OnInit {
 
   getColHeader(col: number, platform: string): string {
     if (platform === 'meta') {
-      return ['', '', 'Impressoes', 'Cliques', 'Leads', 'Conversoes', 'Gasto', 'CTR'][col] || '';
+      return ['', '', this.i18n.t('analytics.colImpressions'), this.i18n.t('analytics.colClicks'), this.i18n.t('analytics.colLeads'), this.i18n.t('analytics.colConversions'), this.i18n.t('analytics.colSpent'), this.i18n.t('analytics.colCtr')][col] || '';
     }
-    return ['', '', 'Enviadas', 'Entregues', 'Lidas', 'Respondidas', 'Taxa', '-'][col] || '';
+    return ['', '', this.i18n.t('analytics.colSent'), this.i18n.t('analytics.colDelivered'), this.i18n.t('analytics.colRead'), this.i18n.t('analytics.colReplied'), this.i18n.t('analytics.colRate'), '-'][col] || '';
   }
 
   formatNumber(val: number): string {

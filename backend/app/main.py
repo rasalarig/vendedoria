@@ -114,6 +114,124 @@ async def privacy_policy():
     """
 
 
+@app.get("/terms", response_class=HTMLResponse)
+async def terms_of_service():
+    return """
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Termos de Servico - VendedorIA</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: #09090b; color: #e4e4e7;
+                max-width: 800px; margin: 0 auto; padding: 40px 20px;
+                line-height: 1.7;
+            }
+            h1 { color: #a78bfa; border-bottom: 1px solid #27272a; padding-bottom: 16px; }
+            h2 { color: #c4b5fd; margin-top: 32px; }
+            p, li { color: #a1a1aa; }
+            a { color: #8b5cf6; }
+            .update { color: #71717a; font-size: 14px; margin-top: 40px; border-top: 1px solid #27272a; padding-top: 16px; }
+        </style>
+    </head>
+    <body>
+        <h1>Termos de Servico</h1>
+        <p><strong>Vendedor IA</strong> — Plataforma de Gestao de Vendas e Marketing com Inteligencia Artificial</p>
+        <p>Ultima atualizacao: Marco de 2026</p>
+
+        <h2>1. Aceitacao dos Termos</h2>
+        <p>Ao acessar ou utilizar a plataforma Vendedor IA, voce concorda com estes Termos de Servico. Caso nao concorde com qualquer disposicao aqui descrita, voce nao devera utilizar a plataforma. O uso continuado da plataforma apos quaisquer alteracoes constitui aceitacao dos termos revisados.</p>
+
+        <h2>2. Descricao do Servico</h2>
+        <p>O Vendedor IA e uma plataforma de gestao de vendas e marketing digital com inteligencia artificial que oferece:</p>
+        <ul>
+            <li>Gestao de leads e funil de vendas</li>
+            <li>Criacao e gerenciamento de campanhas publicitarias</li>
+            <li>Geracao de criativos e textos com inteligencia artificial</li>
+            <li>Integracoes com Meta Ads (Facebook e Instagram), WhatsApp e TikTok</li>
+            <li>Analise de metricas e desempenho de vendas</li>
+            <li>Automacao de processos de marketing e vendas</li>
+        </ul>
+
+        <h2>3. Cadastro e Conta</h2>
+        <p>Para utilizar a plataforma, voce devera criar uma conta fornecendo informacoes verdadeiras e completas. Voce e responsavel por:</p>
+        <ul>
+            <li>Manter a confidencialidade de suas credenciais de acesso</li>
+            <li>Todas as atividades realizadas em sua conta</li>
+            <li>Notificar imediatamente qualquer uso nao autorizado de sua conta</li>
+            <li>Manter seus dados cadastrais atualizados</li>
+        </ul>
+        <p>Reservamo-nos o direito de suspender ou encerrar contas que violem estes termos ou que apresentem atividades suspeitas.</p>
+
+        <h2>4. Uso Permitido</h2>
+        <p>Voce se compromete a utilizar a plataforma apenas para fins legais e em conformidade com a legislacao brasileira vigente. E expressamente proibido:</p>
+        <ul>
+            <li>Utilizar a plataforma para envio de spam ou mensagens nao solicitadas</li>
+            <li>Criar campanhas com conteudo enganoso, difamatorio ou ilegal</li>
+            <li>Tentar acessar dados de outros usuarios sem autorizacao</li>
+            <li>Realizar engenharia reversa ou interferir no funcionamento da plataforma</li>
+            <li>Utilizar bots ou scripts automatizados para manipular a plataforma</li>
+            <li>Violar direitos de propriedade intelectual de terceiros</li>
+        </ul>
+
+        <h2>5. Propriedade Intelectual</h2>
+        <p>Todo o conteudo da plataforma Vendedor IA, incluindo mas nao limitado a software, design, logotipos, textos e algoritmos de inteligencia artificial, e de propriedade exclusiva do Vendedor IA ou de seus licenciadores.</p>
+        <p>O conteudo gerado pela inteligencia artificial para suas campanhas e criativos pode ser utilizado livremente por voce para fins comerciais, porem voce e responsavel por garantir que o uso esteja em conformidade com as leis aplicaveis e os termos das plataformas de terceiros onde o conteudo sera publicado.</p>
+
+        <h2>6. Limitacoes de Responsabilidade</h2>
+        <p>O Vendedor IA e fornecido "como esta" e "conforme disponivel". Nao garantimos que:</p>
+        <ul>
+            <li>A plataforma estara disponivel de forma ininterrupta ou livre de erros</li>
+            <li>Os resultados obtidos com o uso da plataforma serao precisos ou confiaveis</li>
+            <li>O conteudo gerado por IA sera isento de imprecisoes</li>
+        </ul>
+        <p>Em nenhuma hipotese seremos responsaveis por danos indiretos, incidentais, especiais ou consequentes decorrentes do uso ou impossibilidade de uso da plataforma, incluindo perda de lucros, dados ou oportunidades de negocio.</p>
+
+        <h2>7. Integracoes com Terceiros</h2>
+        <p>A plataforma oferece integracoes com servicos de terceiros, incluindo:</p>
+        <ul>
+            <li><strong>Meta Ads (Facebook e Instagram)</strong>: Para criacao e gestao de campanhas publicitarias. O uso esta sujeito aos Termos de Servico e Politicas de Publicidade da Meta.</li>
+            <li><strong>WhatsApp Business API</strong>: Para comunicacao com leads e clientes. O uso esta sujeito aos Termos de Servico do WhatsApp Business.</li>
+            <li><strong>TikTok Ads</strong>: Para criacao de campanhas na plataforma TikTok. O uso esta sujeito aos Termos de Publicidade do TikTok.</li>
+        </ul>
+        <p>Nao nos responsabilizamos por alteracoes, indisponibilidades ou mudancas nas politicas desses servicos de terceiros. Voce e responsavel por cumprir os termos e politicas de cada plataforma integrada.</p>
+
+        <h2>8. Pagamentos e Assinaturas</h2>
+        <p>O acesso a determinadas funcionalidades da plataforma requer uma assinatura paga. Ao contratar um plano:</p>
+        <ul>
+            <li>Voce autoriza a cobranca recorrente conforme o plano escolhido</li>
+            <li>Os precos podem ser atualizados com aviso previo de 30 dias</li>
+            <li>O pagamento de campanhas publicitarias no Meta Ads, TikTok e outros servicos e de sua exclusiva responsabilidade e cobrado diretamente pelas respectivas plataformas</li>
+            <li>Creditos de IA consumidos nao sao reembolsaveis</li>
+        </ul>
+
+        <h2>9. Cancelamento e Encerramento</h2>
+        <p>Voce pode cancelar sua assinatura a qualquer momento atraves das Configuracoes da plataforma. Ao cancelar:</p>
+        <ul>
+            <li>O acesso as funcionalidades premium sera mantido ate o final do periodo ja pago</li>
+            <li>Seus dados serao mantidos por 30 dias apos o cancelamento, permitindo reativacao</li>
+            <li>Apos o periodo de retencao, seus dados serao permanentemente excluidos</li>
+            <li>Campanhas ativas nas plataformas de terceiros deverao ser pausadas ou encerradas diretamente por voce</li>
+        </ul>
+        <p>Reservamo-nos o direito de encerrar sua conta imediatamente em caso de violacao destes termos.</p>
+
+        <h2>10. Alteracoes nos Termos</h2>
+        <p>Podemos atualizar estes Termos de Servico periodicamente. Alteracoes significativas serao comunicadas atraves da plataforma ou por email com pelo menos 15 dias de antecedencia. O uso continuado da plataforma apos a entrada em vigor das alteracoes constitui aceitacao dos novos termos.</p>
+
+        <h2>11. Contato</h2>
+        <p>Para duvidas, sugestoes ou solicitacoes relacionadas a estes Termos de Servico, entre em contato conosco atraves da propria plataforma Vendedor IA na secao de Configuracoes, ou envie uma mensagem pelo canal de suporte disponivel no painel.</p>
+
+        <div class="update">
+            <p>Vendedor IA &copy; 2026. Todos os direitos reservados.</p>
+        </div>
+    </body>
+    </html>
+    """
+
+
 @app.get("/data-deletion", response_class=HTMLResponse)
 async def data_deletion():
     return """
@@ -161,6 +279,9 @@ async def data_deletion():
             <li>Historico de campanhas</li>
             <li>Historico de conversas com a IA</li>
         </ul>
+
+        <h2>Exclusao automatica via Meta</h2>
+        <p>Se voce solicitou a exclusao de dados atraves do Facebook, a solicitacao e processada automaticamente pelo nosso sistema via callback do Meta. Voce recebera um codigo de confirmacao para acompanhar o status da exclusao.</p>
 
         <h2>Prazo</h2>
         <p>A exclusao dos dados e processada imediatamente apos a confirmacao. Alguns dados podem levar ate 30 dias para serem completamente removidos de backups.</p>

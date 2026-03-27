@@ -25,7 +25,7 @@ export interface AppSettings {
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
-  private backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+  private backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:8001' : '';
   private apiUrl = this.backendUrl + '/api/settings';
 
   constructor(private http: HttpClient) {}

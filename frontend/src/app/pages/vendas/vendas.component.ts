@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { I18nService } from '../../services/i18n.service';
 
 interface Sale {
   id: number;
@@ -29,12 +30,12 @@ interface Sale {
       <!-- Hero section -->
       <div class="hero-section">
         <div class="hero-text">
-          <h1>Vendas</h1>
-          <p>Inicie uma nova venda e lance campanhas com IA</p>
+          <h1>{{ i18n.t('vendas.title') }}</h1>
+          <p>{{ i18n.t('vendas.subtitle') }}</p>
         </div>
         <button class="cta-btn" (click)="novaVenda()">
           <mat-icon>add</mat-icon>
-          Nova Venda
+          {{ i18n.t('vendas.new') }}
         </button>
       </div>
 
@@ -42,22 +43,22 @@ interface Sale {
       @if (loading) {
         <div class="loading-state">
           <mat-icon class="spin">hourglass_empty</mat-icon>
-          <p>Carregando...</p>
+          <p>{{ i18n.t('common.loading') }}</p>
         </div>
       } @else if (sales.length === 0) {
         <div class="empty-state">
           <div class="empty-icon">
             <mat-icon>rocket_launch</mat-icon>
           </div>
-          <h3>Nenhuma venda ainda</h3>
-          <p>Crie sua primeira venda e lance uma campanha com poucos cliques.</p>
+          <h3>{{ i18n.t('vendas.noSales') }}</h3>
+          <p>{{ i18n.t('vendas.noSalesDesc') }}</p>
           <button class="btn-primary" (click)="novaVenda()">
             <mat-icon>add</mat-icon>
-            Comecar Agora
+            {{ i18n.t('vendas.startNow') }}
           </button>
         </div>
       } @else {
-        <div class="section-label">Vendas Recentes</div>
+        <div class="section-label">{{ i18n.t('vendas.recent') }}</div>
         <div class="campaigns-list">
           @for (sale of sales; track sale.id) {
             <div class="campaign-row" (click)="openSale(sale.id)" style="cursor: pointer;">
@@ -72,7 +73,7 @@ interface Sale {
                     [class.active]="sale.status === 'completed' || sale.status === 'campaign_active'"
                     [class.paused]="sale.status === 'campaign_pending'"
                     [class.draft]="sale.status === 'created'">
-                {{ sale.status === 'created' ? 'Criada' : sale.status === 'campaign_active' ? 'Ativa' : sale.status === 'campaign_pending' ? 'Pendente' : sale.status === 'completed' ? 'Concluida' : sale.status }}
+                {{ sale.status === 'created' ? i18n.t('vendas.statusCreated') : sale.status === 'campaign_active' ? i18n.t('vendas.statusActive') : sale.status === 'campaign_pending' ? i18n.t('vendas.statusPending') : sale.status === 'completed' ? i18n.t('vendas.statusCompleted') : sale.status }}
               </span>
             </div>
           }
@@ -321,7 +322,7 @@ interface Sale {
 })
 export class VendasComponent implements OnInit {
   private apiUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api'
+    ? 'http://localhost:8001/api'
     : '/api';
 
   sales: Sale[] = [];
@@ -330,6 +331,7 @@ export class VendasComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router,
+    public i18n: I18nService,
   ) {}
 
   ngOnInit(): void {

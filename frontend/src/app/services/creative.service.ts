@@ -21,7 +21,7 @@ export interface Creative {
 @Injectable({ providedIn: 'root' })
 export class CreativeService {
   private apiUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api/creatives'
+    ? 'http://localhost:8001/api/creatives'
     : '/api/creatives';
 
   constructor(private http: HttpClient) {}
